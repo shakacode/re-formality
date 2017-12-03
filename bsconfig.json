@@ -1,0 +1,23 @@
+{
+  "name": "re-formality",
+  "sources": [
+    "src",
+    {
+      "dir": "examples",
+      "type" : "dev",
+      "subdirs": true,
+    },
+  ],
+  "bs-dependencies": ["reason-react"],
+  "bs-dev-dependencies": ["re-classnames"],
+  "reason": {
+    "react-jsx": 2,
+  },
+  "refmt": 3,
+  "bsc-flags": ["-bs-super-errors"],
+  "package-specs": {
+    "module": "commonjs",
+    "in-source": true,
+  },
+  "suffix": ".bs.js",
+}

@@ -1,0 +1,42 @@
+{
+  "name": "re-formality",
+  "version": "0.0.0",
+  "description": "Reasonable form validation tool for reason-react",
+  "main": "src/Formality.re",
+  "author": "Alex Fedoseev <alex.fedoseev@gmail.com>",
+  "license": "MIT",
+  "scripts": {
+    "start:bs": "bsb -clean-world -make-world -w",
+    "start:webpack": "webpack -w",
+    "build": "bsb -clean-world -make-world && webpack",
+    "clean": "bsb -clean-world && rm -rf build examples/build",
+    "predeploy": "yarn run clean && mkdir build && yarn run build && cp -R examples/{index.html,index.css,build} build/",
+    "deploy": "now deploy build",
+    "test": "exit 0"
+  },
+  "files": [
+    "src",
+    "bsconfig.json"
+  ],
+  "keywords": [
+    "react",
+    "reason",
+    "reason-react",
+    "reasonml",
+    "ocaml",
+    "bucklescript"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/alexfedoseev/re-formality.git"
+  },
+  "peerDependencies": {
+    "reason-react": "^0.3.0"
+  },
+  "devDependencies": {
+    "bs-platform": "2.1.0",
+    "re-classnames": "0.0.3",
+    "reason-react": "0.3.0",
+    "webpack": "3.9.1"
+  }
+}
