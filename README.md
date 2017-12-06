@@ -14,7 +14,7 @@ The main goal of the library is to simplify an implementation of forms validatio
 
 * [x] Base API
 * [x] Validation strategies
-* [ ] Dependant fields validation
+* [x] Dependant fields validation
 * [ ] Async validations
 * [ ] Convert [test suit](https://github.com/shakacode/react-validation-layer/tree/master/__tests__)
 
@@ -48,11 +48,12 @@ module MyForm = {
     };
   let strategy = Formality.Strategy.OnFirstSuccessOrFirstBlur;
   module Validators = Formality.MakeValidators({type t = field;});
-  type validators = Validators.t(Formality.validator(state));
+  type validators = Validators.t(Formality.validator(field, state));
   let validators = Formality.(
     Validators.empty
     |> Validators.add(Email, {
-         strategy: None, /* None means global strategy will be used */
+         strategy: None, /* None means global strategy will be used, you can override it w/ Some(Formality.Strategy.t) */
+         dependents: None, /* You can define fields which must be revalidated on change of this field's value */
          validate: (value, state) => {
            switch (value |> Js.Option.getWithDefault(state.email)) {
            | "" => Valid(false)
@@ -61,7 +62,8 @@ module MyForm = {
          }
        })
     |> Validators.add(Password, {
-         strategy: None, /* None means global strategy will be used */
+         strategy: None, /* None means global strategy will be used, you can override it w/ Some(Formality.Strategy.t) */
+         dependents: None, /* You can define fields which must be revalidated on change of this field's value */
          validate: (value, state) => {
            switch (value |> Js.Option.getWithDefault(state.password)) {
            | "" => Valid(false)

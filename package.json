@@ -11,7 +11,7 @@
     "build": "bsb -clean-world -make-world && webpack",
     "clean": "bsb -clean-world && rm -rf build examples/build",
     "predeploy": "yarn run clean && mkdir build && yarn run build && cp -R examples/{index.html,index.css,build} build/",
-    "deploy": "now deploy build",
+    "deploy": "now deploy --public build",
     "test": "exit 0"
   },
   "files": [

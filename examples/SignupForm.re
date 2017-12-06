@@ -1,15 +1,18 @@
 module SignupForm = {
   type field =
     | Email
-    | Password;
+    | Password
+    | PasswordConfirmation;
   type state = {
     email: string,
-    password: string
+    password: string,
+    passwordConfirmation: string
   };
   let update = ((field, value), state) =>
     switch (field, value) {
     | (Email, value) => {...state, email: value}
     | (Password, value) => {...state, password: value}
+    | (PasswordConfirmation, value) => {...state, passwordConfirmation: value}
     };
   let strategy = Formality.Strategy.OnFirstSuccessOrFirstBlur;
   module Validators =
@@ -18,7 +21,7 @@ module SignupForm = {
         type t = field;
       }
     );
-  type validators = Validators.t(Formality.validator(state));
+  type validators = Validators.t(Formality.validator(field, state));
   let validators =
     Formality.(
       Validators.empty
@@ -26,6 +29,7 @@ module SignupForm = {
            Email,
            {
              strategy: None, /* None means global will be used */
+             dependents: None,
              validate: (value', state) => {
                let emailRegex = [%bs.re {|/.*@.*\..+/|}];
                let value = value' |> Js.Option.getWithDefault(state.email);
@@ -42,6 +46,7 @@ module SignupForm = {
            Password,
            {
              strategy: None, /* None means global will be used */
+             dependents: Some([PasswordConfirmation]),
              validate: (value', state) => {
                let minLength = 4;
                let strongLength = 6;
@@ -66,6 +71,23 @@ module SignupForm = {
              }
            }
          )
+      |> Validators.add(
+           PasswordConfirmation,
+           {
+             strategy: None,
+             dependents: None,
+             validate: (value', state) => {
+               let value = value' |> Js.Option.getWithDefault(state.passwordConfirmation);
+               switch value {
+               | "" =>
+                 ValidityBag({valid: false, tag: None, message: Some("Confirmation is required")})
+               | _ when value !== state.password =>
+                 ValidityBag({valid: false, tag: None, message: Some("Password doesn't match")})
+               | _ => ValidityBag({valid: true, tag: None, message: Some("Match!")})
+               }
+             }
+           }
+         )
     );
   exception InvalidResult(field);
 };
@@ -78,7 +100,7 @@ let make = (_) => {
   ...component,
   render: (_) =>
     <Container
-      initialState={email: "", password: ""}
+      initialState={email: "", password: "", passwordConfirmation: ""}
       onSubmit=(
         (~notifyOnSuccess, ~notifyOnFailure, state) => {
           Js.log("Called with:");
@@ -154,6 +176,34 @@ let make = (_) => {
                            (validity.message |> Js.Option.getExn |> ReasonReact.stringToElement)
                          </div>
                        | _ => raise(SignupForm.InvalidResult(SignupForm.Password))
+                       }
+                     | None => ReasonReact.nullElement
+                     }
+                   )
+                 </div>
+                 <div className="form-row">
+                   <label htmlFor="signup--passwordConfirmation" className="label-lg">
+                     ("Confirmation" |> ReasonReact.stringToElement)
+                   </label>
+                   <input
+                     id="signup--passwordConfirmation"
+                     value=state.passwordConfirmation
+                     disabled=(submitting |> Js.Boolean.to_js_boolean)
+                     onChange=(update(SignupForm.PasswordConfirmation))
+                     onBlur=(blur(SignupForm.PasswordConfirmation))
+                   />
+                   (
+                     switch (SignupForm.PasswordConfirmation |> results) {
+                     | Some(result) =>
+                       switch result {
+                       | Formality.ValidityBag(validity) =>
+                         <div
+                           className=(
+                             Cn.make(["form-message", validity.valid ? "success" : "failure"])
+                           )>
+                           (validity.message |> Js.Option.getExn |> ReasonReact.stringToElement)
+                         </div>
+                       | _ => raise(SignupForm.InvalidResult(SignupForm.PasswordConfirmation))
                        }
                      | None => ReasonReact.nullElement
                      }
