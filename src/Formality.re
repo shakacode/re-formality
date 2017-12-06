@@ -289,7 +289,7 @@ module Make = (Form: Form) => {
             )
           ) :
           ReasonReact.Update({...state, results, submitting: false, submittedOnce: true})
-      | Reset => ReasonReact.Update(state.data |> getInitialState)
+      | Reset => ReasonReact.Update(initialState |> getInitialState)
       | HandleSubmissionError => ReasonReact.Update({...state, submitting: false})
       },
     render: ({state, reduce}) =>
