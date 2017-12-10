@@ -41,12 +41,18 @@ module MyForm = {
     email: string,
     password: string
   };
+  let get = (field, state) =>
+    switch field {
+    | Email => state.email
+    | Password => state.password
+    };
   let update = ((field, value), state) =>
     switch (field, value) {
     | (Email, value) => {...state, email: value}
     | (Password, value) => {...state, password: value}
     };
   let strategy = Formality.Strategy.OnFirstSuccessOrFirstBlur;
+  let asyncStrategy = Some(Formality.AsyncStrategy.OnChange);
   module Validators = Formality.MakeValidators({type t = field;});
   type validators = Validators.t(Formality.validator(field, state));
   let validators = Formality.(
@@ -59,7 +65,14 @@ module MyForm = {
            | "" => Valid(false)
            | _ => Valid(true)
            }
-         }
+         },
+         validateAsync: Some((value) =>
+           Js.Promise.(
+             value
+             |> Api.validateEmail
+             |> then_((valid) => valid ? resolve(Valid(true)) : resolve(Valid(false)))
+           )
+         )
        })
     |> Validators.add(Password, {
          strategy: None, /* None means global strategy will be used, you can override it w/ Some(Formality.Strategy.t) */
@@ -69,7 +82,8 @@ module MyForm = {
            | "" => Valid(false)
            | _ => Valid(true)
            }
-         }
+         },
+         validateAsync: None
        })
     );
 };
@@ -85,7 +99,7 @@ let make = (_) => {
       initialState={email: "", password: ""}
       onSubmit=((~notifyOnSuccess, ~notifyOnFailure, state) => {/* Submit form... */})>
       ...(
-           ({state, results, update, blur, submit, submitting}) =>
+           ({state, results, update, blur, validating, submitting, submit}) =>
              <form className="form" onSubmit=submit>
                <input
                  value=state.email
@@ -94,12 +108,18 @@ let make = (_) => {
                  onBlur=(blur(MyForm.Email))
                />
                (
-                 switch (MyForm.Email |> results) {
-                 | Some(Formality.Valid(valid)) =>
+                 switch (MyForm.Email |> results, MyForm.Email |> validating) {
+                 | (_, true) =>
+                   <div className="form-message">
+                     ("Checking..." |> ReasonReact.stringToElement)
+                   </div>
+
+                 | (Some(Formality.Valid(valid)), false) =>
                    <div className=(Cn.make(["form-message", valid ? "success" : "failure"]))>
                      ((valid ? "Nice!" : "Uh oh error") |> ReasonReact.stringToElement)
                    </div>
-                 | None => ReasonReact.nullElement
+
+                 | (None, false) => ReasonReact.nullElement
                  }
                )
                <input

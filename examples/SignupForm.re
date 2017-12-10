@@ -8,6 +8,12 @@ module SignupForm = {
     password: string,
     passwordConfirmation: string
   };
+  let get = (field, state) =>
+    switch field {
+    | Email => state.email
+    | Password => state.password
+    | PasswordConfirmation => state.passwordConfirmation
+    };
   let update = ((field, value), state) =>
     switch (field, value) {
     | (Email, value) => {...state, email: value}
@@ -15,6 +21,7 @@ module SignupForm = {
     | (PasswordConfirmation, value) => {...state, passwordConfirmation: value}
     };
   let strategy = Formality.Strategy.OnFirstSuccessOrFirstBlur;
+  let asyncStrategy = Some(Formality.AsyncStrategy.OnChange);
   module Validators =
     Formality.MakeValidators(
       {
@@ -39,7 +46,29 @@ module SignupForm = {
                  ValidityBag({valid: false, tag: None, message: Some("Email is invalid")})
                | _ => ValidityBag({valid: true, tag: None, message: Some("Nice!")})
                }
-             }
+             },
+             validateAsync:
+               Some(
+                 (value) =>
+                   Js.Promise.(
+                     value
+                     |> Api.validateEmail
+                     |> then_(
+                          (valid) =>
+                            valid ?
+                              resolve(
+                                ValidityBag({valid: true, tag: None, message: Some("Nice!")})
+                              ) :
+                              resolve(
+                                ValidityBag({
+                                  valid: false,
+                                  tag: None,
+                                  message: Some("Email is already taken")
+                                })
+                              )
+                        )
+                   )
+               )
            }
          )
       |> Validators.add(
@@ -68,7 +97,8 @@ module SignupForm = {
                  })
                | _ => ValidityBag({valid: true, tag: None, message: Some("Nice!")})
                }
-             }
+             },
+             validateAsync: None
            }
          )
       |> Validators.add(
@@ -85,7 +115,8 @@ module SignupForm = {
                  ValidityBag({valid: false, tag: None, message: Some("Password doesn't match")})
                | _ => ValidityBag({valid: true, tag: None, message: Some("Match!")})
                }
-             }
+             },
+             validateAsync: None
            }
          )
     );
@@ -112,7 +143,7 @@ let make = (_) => {
         }
       )>
       ...(
-           ({state, results, update, blur, submit, submitting}) =>
+           ({state, results, update, blur, validating, submitting, submit}) =>
              <form className="form" onSubmit=submit>
                <div className="form-messages-area form-messages-area-lg" />
                <div className="form-content">
@@ -129,8 +160,12 @@ let make = (_) => {
                      onBlur=(blur(SignupForm.Email))
                    />
                    (
-                     switch (SignupForm.Email |> results) {
-                     | Some(result) =>
+                     switch (SignupForm.Email |> results, SignupForm.Email |> validating) {
+                     | (_, true) =>
+                       <div className="form-message">
+                         ("Checking..." |> ReasonReact.stringToElement)
+                       </div>
+                     | (Some(result), false) =>
                        switch result {
                        | Formality.ValidityBag(validity) =>
                          <div
@@ -141,7 +176,7 @@ let make = (_) => {
                          </div>
                        | _ => raise(SignupForm.InvalidResult(SignupForm.Email))
                        }
-                     | None => ReasonReact.nullElement
+                     | (None, false) => ReasonReact.nullElement
                      }
                    )
                  </div>
