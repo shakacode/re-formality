@@ -8,7 +8,7 @@
   "scripts": {
     "start:bs": "bsb -clean-world -make-world -w",
     "start:webpack": "webpack -w",
-    "build": "bsb -clean-world -make-world && webpack",
+    "build": "bsb -clean-world -make-world && webpack --optimize-minimize",
     "clean": "bsb -clean-world && rm -rf build examples/build",
     "predeploy": "yarn run clean && mkdir build && yarn run build && cp -R examples/{index.html,index.css,build} build/",
     "deploy": "now deploy build",
