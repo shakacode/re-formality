@@ -41,31 +41,44 @@ module SignupForm = {
                let emailRegex = [%bs.re {|/.*@.*\..+/|}];
                let value = value' |> Js.Option.getWithDefault(state.email);
                switch value {
-               | "" => ValidityBag({valid: false, tag: None, message: Some("Email is required")})
+               | "" =>
+                 ValidityBag({
+                   valid: false,
+                   tag: None,
+                   message: Some("Email is required")
+                 })
                | _ when ! (emailRegex |> Js.Re.test(value)) =>
-                 ValidityBag({valid: false, tag: None, message: Some("Email is invalid")})
-               | _ => ValidityBag({valid: true, tag: None, message: Some("Nice!")})
-               }
+                 ValidityBag({
+                   valid: false,
+                   tag: None,
+                   message: Some("Email is invalid")
+                 })
+               | _ =>
+                 ValidityBag({valid: true, tag: None, message: Some("Nice!")})
+               };
              },
              validateAsync:
                Some(
-                 (value) =>
+                 value =>
                    Js.Promise.(
                      value
                      |> Api.validateEmail
-                     |> then_(
-                          (valid) =>
-                            valid ?
-                              resolve(
-                                ValidityBag({valid: true, tag: None, message: Some("Nice!")})
-                              ) :
-                              resolve(
-                                ValidityBag({
-                                  valid: false,
-                                  tag: None,
-                                  message: Some("Email is already taken")
-                                })
-                              )
+                     |> then_(valid =>
+                          valid ?
+                            resolve(
+                              ValidityBag({
+                                valid: true,
+                                tag: None,
+                                message: Some("Nice!")
+                              })
+                            ) :
+                            resolve(
+                              ValidityBag({
+                                valid: false,
+                                tag: None,
+                                message: Some("Email is already taken")
+                              })
+                            )
                         )
                    )
                )
@@ -82,7 +95,11 @@ module SignupForm = {
                let value = value' |> Js.Option.getWithDefault(state.password);
                switch value {
                | "" =>
-                 ValidityBag({valid: false, tag: None, message: Some("Password is required")})
+                 ValidityBag({
+                   valid: false,
+                   tag: None,
+                   message: Some("Password is required")
+                 })
                | _ when String.length(value) < minLength =>
                  ValidityBag({
                    valid: false,
@@ -95,8 +112,9 @@ module SignupForm = {
                    tag: Some("weak"),
                    message: Some("Can be stronger... (still valid tho)")
                  })
-               | _ => ValidityBag({valid: true, tag: None, message: Some("Nice!")})
-               }
+               | _ =>
+                 ValidityBag({valid: true, tag: None, message: Some("Nice!")})
+               };
              },
              validateAsync: None
            }
@@ -107,14 +125,24 @@ module SignupForm = {
              strategy: None,
              dependents: None,
              validate: (value', state) => {
-               let value = value' |> Js.Option.getWithDefault(state.passwordConfirmation);
+               let value =
+                 value' |> Js.Option.getWithDefault(state.passwordConfirmation);
                switch value {
                | "" =>
-                 ValidityBag({valid: false, tag: None, message: Some("Confirmation is required")})
+                 ValidityBag({
+                   valid: false,
+                   tag: None,
+                   message: Some("Confirmation is required")
+                 })
                | _ when value !== state.password =>
-                 ValidityBag({valid: false, tag: None, message: Some("Password doesn't match")})
-               | _ => ValidityBag({valid: true, tag: None, message: Some("Match!")})
-               }
+                 ValidityBag({
+                   valid: false,
+                   tag: None,
+                   message: Some("Password doesn't match")
+                 })
+               | _ =>
+                 ValidityBag({valid: true, tag: None, message: Some("Match!")})
+               };
              },
              validateAsync: None
            }
@@ -139,7 +167,7 @@ let make = (_) => {
           Js.log("If api returned error this callback should be called:");
           Js.log(notifyOnFailure);
           let _ = Js.Global.setTimeout(notifyOnSuccess, 500);
-          ()
+          ();
         }
       )>
       ...(
@@ -147,7 +175,9 @@ let make = (_) => {
              <form className="form" onSubmit=submit>
                <div className="form-messages-area form-messages-area-lg" />
                <div className="form-content">
-                 <h2 className="push-lg"> ("Signup" |> ReasonReact.stringToElement) </h2>
+                 <h2 className="push-lg">
+                   ("Signup" |> ReasonReact.stringToElement)
+                 </h2>
                  <div className="form-row">
                    <label htmlFor="signup--email" className="label-lg">
                      ("Email" |> ReasonReact.stringToElement)
@@ -160,7 +190,10 @@ let make = (_) => {
                      onBlur=(blur(SignupForm.Email))
                    />
                    (
-                     switch (SignupForm.Email |> results, SignupForm.Email |> validating) {
+                     switch (
+                       SignupForm.Email |> results,
+                       SignupForm.Email |> validating
+                     ) {
                      | (_, true) =>
                        <div className="form-message">
                          ("Checking..." |> ReasonReact.stringToElement)
@@ -170,9 +203,16 @@ let make = (_) => {
                        | Formality.ValidityBag(validity) =>
                          <div
                            className=(
-                             Cn.make(["form-message", validity.valid ? "success" : "failure"])
+                             Cn.make([
+                               "form-message",
+                               validity.valid ? "success" : "failure"
+                             ])
                            )>
-                           (validity.message |> Js.Option.getExn |> ReasonReact.stringToElement)
+                           (
+                             validity.message
+                             |> Js.Option.getExn
+                             |> ReasonReact.stringToElement
+                           )
                          </div>
                        | _ => raise(SignupForm.InvalidResult(SignupForm.Email))
                        }
@@ -208,16 +248,23 @@ let make = (_) => {
                                  "failure"
                              ])
                            )>
-                           (validity.message |> Js.Option.getExn |> ReasonReact.stringToElement)
+                           (
+                             validity.message
+                             |> Js.Option.getExn
+                             |> ReasonReact.stringToElement
+                           )
                          </div>
-                       | _ => raise(SignupForm.InvalidResult(SignupForm.Password))
+                       | _ =>
+                         raise(SignupForm.InvalidResult(SignupForm.Password))
                        }
                      | None => ReasonReact.nullElement
                      }
                    )
                  </div>
                  <div className="form-row">
-                   <label htmlFor="signup--passwordConfirmation" className="label-lg">
+                   <label
+                     htmlFor="signup--passwordConfirmation"
+                     className="label-lg">
                      ("Confirmation" |> ReasonReact.stringToElement)
                    </label>
                    <input
@@ -234,19 +281,36 @@ let make = (_) => {
                        | Formality.ValidityBag(validity) =>
                          <div
                            className=(
-                             Cn.make(["form-message", validity.valid ? "success" : "failure"])
+                             Cn.make([
+                               "form-message",
+                               validity.valid ? "success" : "failure"
+                             ])
                            )>
-                           (validity.message |> Js.Option.getExn |> ReasonReact.stringToElement)
+                           (
+                             validity.message
+                             |> Js.Option.getExn
+                             |> ReasonReact.stringToElement
+                           )
                          </div>
-                       | _ => raise(SignupForm.InvalidResult(SignupForm.PasswordConfirmation))
+                       | _ =>
+                         raise(
+                           SignupForm.InvalidResult(
+                             SignupForm.PasswordConfirmation
+                           )
+                         )
                        }
                      | None => ReasonReact.nullElement
                      }
                    )
                  </div>
                  <div className="form-row">
-                   <button className="push-lg" disabled=(submitting |> Js.Boolean.to_js_boolean)>
-                     ((submitting ? "Submitting..." : "Submit") |> ReasonReact.stringToElement)
+                   <button
+                     className="push-lg"
+                     disabled=(submitting |> Js.Boolean.to_js_boolean)>
+                     (
+                       (submitting ? "Submitting..." : "Submit")
+                       |> ReasonReact.stringToElement
+                     )
                    </button>
                  </div>
                </div>
