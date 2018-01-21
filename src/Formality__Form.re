@@ -65,9 +65,9 @@ module Make = (Form: Config) => {
     state: Form.state,
     results: Form.field => option(result),
     submitting: bool,
-    change: Form.field => ReasonReact.Callback.t(ReactEventRe.Form.t),
+    change: (Form.field, ReactEventRe.Form.t) => unit,
     blur: (Form.field, ReactEventRe.Focus.t) => unit,
-    submit: ReasonReact.Callback.t(ReactEventRe.Form.t)
+    submit: ReactEventRe.Form.t => unit
   };
   let getInitialState = data => {
     data,
@@ -284,26 +284,21 @@ module Make = (Form: Config) => {
       | HandleSubmissionError =>
         ReasonReact.Update({...state, submitting: false})
       },
-    render: ({state, reduce}) =>
+    render: ({state, send}) =>
       children({
         state: state.data,
         results: field => state.results |> ResultsMap.get(field),
         submitting: state.submitting,
-        change: field =>
-          reduce(event =>
-            Change((field, event |> Formality__Utils.formEventTargetValue))
-          ),
-        blur: field =>
-          reduce(event =>
-            Blur((field, event |> Formality__Utils.focusEventTargetValue))
-          ),
-        submit:
-          reduce(event => {
-            if (! ReactEventRe.Form.defaultPrevented(event)) {
-              event |> ReactEventRe.Form.preventDefault;
-            };
-            Submit;
-          })
+        change: (field, event) =>
+          send(Change((field, event |> Formality__Utils.formEventTargetValue))),
+        blur: (field, event) =>
+          send(Blur((field, event |> Formality__Utils.focusEventTargetValue))),
+        submit: event => {
+          if (! ReactEventRe.Form.defaultPrevented(event)) {
+            event |> ReactEventRe.Form.preventDefault;
+          };
+          send(Submit);
+        }
       })
   };
 };

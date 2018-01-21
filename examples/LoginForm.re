@@ -1,4 +1,4 @@
-module SignupForm = {
+module LoginForm = {
   type field =
     | Email
     | Password;
@@ -56,7 +56,7 @@ module SignupForm = {
       |> Validators.add(
            Password,
            {
-             strategy: None, /* None means global will be used */
+             strategy: Some(Strategy.OnFirstBlur),
              dependents: None,
              validate: (value, _) =>
                switch value {
@@ -75,14 +75,14 @@ module SignupForm = {
   exception InvalidResult(field);
 };
 
-module Container = Formality.Make(SignupForm);
+module LoginFormContainer = Formality.Make(LoginForm);
 
-let component = ReasonReact.statelessComponent("SignupForm");
+let component = ReasonReact.statelessComponent("LoginForm");
 
 let make = (_) => {
   ...component,
   render: (_) =>
-    <Container
+    <LoginFormContainer
       initialState={email: "", password: ""}
       onSubmit=(
         (~notifyOnSuccess, ~notifyOnFailure, state) => {
@@ -100,21 +100,21 @@ let make = (_) => {
                <div className="form-messages-area form-messages-area-lg" />
                <div className="form-content">
                  <h2 className="push-lg">
-                   ("Signup" |> ReasonReact.stringToElement)
+                   ("Login" |> ReasonReact.stringToElement)
                  </h2>
                  <div className="form-row">
-                   <label htmlFor="signup--email" className="label-lg">
+                   <label htmlFor="login--email" className="label-lg">
                      ("Email" |> ReasonReact.stringToElement)
                    </label>
                    <input
-                     id="signup--email"
+                     id="login--email"
                      value=state.email
                      disabled=(submitting |> Js.Boolean.to_js_boolean)
-                     onChange=(change(SignupForm.Email))
-                     onBlur=(blur(SignupForm.Email))
+                     onChange=(change(LoginForm.Email))
+                     onBlur=(blur(LoginForm.Email))
                    />
                    (
-                     switch (SignupForm.Email |> results) {
+                     switch (LoginForm.Email |> results) {
                      | Some(result) =>
                        switch result {
                        | Formality.ValidityBag(validity) =>
@@ -131,25 +131,25 @@ let make = (_) => {
                              |> ReasonReact.stringToElement
                            )
                          </div>
-                       | _ => raise(SignupForm.InvalidResult(SignupForm.Email))
+                       | _ => raise(LoginForm.InvalidResult(LoginForm.Email))
                        }
                      | None => ReasonReact.nullElement
                      }
                    )
                  </div>
                  <div className="form-row">
-                   <label htmlFor="signup--password" className="label-lg">
+                   <label htmlFor="login--password" className="label-lg">
                      ("Password" |> ReasonReact.stringToElement)
                    </label>
                    <input
-                     id="signup--password"
+                     id="login--password"
                      value=state.password
                      disabled=(submitting |> Js.Boolean.to_js_boolean)
-                     onChange=(change(SignupForm.Password))
-                     onBlur=(blur(SignupForm.Password))
+                     onChange=(change(LoginForm.Password))
+                     onBlur=(blur(LoginForm.Password))
                    />
                    (
-                     switch (SignupForm.Password |> results) {
+                     switch (LoginForm.Password |> results) {
                      | Some(result) =>
                        switch result {
                        | Formality.ValidityBag(validity) =>
@@ -172,7 +172,7 @@ let make = (_) => {
                            )
                          </div>
                        | _ =>
-                         raise(SignupForm.InvalidResult(SignupForm.Password))
+                         raise(LoginForm.InvalidResult(LoginForm.Password))
                        }
                      | None => ReasonReact.nullElement
                      }
@@ -191,5 +191,5 @@ let make = (_) => {
                </div>
              </form>
          )
-    </Container>
+    </LoginFormContainer>
 };

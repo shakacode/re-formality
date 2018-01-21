@@ -37,6 +37,21 @@ body,
   max-width: 800px;
 }
 
+.nav {
+  display: flex;
+  flex-flow: row nowrap;
+  margin-bottom: 10px;
+}
+
+.nav-link {
+  margin-right: 10px;
+  background-color: transparent;
+}
+
+.nav-link.active {
+  border-bottom: 1px solid #29d;
+}
+
 h1,
 h2 {
   margin: 0 0 22px;

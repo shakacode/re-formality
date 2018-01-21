@@ -1,4 +1,1 @@
-ReactDOMRe.renderToElementWithId(
-  <div className="container"> <LoginForm /> </div>,
-  "app"
-);
+ReactDOMRe.renderToElementWithId(<App />, "app");
