@@ -81,7 +81,7 @@ module Make = (Form: Config) => {
     | validator => Some(validator)
     | exception Not_found => None
     };
-  let getStrategy = validator =>
+  let getStrategy = (validator: validator(Form.field, Form.state)) =>
     validator.strategy |> Js.Option.getWithDefault(Form.strategy);
   let validateDependents = (~data, ~results, ~emittedFields, dependents) =>
     dependents

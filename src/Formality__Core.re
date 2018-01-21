@@ -30,3 +30,10 @@ type validator('field, 'state) = {
   dependents: option(list('field)),
   validate: validate('state)
 };
+
+type asyncValidator('field, 'state) = {
+  strategy: option(Strategy.t),
+  dependents: option(list('field)),
+  validate: validate('state),
+  validateAsync: option(validateAsync)
+};

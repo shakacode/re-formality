@@ -7,5 +7,3 @@ let formEventTargetValue = event =>
 
 let focusEventTargetValue = event =>
   event |> ReactEventRe.Focus.target |> targetValue;
-
-let makeFieldsSet = () => 1;
