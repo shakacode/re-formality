@@ -1,4 +1,4 @@
 ReactDOMRe.renderToElementWithId(
-  <div className="container"> <SignupForm /> </div>,
+  <div className="container"> <LoginForm /> </div>,
   "app"
 );
