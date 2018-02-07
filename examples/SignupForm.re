@@ -146,7 +146,7 @@ module SignupForm = {
 };
 
 module SignupFormContainer =
-  Formality.MakeWithAsyncValidationsOnBlur(SignupForm);
+  Formality.MakeWithAsyncValidationsOnChange(SignupForm);
 
 let component = ReasonReact.statelessComponent("SignupForm");
 
