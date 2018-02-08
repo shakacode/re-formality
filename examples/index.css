@@ -37,6 +37,40 @@ body,
   max-width: 800px;
 }
 
+.header {
+  display: flex;
+  flex-flow: row nowrap;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.link:active,
+.link:focus,
+.link:hover {
+  outline: none;
+  text-decoration: underline;
+}
+
+.nav {
+  display: flex;
+  flex-flow: row nowrap;
+  margin-bottom: 10px;
+}
+
+.nav-link {
+  margin-right: 10px;
+  background-color: transparent;
+}
+
+.nav-link.active {
+  border-bottom: 1px solid #29d;
+}
+
 h1,
 h2 {
   margin: 0 0 22px;

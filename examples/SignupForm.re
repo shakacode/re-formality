@@ -21,14 +21,14 @@ module SignupForm = {
     | (PasswordConfirmation, value) => {...state, passwordConfirmation: value}
     };
   let strategy = Formality.Strategy.OnFirstSuccessOrFirstBlur;
-  let asyncStrategy = Some(Formality.AsyncStrategy.OnChange);
+  let debounceInterval = Formality.debounceInterval;
   module Validators =
     Formality.MakeValidators(
       {
         type t = field;
       }
     );
-  type validators = Validators.t(Formality.validator(field, state));
+  type validators = Validators.t(Formality.asyncValidator(field, state));
   let validators =
     Formality.(
       Validators.empty
@@ -37,9 +37,8 @@ module SignupForm = {
            {
              strategy: None, /* None means global will be used */
              dependents: None,
-             validate: (value', state) => {
+             validate: (value, _) => {
                let emailRegex = [%bs.re {|/.*@.*\..+/|}];
-               let value = value' |> Js.Option.getWithDefault(state.email);
                switch value {
                | "" =>
                  ValidityBag({
@@ -89,10 +88,9 @@ module SignupForm = {
            {
              strategy: None, /* None means global will be used */
              dependents: Some([PasswordConfirmation]),
-             validate: (value', state) => {
+             validate: (value, _) => {
                let minLength = 4;
                let strongLength = 6;
-               let value = value' |> Js.Option.getWithDefault(state.password);
                switch value {
                | "" =>
                  ValidityBag({
@@ -124,9 +122,7 @@ module SignupForm = {
            {
              strategy: None,
              dependents: None,
-             validate: (value', state) => {
-               let value =
-                 value' |> Js.Option.getWithDefault(state.passwordConfirmation);
+             validate: (value, state) =>
                switch value {
                | "" =>
                  ValidityBag({
@@ -142,8 +138,7 @@ module SignupForm = {
                  })
                | _ =>
                  ValidityBag({valid: true, tag: None, message: Some("Match!")})
-               };
-             },
+               },
              validateAsync: None
            }
          )
@@ -151,14 +146,15 @@ module SignupForm = {
   exception InvalidResult(field);
 };
 
-module Container = Formality.Make(SignupForm);
+module SignupFormContainer =
+  Formality.MakeWithAsyncValidationsOnChange(SignupForm);
 
 let component = ReasonReact.statelessComponent("SignupForm");
 
 let make = (_) => {
   ...component,
   render: (_) =>
-    <Container
+    <SignupFormContainer
       initialState={email: "", password: "", passwordConfirmation: ""}
       onSubmit=(
         (~notifyOnSuccess, ~notifyOnFailure, state) => {
@@ -171,7 +167,7 @@ let make = (_) => {
         }
       )>
       ...(
-           ({state, results, update, blur, validating, submitting, submit}) =>
+           ({state, results, validating, submitting, change, blur, submit}) =>
              <form className="form" onSubmit=submit>
                <div className="form-messages-area form-messages-area-lg" />
                <div className="form-content">
@@ -186,7 +182,7 @@ let make = (_) => {
                      id="signup--email"
                      value=state.email
                      disabled=(submitting |> Js.Boolean.to_js_boolean)
-                     onChange=(update(SignupForm.Email))
+                     onChange=(change(SignupForm.Email))
                      onBlur=(blur(SignupForm.Email))
                    />
                    (
@@ -228,7 +224,7 @@ let make = (_) => {
                      id="signup--password"
                      value=state.password
                      disabled=(submitting |> Js.Boolean.to_js_boolean)
-                     onChange=(update(SignupForm.Password))
+                     onChange=(change(SignupForm.Password))
                      onBlur=(blur(SignupForm.Password))
                    />
                    (
@@ -271,7 +267,7 @@ let make = (_) => {
                      id="signup--passwordConfirmation"
                      value=state.passwordConfirmation
                      disabled=(submitting |> Js.Boolean.to_js_boolean)
-                     onChange=(update(SignupForm.PasswordConfirmation))
+                     onChange=(change(SignupForm.PasswordConfirmation))
                      onBlur=(blur(SignupForm.PasswordConfirmation))
                    />
                    (
@@ -316,5 +312,5 @@ let make = (_) => {
                </div>
              </form>
          )
-    </Container>
+    </SignupFormContainer>
 };
