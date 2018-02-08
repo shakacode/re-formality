@@ -40,6 +40,13 @@ let make = (_) => {
   ],
   render: ({state}) =>
     <div className="container">
+      <div className="header">
+        <h1> ("Formality" |> ReasonReact.stringToElement) </h1>
+        <a
+          href="https://github.com/alexfedoseev/re-formality" className="link">
+          ("Github" |> ReasonReact.stringToElement)
+        </a>
+      </div>
       <div className="nav">
         <button
           className=(
