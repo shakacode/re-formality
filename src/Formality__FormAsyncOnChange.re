@@ -137,8 +137,8 @@ module Make = (Form: Config) => {
         lastSelf := None;
         lastValue := None;
         switch (field, value, self) {
-        | (Some(field), Some(value), Some({ReasonReact.reduce})) =>
-          reduce(() => TriggerAsyncValidation(field, value, validateAsync), ())
+        | (Some(field), Some(value), Some({ReasonReact.send})) =>
+          send(TriggerAsyncValidation(field, value, validateAsync))
         | _ => ()
         };
       };
