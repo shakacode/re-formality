@@ -1,5 +1,7 @@
 open Formality__Core;
 
+let defaultDebounceInterval = 700;
+
 module type Config = {
   type field;
   type state;
@@ -8,10 +10,16 @@ module type Config = {
   let strategy: Strategy.t;
   type validators;
   let validators: validators;
+  let debounceInterval: int;
   module Validators: {
-    let find: (field, validators) => asyncValidator(field, state);
+    type t(+'a);
+    let find: (field, t('debouncedValidator)) => 'debouncedValidator;
     let fold:
-      ((field, asyncValidator(field, state), 'a) => 'a, validators, 'a) => 'a;
+      ((field, 'debouncedValidator, 'a) => 'a, t('debouncedValidator), 'a) =>
+      'a;
+    let map:
+      (asyncValidator(field, state) => 'debouncedValidator, validators) =>
+      t('debouncedValidator);
   };
 };
 
@@ -61,6 +69,16 @@ module Make = (Form: Config) => {
   type action =
     | Change((Form.field, value))
     | Blur((Form.field, value))
+    | InvokeDebouncedAsyncValidation(
+        Form.field,
+        value,
+        (
+          ~field: Form.field,
+          ~value: value,
+          ReasonReact.self(state, ReasonReact.noRetainedProps, action)
+        ) =>
+        unit
+      )
     | TriggerAsyncValidation(Form.field, value, validateAsync)
     | ApplyAsyncResult(Form.field, value, result)
     | Submit
@@ -83,12 +101,97 @@ module Make = (Form: Config) => {
     submittedOnce: false,
     emittedFields: FieldsSet.empty
   };
+  let debounce = (~validateAsync, ~wait) => {
+    let lastSelf = ref(None);
+    let lastField = ref(None);
+    let lastValue = ref(None);
+    let lastCallTime = ref(None);
+    let timerId = ref(None);
+    let shouldInvoke = time =>
+      switch lastCallTime^ {
+      | None => true
+      | Some(lastCallTime) =>
+        let timeSinceLastCall = time - lastCallTime;
+        timeSinceLastCall >= wait || timeSinceLastCall < 0;
+      };
+    let remainingWait = time =>
+      switch lastCallTime^ {
+      | None => wait
+      | Some(lastCallTime) =>
+        let timeSinceLastCall = time - lastCallTime;
+        wait - timeSinceLastCall;
+      };
+    let rec timerExpired = () => {
+      let time = Js.Date.now() |> int_of_float;
+      time |> shouldInvoke ?
+        invoke() :
+        timerId :=
+          Some(Js.Global.setTimeout(timerExpired, time |> remainingWait));
+    }
+    and invoke = () => {
+      timerId := None;
+      if (lastValue^ |> Js.Option.isSome) {
+        let field = lastField^;
+        let value = lastValue^;
+        let self = lastSelf^;
+        lastSelf := None;
+        lastValue := None;
+        switch (field, value, self) {
+        | (Some(field), Some(value), Some({ReasonReact.reduce})) =>
+          reduce(() => TriggerAsyncValidation(field, value, validateAsync), ())
+        | _ => ()
+        };
+      };
+    };
+    let debounced = (~field, ~value, self) => {
+      let time = Js.Date.now() |> int_of_float;
+      lastCallTime := Some(time);
+      lastField := Some(field);
+      lastValue := Some(value);
+      lastSelf := Some(self);
+      timerId := Some(Js.Global.setTimeout(timerExpired, wait));
+    };
+    debounced;
+  };
+  type debouncedValidator = {
+    strategy: option(Strategy.t),
+    dependents: option(list(Form.field)),
+    validate: validate(Form.state),
+    validateAsync:
+      option(
+        (
+          ~field: Form.field,
+          ~value: value,
+          ReasonReact.self(state, ReasonReact.noRetainedProps, action)
+        ) =>
+        unit
+      )
+  };
+  let debouncedValidators =
+    Form.validators
+    |> Form.Validators.map(validator =>
+         switch validator.validateAsync {
+         | Some(validateAsync) => {
+             strategy: validator.strategy,
+             dependents: validator.dependents,
+             validate: validator.validate,
+             validateAsync:
+               Some(debounce(~validateAsync, ~wait=Form.debounceInterval))
+           }
+         | None => {
+             strategy: validator.strategy,
+             dependents: validator.dependents,
+             validate: validator.validate,
+             validateAsync: None
+           }
+         }
+       );
   let getValidator = field =>
-    switch (Form.validators |> Form.Validators.find(field)) {
+    switch (debouncedValidators |> Form.Validators.find(field)) {
     | validator => Some(validator)
     | exception Not_found => None
     };
-  let getStrategy = (validator: asyncValidator(Form.field, Form.state)) =>
+  let getStrategy = (validator: debouncedValidator) =>
     validator.strategy |> Js.Option.getWithDefault(Form.strategy);
   let validateDependents = (~data, ~results, ~emittedFields, dependents) =>
     dependents
@@ -172,7 +275,7 @@ module Make = (Form: Config) => {
                            },
                            ({send}) =>
                              send(
-                               TriggerAsyncValidation(
+                               InvokeDebouncedAsyncValidation(
                                  field,
                                  value,
                                  validateAsync
@@ -210,7 +313,7 @@ module Make = (Form: Config) => {
                            },
                            ({send}) =>
                              send(
-                               TriggerAsyncValidation(
+                               InvokeDebouncedAsyncValidation(
                                  field,
                                  value,
                                  validateAsync
@@ -292,7 +395,7 @@ module Make = (Form: Config) => {
                            },
                            ({send}) =>
                              send(
-                               TriggerAsyncValidation(
+                               InvokeDebouncedAsyncValidation(
                                  field,
                                  value,
                                  validateAsync
@@ -327,7 +430,7 @@ module Make = (Form: Config) => {
                            },
                            ({send}) =>
                              send(
-                               TriggerAsyncValidation(
+                               InvokeDebouncedAsyncValidation(
                                  field,
                                  value,
                                  validateAsync
@@ -426,7 +529,7 @@ module Make = (Form: Config) => {
                          },
                          ({send}) =>
                            send(
-                             TriggerAsyncValidation(
+                             InvokeDebouncedAsyncValidation(
                                field,
                                value,
                                validateAsync
@@ -455,6 +558,10 @@ module Make = (Form: Config) => {
             }
           }
         };
+      | InvokeDebouncedAsyncValidation(field, value, validateAsync) =>
+        ReasonReact.SideEffects(
+          (self => self |> validateAsync(~field, ~value))
+        )
       | TriggerAsyncValidation(field, value, validateAsync) =>
         ReasonReact.SideEffects(
           (
@@ -520,7 +627,7 @@ module Make = (Form: Config) => {
                    | (_, None) => raise(NoResultInResultsMapOnSubmit(field'))
                    };
                  },
-                 Form.validators
+                 debouncedValidators
                );
           valid ?
             ReasonReact.UpdateWithSideEffects(

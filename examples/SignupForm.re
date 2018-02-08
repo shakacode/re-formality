@@ -21,6 +21,7 @@ module SignupForm = {
     | (PasswordConfirmation, value) => {...state, passwordConfirmation: value}
     };
   let strategy = Formality.Strategy.OnFirstSuccessOrFirstBlur;
+  let debounceInterval = Formality.debounceInterval;
   module Validators =
     Formality.MakeValidators(
       {
