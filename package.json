@@ -1,6 +1,6 @@
 {
   "name": "re-formality",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Reasonable form validation tool for reason-react",
   "main": "src/Formality.re",
   "author": "Alex Fedoseev <alex.fedoseev@gmail.com>",
