@@ -4,18 +4,20 @@ Reasonable form validation tool for [`reason-react`](https://reasonml.github.io/
 
 ## Why
 
-The main goal of the library is to simplify an implementation of forms validation preserving an excellent UX. It offers set of predefined strategies to handle different kinds of validation flows.
+The main goal of the library is to simplify an implementation of forms validation preserving an excellent UX. It offers set of predefined strategies to handle different kinds of validation flows (incl. async validations).
 
 ## Examples
 
-* Signup form [ [live](https://formality.now.sh) &middot; [source](examples/SignupForm.re) ]
+* Signup form [ [live](https://formality.now.sh/#signup) &middot; [source](examples/SignupForm.re) ]
+* Login form [ [live](https://formality.now.sh/#login) &middot; [source](examples/LoginForm.re) ]
 
 ## 🚧 WIP 🚧
 
 * [x] Base API
 * [x] Validation strategies
 * [x] Dependant fields validation
-* [ ] Async validations
+* [x] Async validations
+* [ ] I18n compat
 * [ ] Convert [test suit](https://github.com/shakacode/react-validation-layer/tree/master/__tests__)
 
 ## Installation
@@ -52,7 +54,6 @@ module MyForm = {
     | (Password, value) => {...state, password: value}
     };
   let strategy = Formality.Strategy.OnFirstSuccessOrFirstBlur;
-  let asyncStrategy = Some(Formality.AsyncStrategy.OnChange);
   module Validators = Formality.MakeValidators({type t = field;});
   type validators = Validators.t(Formality.validator(field, state));
   let validators = Formality.(
@@ -60,72 +61,59 @@ module MyForm = {
     |> Validators.add(Email, {
          strategy: None, /* None means global strategy will be used, you can override it w/ Some(Formality.Strategy.t) */
          dependents: None, /* You can define fields which must be revalidated on change of this field's value */
-         validate: (value, state) => {
-           switch (value |> Js.Option.getWithDefault(state.email)) {
+         validate: (value, _state) => {
+           switch value {
            | "" => Valid(false)
            | _ => Valid(true)
            }
-         },
-         validateAsync: Some((value) =>
-           Js.Promise.(
-             value
-             |> Api.validateEmail
-             |> then_((valid) => valid ? resolve(Valid(true)) : resolve(Valid(false)))
-           )
-         )
+         }
        })
     |> Validators.add(Password, {
          strategy: None, /* None means global strategy will be used, you can override it w/ Some(Formality.Strategy.t) */
          dependents: None, /* You can define fields which must be revalidated on change of this field's value */
-         validate: (value, state) => {
-           switch (value |> Js.Option.getWithDefault(state.password)) {
+         validate: (value, _state) => {
+           switch value {
            | "" => Valid(false)
            | _ => Valid(true)
            }
-         },
-         validateAsync: None
+         }
        })
     );
 };
 
-module Container = Formality.Make(MyForm);
+module FormContainer = Formality.Make(MyForm);
 
 let component = ReasonReact.statelessComponent("MyForm");
 
 let make = (_) => {
   ...component,
   render: (_) =>
-    <Container
+    <FormContainer
       initialState={email: "", password: ""}
       onSubmit=((~notifyOnSuccess, ~notifyOnFailure, state) => {/* Submit form... */})>
       ...(
-           ({state, results, update, blur, validating, submitting, submit}) =>
+           ({state, results, change, blur, submit, submitting}) =>
              <form className="form" onSubmit=submit>
                <input
                  value=state.email
                  disabled=(submitting |> Js.Boolean.to_js_boolean)
-                 onChange=(update(MyForm.Email))
+                 onChange=(change(MyForm.Email))
                  onBlur=(blur(MyForm.Email))
                />
                (
-                 switch (MyForm.Email |> results, MyForm.Email |> validating) {
-                 | (_, true) =>
-                   <div className="form-message">
-                     ("Checking..." |> ReasonReact.stringToElement)
-                   </div>
-
-                 | (Some(Formality.Valid(valid)), false) =>
+                 switch (MyForm.Email |> results) {
+                 | Some(Formality.Valid(valid)) =>
                    <div className=(Cn.make(["form-message", valid ? "success" : "failure"]))>
                      ((valid ? "Nice!" : "Uh oh error") |> ReasonReact.stringToElement)
                    </div>
 
-                 | (None, false) => ReasonReact.nullElement
+                 | None => ReasonReact.nullElement
                  }
                )
                <input
                  value=state.password
                  disabled=(submitting |> Js.Boolean.to_js_boolean)
-                 onChange=(update(MyForm.Password))
+                 onChange=(change(MyForm.Password))
                  onBlur=(blur(MyForm.Password))
                />
                (
@@ -142,6 +130,6 @@ let make = (_) => {
                </button>
              </form>
          )
-    </Container>
+    </FormContainer>
 };
 ```
