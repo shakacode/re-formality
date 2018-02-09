@@ -8,6 +8,7 @@ module SignupForm = {
     password: string,
     passwordConfirmation: string
   };
+  type message = string;
   let get = (field, state) =>
     switch field {
     | Email => state.email
@@ -28,7 +29,8 @@ module SignupForm = {
         type t = field;
       }
     );
-  type validators = Validators.t(Formality.asyncValidator(field, state));
+  type validators =
+    Validators.t(Formality.asyncValidator(field, state, message));
   let validators =
     Formality.(
       Validators.empty
@@ -44,16 +46,15 @@ module SignupForm = {
                  ValidityBag({
                    valid: false,
                    tag: None,
-                   message: Some("Email is required")
+                   message: "Email is required"
                  })
                | _ when ! (emailRegex |> Js.Re.test(value)) =>
                  ValidityBag({
                    valid: false,
                    tag: None,
-                   message: Some("Email is invalid")
+                   message: "Email is invalid"
                  })
-               | _ =>
-                 ValidityBag({valid: true, tag: None, message: Some("Nice!")})
+               | _ => ValidityBag({valid: true, tag: None, message: "Nice!"})
                };
              },
              validateAsync:
@@ -68,14 +69,14 @@ module SignupForm = {
                               ValidityBag({
                                 valid: true,
                                 tag: None,
-                                message: Some("Nice!")
+                                message: "Nice!"
                               })
                             ) :
                             resolve(
                               ValidityBag({
                                 valid: false,
                                 tag: None,
-                                message: Some("Email is already taken")
+                                message: "Email is already taken"
                               })
                             )
                         )
@@ -96,22 +97,21 @@ module SignupForm = {
                  ValidityBag({
                    valid: false,
                    tag: None,
-                   message: Some("Password is required")
+                   message: "Password is required"
                  })
                | _ when String.length(value) < minLength =>
                  ValidityBag({
                    valid: false,
                    tag: None,
-                   message: Some({j| $(minLength)+ characters, please|j})
+                   message: {j| $(minLength)+ characters, please|j}
                  })
                | _ when String.length(value) < strongLength =>
                  ValidityBag({
                    valid: true,
                    tag: Some("weak"),
-                   message: Some("Can be stronger... (still valid tho)")
+                   message: "Can be stronger... (still valid tho)"
                  })
-               | _ =>
-                 ValidityBag({valid: true, tag: None, message: Some("Nice!")})
+               | _ => ValidityBag({valid: true, tag: None, message: "Nice!"})
                };
              },
              validateAsync: None
@@ -128,16 +128,15 @@ module SignupForm = {
                  ValidityBag({
                    valid: false,
                    tag: None,
-                   message: Some("Confirmation is required")
+                   message: "Confirmation is required"
                  })
                | _ when value !== state.password =>
                  ValidityBag({
                    valid: false,
                    tag: None,
-                   message: Some("Password doesn't match")
+                   message: "Password doesn't match"
                  })
-               | _ =>
-                 ValidityBag({valid: true, tag: None, message: Some("Match!")})
+               | _ => ValidityBag({valid: true, tag: None, message: "Match!"})
                },
              validateAsync: None
            }
@@ -204,11 +203,7 @@ let make = (_) => {
                                validity.valid ? "success" : "failure"
                              ])
                            )>
-                           (
-                             validity.message
-                             |> Js.Option.getExn
-                             |> ReasonReact.stringToElement
-                           )
+                           (validity.message |> ReasonReact.stringToElement)
                          </div>
                        | _ => raise(SignupForm.InvalidResult(SignupForm.Email))
                        }
@@ -244,11 +239,7 @@ let make = (_) => {
                                  "failure"
                              ])
                            )>
-                           (
-                             validity.message
-                             |> Js.Option.getExn
-                             |> ReasonReact.stringToElement
-                           )
+                           (validity.message |> ReasonReact.stringToElement)
                          </div>
                        | _ =>
                          raise(SignupForm.InvalidResult(SignupForm.Password))
@@ -282,11 +273,7 @@ let make = (_) => {
                                validity.valid ? "success" : "failure"
                              ])
                            )>
-                           (
-                             validity.message
-                             |> Js.Option.getExn
-                             |> ReasonReact.stringToElement
-                           )
+                           (validity.message |> ReasonReact.stringToElement)
                          </div>
                        | _ =>
                          raise(

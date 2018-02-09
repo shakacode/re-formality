@@ -6,6 +6,7 @@ module LoginForm = {
     email: string,
     password: string
   };
+  type message = string;
   let get = (field, state) =>
     switch field {
     | Email => state.email
@@ -23,7 +24,7 @@ module LoginForm = {
         type t = field;
       }
     );
-  type validators = Validators.t(Formality.validator(field, state));
+  type validators = Validators.t(Formality.validator(field, state, message));
   let validators =
     Formality.(
       Validators.empty
@@ -39,16 +40,15 @@ module LoginForm = {
                  ValidityBag({
                    valid: false,
                    tag: None,
-                   message: Some("Email is required")
+                   message: "Email is required"
                  })
                | _ when ! (emailRegex |> Js.Re.test(value)) =>
                  ValidityBag({
                    valid: false,
                    tag: None,
-                   message: Some("Email is invalid")
+                   message: "Email is invalid"
                  })
-               | _ =>
-                 ValidityBag({valid: true, tag: None, message: Some("Nice!")})
+               | _ => ValidityBag({valid: true, tag: None, message: "Nice!"})
                };
              }
            }
@@ -64,10 +64,9 @@ module LoginForm = {
                  ValidityBag({
                    valid: false,
                    tag: None,
-                   message: Some("Password is required")
+                   message: "Password is required"
                  })
-               | _ =>
-                 ValidityBag({valid: true, tag: None, message: Some("Nice!")})
+               | _ => ValidityBag({valid: true, tag: None, message: "Nice!"})
                }
            }
          )
@@ -125,11 +124,7 @@ let make = (_) => {
                                validity.valid ? "success" : "failure"
                              ])
                            )>
-                           (
-                             validity.message
-                             |> Js.Option.getExn
-                             |> ReasonReact.stringToElement
-                           )
+                           (validity.message |> ReasonReact.stringToElement)
                          </div>
                        | _ => raise(LoginForm.InvalidResult(LoginForm.Email))
                        }
@@ -165,11 +160,7 @@ let make = (_) => {
                                  "failure"
                              ])
                            )>
-                           (
-                             validity.message
-                             |> Js.Option.getExn
-                             |> ReasonReact.stringToElement
-                           )
+                           (validity.message |> ReasonReact.stringToElement)
                          </div>
                        | _ =>
                          raise(LoginForm.InvalidResult(LoginForm.Password))

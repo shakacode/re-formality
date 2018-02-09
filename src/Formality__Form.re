@@ -1,17 +1,28 @@
-open Formality__Core;
+module Validation = Formality__Validation;
+
+module Strategy = Formality__Strategy;
+
+module Utils = Formality__Utils;
 
 module type Config = {
   type field;
   type state;
-  let get: (field, state) => value;
-  let update: ((field, value), state) => state;
+  type message;
+  let get: (field, state) => Validation.value;
+  let update: ((field, Validation.value), state) => state;
   let strategy: Strategy.t;
   type validators;
   let validators: validators;
   module Validators: {
-    let find: (field, validators) => validator(field, state);
+    let find:
+      (field, validators) => Validation.validator(field, state, message);
     let fold:
-      ((field, validator(field, state), 'a) => 'a, validators, 'a) => 'a;
+      (
+        (field, Validation.validator(field, state, message), 'a) => 'a,
+        validators,
+        'a
+      ) =>
+      'a;
   };
 };
 
@@ -20,7 +31,7 @@ module Make = (Form: Config) => {
     Set.Make(
       {
         type t = Form.field;
-        let compare = Formality__Utils.comparator;
+        let compare = Utils.comparator;
       }
     );
   module FieldsSet = {
@@ -34,12 +45,12 @@ module Make = (Form: Config) => {
     Map.Make(
       {
         type t = Form.field;
-        let compare = Formality__Utils.comparator;
+        let compare = Utils.comparator;
       }
     );
   module ResultsMap = {
     type key = ResultsMapOrigin.key;
-    type t = ResultsMapOrigin.t(option(result));
+    type t = ResultsMapOrigin.t(option(Validation.result(Form.message)));
     let empty = ResultsMapOrigin.empty;
     let add = ResultsMapOrigin.add;
     let get = (key: key, map: t) =>
@@ -56,14 +67,14 @@ module Make = (Form: Config) => {
     emittedFields: FieldsSet.t
   };
   type action =
-    | Change((Form.field, value))
-    | Blur((Form.field, value))
+    | Change((Form.field, Validation.value))
+    | Blur((Form.field, Validation.value))
     | Submit
     | Reset
     | HandleSubmissionError;
   type interface = {
     state: Form.state,
-    results: Form.field => option(result),
+    results: Form.field => option(Validation.result(Form.message)),
     submitting: bool,
     change: (Form.field, ReactEventRe.Form.t) => unit,
     blur: (Form.field, ReactEventRe.Focus.t) => unit,
@@ -81,7 +92,8 @@ module Make = (Form: Config) => {
     | validator => Some(validator)
     | exception Not_found => None
     };
-  let getStrategy = (validator: validator(Form.field, Form.state)) =>
+  let getStrategy =
+      (validator: Validation.validator(Form.field, Form.state, Form.message)) =>
     validator.strategy |> Js.Option.getWithDefault(Form.strategy);
   let validateDependents = (~data, ~results, ~emittedFields, dependents) =>
     dependents
@@ -104,10 +116,10 @@ module Make = (Form: Config) => {
        );
   let ifResult = (~valid, ~invalid, result) =>
     switch result {
-    | Valid(true) => result |> valid
-    | ValidityBag(validity) when validity.valid => result |> valid
-    | Valid(false)
-    | ValidityBag(_) => result |> invalid
+    | Validation.Valid(true) => result |> valid
+    | Validation.ValidityBag(validity) when validity.valid => result |> valid
+    | Validation.Valid(false)
+    | Validation.ValidityBag(_) => result |> invalid
     };
   let component = ReasonReact.reducerComponent("FormalityForm");
   let make =
@@ -255,8 +267,11 @@ module Make = (Form: Config) => {
                    results' |> ResultsMap.add(field', Some(result));
                  switch (valid', result) {
                  | (false, _) => (false, results)
-                 | (true, Valid(valid)) => (valid, results)
-                 | (true, ValidityBag(validity)) => (validity.valid, results)
+                 | (true, Validation.Valid(valid)) => (valid, results)
+                 | (true, Validation.ValidityBag(validity)) => (
+                     validity.valid,
+                     results
+                   )
                  };
                },
                Form.validators
@@ -290,9 +305,9 @@ module Make = (Form: Config) => {
         results: field => state.results |> ResultsMap.get(field),
         submitting: state.submitting,
         change: (field, event) =>
-          send(Change((field, event |> Formality__Utils.formEventTargetValue))),
+          send(Change((field, event |> Utils.formEventTargetValue))),
         blur: (field, event) =>
-          send(Blur((field, event |> Formality__Utils.focusEventTargetValue))),
+          send(Blur((field, event |> Utils.focusEventTargetValue))),
         submit: event => {
           if (! ReactEventRe.Form.defaultPrevented(event)) {
             event |> ReactEventRe.Form.preventDefault;
