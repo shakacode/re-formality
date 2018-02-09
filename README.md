@@ -17,7 +17,7 @@ The main goal of the library is to simplify an implementation of forms validatio
 * [x] Validation strategies
 * [x] Dependant fields validation
 * [x] Async validations
-* [ ] I18n compat
+* [x] I18n compat
 * [ ] Convert [test suit](https://github.com/shakacode/react-validation-layer/tree/master/__tests__)
 
 ## Installation
@@ -43,6 +43,7 @@ module MyForm = {
     email: string,
     password: string
   };
+  type message = string;
   let get = (field, state) =>
     switch field {
     | Email => state.email
@@ -55,7 +56,7 @@ module MyForm = {
     };
   let strategy = Formality.Strategy.OnFirstSuccessOrFirstBlur;
   module Validators = Formality.MakeValidators({type t = field;});
-  type validators = Validators.t(Formality.validator(field, state));
+  type validators = Validators.t(Formality.validator(field, state, message));
   let validators = Formality.(
     Validators.empty
     |> Validators.add(Email, {
