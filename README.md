@@ -91,7 +91,7 @@ let make = (_) => {
   render: (_) =>
     <FormContainer
       initialState={email: "", password: ""}
-      onSubmit=((~notifyOnSuccess, ~notifyOnFailure, state) => {/* Submit form... */})>
+      onSubmit=((state, notify) => {/* Submit form and either notify.onSuccess / notify.onFailure */})>
       ...(
            ({state, results, change, blur, submit, submitting}) =>
              <form className="form" onSubmit=submit>

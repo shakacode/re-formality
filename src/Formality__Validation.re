@@ -37,3 +37,8 @@ module MakeValidators = (Config: ValidatorsConfig) =>
       let compare = Formality__Utils.comparator;
     }
   );
+
+type notifiers = {
+  onSuccess: unit => unit,
+  onFailure: unit => unit /* TODO: notifiers.onFailure should accept errors */
+};

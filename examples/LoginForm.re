@@ -84,12 +84,12 @@ let make = (_) => {
     <LoginFormContainer
       initialState={email: "", password: ""}
       onSubmit=(
-        (~notifyOnSuccess, ~notifyOnFailure, state) => {
+        (state, notify) => {
           Js.log("Called with:");
           Js.log(state);
           Js.log("If api returned error this callback should be called:");
-          Js.log(notifyOnFailure);
-          let _ = Js.Global.setTimeout(notifyOnSuccess, 500);
+          Js.log(notify.onFailure);
+          let _ = Js.Global.setTimeout(notify.onSuccess, 500);
           ();
         }
       )>

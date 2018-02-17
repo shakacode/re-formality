@@ -239,13 +239,7 @@ module Make = (Form: Config) => {
   let make =
       (
         ~initialState: Form.state,
-        ~onSubmit:
-           (
-             ~notifyOnSuccess: unit => unit,
-             ~notifyOnFailure: unit => unit,
-             Form.state
-           ) =>
-           unit,
+        ~onSubmit: (Form.state, Validation.notifiers) => unit,
         children
       ) => {
     ...component,
@@ -651,12 +645,14 @@ module Make = (Form: Config) => {
               {...state, results, submitting: true, submittedOnce: true},
               /* TODO: notifyOnFailure should accept errors */
               (
-                ({state, reduce}) =>
-                  state.data
-                  |> onSubmit(
-                       ~notifyOnSuccess=reduce(() => Reset),
-                       ~notifyOnFailure=reduce(() => HandleSubmissionError)
-                     )
+                ({state, send}) =>
+                  onSubmit(
+                    state.data,
+                    {
+                      onSuccess: () => send(Reset),
+                      onFailure: () => send(HandleSubmissionError)
+                    }
+                  )
               )
             ) :
             ReasonReact.Update({
