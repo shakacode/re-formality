@@ -1,6 +1,6 @@
 {
   "name": "re-formality",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "Reasonable form validation tool for reason-react",
   "main": "src/Formality.re",
   "author": "Alex Fedoseev <alex.fedoseev@gmail.com>",
@@ -11,12 +11,14 @@
     "build": "bsb -clean-world -make-world && webpack --optimize-minimize",
     "clean": "bsb -clean-world && rm -rf build examples/build",
     "preversion": "yarn run clean",
-    "predeploy":
-      "yarn run clean && mkdir build && yarn run build && cp -R examples/{index.html,index.css,build} build/",
+    "predeploy": "yarn run clean && mkdir build && yarn run build && cp -R examples/{index.html,index.css,build} build/",
     "deploy": "now deploy build --public",
     "test": "exit 0"
   },
-  "files": ["src", "bsconfig.json"],
+  "files": [
+    "src",
+    "bsconfig.json"
+  ],
   "keywords": [
     "react",
     "reason",
