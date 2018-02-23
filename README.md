@@ -2,23 +2,16 @@
 
 Reasonable form validation tool for [`reason-react`](https://reasonml.github.io/reason-react/).
 
-## Why
-
-The main goal of the library is to simplify an implementation of forms validation preserving an excellent UX. It offers set of predefined strategies to handle different kinds of validation flows (incl. async validations).
+## Features
+* Validation strategies
+* Dependant fields validation
+* Async validations (on blur / debounced on change)
+* I18n compat
 
 ## Examples
 
 * Signup form [ [live](https://formality.now.sh/#signup) &middot; [source](examples/SignupForm.re) ]
 * Login form [ [live](https://formality.now.sh/#login) &middot; [source](examples/LoginForm.re) ]
-
-## 🚧 WIP 🚧
-
-* [x] Base API
-* [x] Validation strategies
-* [x] Dependant fields validation
-* [x] Async validations
-* [x] I18n compat
-* [ ] Convert [test suit](https://github.com/shakacode/react-validation-layer/tree/master/__tests__)
 
 ## Installation
 
@@ -28,11 +21,11 @@ yarn add re-formality
 npm install --save re-formality
 ```
 
+## 🚧 Docs are WIP 🚧
+
 ## Usage
 
-Docs are WIP. Here's the quick example. See [`examples`](examples/) for real-world cases.
-
-> Also, you can read more on `strategies` [here](https://github.com/shakacode/react-validation-layer#propsstrategy)
+Here's the quick example. See [`examples`](examples/) for real-world cases.
 
 ```reason
 module MyForm = {
@@ -84,53 +77,90 @@ module MyForm = {
 
 module FormContainer = Formality.Make(MyForm);
 
-let component = ReasonReact.statelessComponent("MyForm");
+let component = "MyForm" |> ReasonReact.statelessComponent;
 
 let make = (_) => {
   ...component,
   render: (_) =>
     <FormContainer
       initialState={email: "", password: ""}
-      onSubmit=((state, notify) => {/* Submit form and either notify.onSuccess / notify.onFailure */})>
+      onSubmit=((state, notify) => {
+        /* Submit form and either notify.onSuccess / notify.onFailure */
+      })
+    >
       ...(
-           ({state, results, change, blur, submit, submitting}) =>
-             <form className="form" onSubmit=submit>
-               <input
-                 value=state.email
-                 disabled=(submitting |> Js.Boolean.to_js_boolean)
-                 onChange=(change(MyForm.Email))
-                 onBlur=(blur(MyForm.Email))
-               />
-               (
-                 switch (MyForm.Email |> results) {
-                 | Some(Formality.Valid(valid)) =>
-                   <div className=(Cn.make(["form-message", valid ? "success" : "failure"]))>
-                     ((valid ? "Nice!" : "Uh oh error") |> ReasonReact.stringToElement)
-                   </div>
-
-                 | None => ReasonReact.nullElement
-                 }
-               )
-               <input
-                 value=state.password
-                 disabled=(submitting |> Js.Boolean.to_js_boolean)
-                 onChange=(change(MyForm.Password))
-                 onBlur=(blur(MyForm.Password))
-               />
-               (
-                 switch (MyForm.Password |> results) {
-                 | Some(Formality.Valid(valid)) =>
-                   <div className=(Cn.make(["form-message", valid ? "success" : "failure"]))>
-                     ((valid ? "Nice!" : "Uh oh error") |> ReasonReact.stringToElement)
-                   </div>
-                 | None => ReasonReact.nullElement
-                 }
-               )
-               <button disabled=(submitting |> Js.Boolean.to_js_boolean)>
-                 ((submitting ? "Submitting..." : "Submit") |> ReasonReact.stringToElement)
-               </button>
-             </form>
-         )
+            form =>
+              <form className="form" onSubmit=form.submit>
+                <input
+                  value=form.state.email
+                  disabled=(form.submitting |> Js.Boolean.to_js_boolean)
+                  onChange=(MyForm.Email |> from.change)
+                  onBlur=(MyForm.Email |> form.blur)
+                />
+                (
+                  switch (MyForm.Email |> form.results) {
+                  | Some(Formality.Valid(valid)) =>
+                    <div className=(Cn.make(["form-message", valid ? "success" : "failure"]))>
+                      ((valid ? "Nice!" : "Uh oh error") |> ReasonReact.stringToElement)
+                    </div>
+                  | None => ReasonReact.nullElement
+                  }
+                )
+                <input
+                  value=form.state.password
+                  disabled=(form.submitting |> Js.Boolean.to_js_boolean)
+                  onChange=(MyForm.Password |> form.change)
+                  onBlur=(MyForm.Password |> form.blur)
+                />
+                (
+                  switch (MyForm.Password |> form.results) {
+                  | Some(Formality.Valid(valid)) =>
+                    <div className=(Cn.make(["form-message", valid ? "success" : "failure"]))>
+                      ((valid ? "Nice!" : "Uh oh error") |> ReasonReact.stringToElement)
+                    </div>
+                  | None => ReasonReact.nullElement
+                  }
+                )
+                <button disabled=(form.submitting |> Js.Boolean.to_js_boolean)>
+                  ((form.submitting ? "Submitting..." : "Submit") |> ReasonReact.stringToElement)
+                </button>
+              </form>
+          )
     </FormContainer>
 };
 ```
+
+## API
+
+...
+
+### Strategies
+In most cases validation feedback should be provided as soon as possible, but not too soon. The question comes down to when to start providing feedback. It really depends on context. Using strategies below, the form won't provide any feedback until the specific moment, e.g. the first blur from the field or the first successful validation. All you have to do is to pick the most suitable one for your context. To understand the behavior of each strategy, add the following prefix to its name: "Start providing feedback on..."
+
+```reason
+module Strategy = {
+  type t =
+    | OnFirstBlur
+    | OnFirstChange
+    | OnFirstSuccess
+    | OnFirstSuccessOrFirstBlur
+    | OnSubmit;
+};
+```
+
+#### `OnFirstBlur`
+Results are emitted on the first blur. After first results are emitted, feedback is provided on every change in this field.
+
+#### `OnFirstChange`
+Results are emitted as user types in the field.
+
+#### `OnFirstSuccess`
+Results are emitted on first successful validation. After first results are emitted, feedback is provided on every change in this field.
+
+#### `OnFirstSuccessOrFirstBlur` ✨
+Results are emitted immediately on successful validation or on the first blur. After first results are emitted, feedback is provided on every change in this field.
+
+#### `OnSubmit`
+Results are emitted only after first submission attempt. After this, results for each field are emitted on every change until the form is reset or remounted.
+
+...
