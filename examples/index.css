@@ -111,6 +111,10 @@ h2 {
   margin-top: 20px;
 }
 
+.form-row.form-row-footer {
+  margin-top: 5px;
+}
+
 label {
   display: inline-flex;
   justify-content: flex-end;

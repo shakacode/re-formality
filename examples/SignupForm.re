@@ -142,13 +142,13 @@ module SignupForm = {
            }
          )
     );
-  exception InvalidResult(field);
+  /* exception InvalidResult(field); */
 };
 
 module SignupFormContainer =
   Formality.MakeWithAsyncValidationsOnChange(SignupForm);
 
-let component = ReasonReact.statelessComponent("SignupForm");
+let component = "SignupForm" |> ReasonReact.statelessComponent;
 
 let make = (_) => {
   ...component,
@@ -166,8 +166,8 @@ let make = (_) => {
         }
       )>
       ...(
-           ({state, results, validating, submitting, change, blur, submit}) =>
-             <form className="form" onSubmit=submit>
+           form =>
+             <form className="form" onSubmit=form.submit>
                <div className="form-messages-area form-messages-area-lg" />
                <div className="form-content">
                  <h2 className="push-lg">
@@ -179,15 +179,15 @@ let make = (_) => {
                    </label>
                    <input
                      id="signup--email"
-                     value=state.email
-                     disabled=(submitting |> Js.Boolean.to_js_boolean)
-                     onChange=(change(SignupForm.Email))
-                     onBlur=(blur(SignupForm.Email))
+                     value=form.state.email
+                     disabled=(form.submitting |> Js.Boolean.to_js_boolean)
+                     onChange=(SignupForm.Email |> form.change)
+                     onBlur=(SignupForm.Email |> form.blur)
                    />
                    (
                      switch (
-                       SignupForm.Email |> results,
-                       SignupForm.Email |> validating
+                       SignupForm.Email |> form.results,
+                       SignupForm.Email |> form.validating
                      ) {
                      | (_, true) =>
                        <div className="form-message">
@@ -195,21 +195,29 @@ let make = (_) => {
                        </div>
                      | (Some(result), false) =>
                        switch result {
-                       | Formality.ValidityBag(validity) =>
+                       | Formality.ValidityBag(bag) =>
                          <div
                            className=(
                              Cn.make([
                                "form-message",
-                               validity.valid ? "success" : "failure"
+                               bag.valid ? "success" : "failure"
                              ])
                            )>
-                           (validity.message |> ReasonReact.stringToElement)
+                           (bag.message |> ReasonReact.stringToElement)
                          </div>
-                       | _ => raise(SignupForm.InvalidResult(SignupForm.Email))
+                       | _ => raise(Formality.ImpossibleResult)
                        }
                      | (None, false) => ReasonReact.nullElement
                      }
                    )
+                 </div>
+                 <div className="form-row form-row-footer">
+                   <div className="note push-lg">
+                     (
+                       "Hint: try `test@taken.email`"
+                       |> ReasonReact.stringToElement
+                     )
+                   </div>
                  </div>
                  <div className="form-row">
                    <label htmlFor="signup--password" className="label-lg">
@@ -217,32 +225,31 @@ let make = (_) => {
                    </label>
                    <input
                      id="signup--password"
-                     value=state.password
-                     disabled=(submitting |> Js.Boolean.to_js_boolean)
-                     onChange=(change(SignupForm.Password))
-                     onBlur=(blur(SignupForm.Password))
+                     value=form.state.password
+                     disabled=(form.submitting |> Js.Boolean.to_js_boolean)
+                     onChange=(SignupForm.Password |> form.change)
+                     onBlur=(SignupForm.Password |> form.blur)
                    />
                    (
-                     switch (SignupForm.Password |> results) {
+                     switch (SignupForm.Password |> form.results) {
                      | Some(result) =>
                        switch result {
-                       | Formality.ValidityBag(validity) =>
+                       | Formality.ValidityBag(bag) =>
                          <div
                            className=(
                              Cn.make([
                                "form-message",
-                               validity.valid ?
-                                 switch validity.tag {
+                               bag.valid ?
+                                 switch bag.tag {
                                  | Some(tag) => tag
                                  | None => "success"
                                  } :
                                  "failure"
                              ])
                            )>
-                           (validity.message |> ReasonReact.stringToElement)
+                           (bag.message |> ReasonReact.stringToElement)
                          </div>
-                       | _ =>
-                         raise(SignupForm.InvalidResult(SignupForm.Password))
+                       | _ => raise(Formality.ImpossibleResult)
                        }
                      | None => ReasonReact.nullElement
                      }
@@ -256,31 +263,26 @@ let make = (_) => {
                    </label>
                    <input
                      id="signup--passwordConfirmation"
-                     value=state.passwordConfirmation
-                     disabled=(submitting |> Js.Boolean.to_js_boolean)
-                     onChange=(change(SignupForm.PasswordConfirmation))
-                     onBlur=(blur(SignupForm.PasswordConfirmation))
+                     value=form.state.passwordConfirmation
+                     disabled=(form.submitting |> Js.Boolean.to_js_boolean)
+                     onChange=(SignupForm.PasswordConfirmation |> form.change)
+                     onBlur=(SignupForm.PasswordConfirmation |> form.blur)
                    />
                    (
-                     switch (SignupForm.PasswordConfirmation |> results) {
+                     switch (SignupForm.PasswordConfirmation |> form.results) {
                      | Some(result) =>
                        switch result {
-                       | Formality.ValidityBag(validity) =>
+                       | Formality.ValidityBag(bag) =>
                          <div
                            className=(
                              Cn.make([
                                "form-message",
-                               validity.valid ? "success" : "failure"
+                               bag.valid ? "success" : "failure"
                              ])
                            )>
-                           (validity.message |> ReasonReact.stringToElement)
+                           (bag.message |> ReasonReact.stringToElement)
                          </div>
-                       | _ =>
-                         raise(
-                           SignupForm.InvalidResult(
-                             SignupForm.PasswordConfirmation
-                           )
-                         )
+                       | _ => raise(Formality.ImpossibleResult)
                        }
                      | None => ReasonReact.nullElement
                      }
@@ -289,9 +291,9 @@ let make = (_) => {
                  <div className="form-row">
                    <button
                      className="push-lg"
-                     disabled=(submitting |> Js.Boolean.to_js_boolean)>
+                     disabled=(form.submitting |> Js.Boolean.to_js_boolean)>
                      (
-                       (submitting ? "Submitting..." : "Submit")
+                       (form.submitting ? "Submitting..." : "Submit")
                        |> ReasonReact.stringToElement
                      )
                    </button>

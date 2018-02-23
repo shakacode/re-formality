@@ -71,12 +71,11 @@ module LoginForm = {
            }
          )
     );
-  exception InvalidResult(field);
 };
 
 module LoginFormContainer = Formality.Make(LoginForm);
 
-let component = ReasonReact.statelessComponent("LoginForm");
+let component = "LoginForm" |> ReasonReact.statelessComponent;
 
 let make = (_) => {
   ...component,
@@ -94,8 +93,8 @@ let make = (_) => {
         }
       )>
       ...(
-           ({state, results, change, blur, submit, submitting}) =>
-             <form className="form" onSubmit=submit>
+           form =>
+             <form className="form" onSubmit=form.submit>
                <div className="form-messages-area form-messages-area-lg" />
                <div className="form-content">
                  <h2 className="push-lg">
@@ -107,29 +106,35 @@ let make = (_) => {
                    </label>
                    <input
                      id="login--email"
-                     value=state.email
-                     disabled=(submitting |> Js.Boolean.to_js_boolean)
-                     onChange=(change(LoginForm.Email))
-                     onBlur=(blur(LoginForm.Email))
+                     value=form.state.email
+                     disabled=(form.submitting |> Js.Boolean.to_js_boolean)
+                     onChange=(LoginForm.Email |> form.change)
+                     onBlur=(LoginForm.Email |> form.blur)
                    />
                    (
-                     switch (LoginForm.Email |> results) {
-                     | Some(result) =>
-                       switch result {
-                       | Formality.ValidityBag(validity) =>
-                         <div
-                           className=(
-                             Cn.make([
-                               "form-message",
-                               validity.valid ? "success" : "failure"
-                             ])
-                           )>
-                           (validity.message |> ReasonReact.stringToElement)
-                         </div>
-                       | _ => raise(LoginForm.InvalidResult(LoginForm.Email))
-                       }
-                     | None => ReasonReact.nullElement
-                     }
+                     LoginForm.Email
+                     |> form.results
+                     |> Formality.ifResult(
+                          ~none=() => ReasonReact.nullElement,
+                          ~valid=() => raise(Formality.ImpossibleResult),
+                          ~invalid=() => raise(Formality.ImpossibleResult),
+                          ~validWithBag=
+                            bag =>
+                              <div
+                                className=(
+                                  Cn.make(["form-message", "success"])
+                                )>
+                                (bag.message |> ReasonReact.stringToElement)
+                              </div>,
+                          ~invalidWithBag=
+                            bag =>
+                              <div
+                                className=(
+                                  Cn.make(["form-message", "failure"])
+                                )>
+                                (bag.message |> ReasonReact.stringToElement)
+                              </div>
+                        )
                    )
                  </div>
                  <div className="form-row">
@@ -138,43 +143,49 @@ let make = (_) => {
                    </label>
                    <input
                      id="login--password"
-                     value=state.password
-                     disabled=(submitting |> Js.Boolean.to_js_boolean)
-                     onChange=(change(LoginForm.Password))
-                     onBlur=(blur(LoginForm.Password))
+                     value=form.state.password
+                     disabled=(form.submitting |> Js.Boolean.to_js_boolean)
+                     onChange=(LoginForm.Password |> form.change)
+                     onBlur=(LoginForm.Password |> form.blur)
                    />
                    (
-                     switch (LoginForm.Password |> results) {
-                     | Some(result) =>
-                       switch result {
-                       | Formality.ValidityBag(validity) =>
-                         <div
-                           className=(
-                             Cn.make([
-                               "form-message",
-                               validity.valid ?
-                                 switch validity.tag {
-                                 | Some(tag) => tag
-                                 | None => "success"
-                                 } :
-                                 "failure"
-                             ])
-                           )>
-                           (validity.message |> ReasonReact.stringToElement)
-                         </div>
-                       | _ =>
-                         raise(LoginForm.InvalidResult(LoginForm.Password))
-                       }
-                     | None => ReasonReact.nullElement
-                     }
+                     LoginForm.Password
+                     |> form.results
+                     |> Formality.ifResult(
+                          ~none=() => ReasonReact.nullElement,
+                          ~valid=() => raise(Formality.ImpossibleResult),
+                          ~invalid=() => raise(Formality.ImpossibleResult),
+                          ~validWithBag=
+                            bag =>
+                              <div
+                                className=(
+                                  Cn.make([
+                                    "form-message",
+                                    switch bag.tag {
+                                    | Some(tag) => tag
+                                    | None => "success"
+                                    }
+                                  ])
+                                )>
+                                (bag.message |> ReasonReact.stringToElement)
+                              </div>,
+                          ~invalidWithBag=
+                            bag =>
+                              <div
+                                className=(
+                                  Cn.make(["form-message", "failure"])
+                                )>
+                                (bag.message |> ReasonReact.stringToElement)
+                              </div>
+                        )
                    )
                  </div>
                  <div className="form-row">
                    <button
                      className="push-lg"
-                     disabled=(submitting |> Js.Boolean.to_js_boolean)>
+                     disabled=(form.submitting |> Js.Boolean.to_js_boolean)>
                      (
-                       (submitting ? "Submitting..." : "Submit")
+                       (form.submitting ? "Submitting..." : "Submit")
                        |> ReasonReact.stringToElement
                      )
                    </button>
