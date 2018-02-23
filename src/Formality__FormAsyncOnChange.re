@@ -228,13 +228,6 @@ module Make = (Form: Config) => {
          },
          (results, emittedFields)
        );
-  let ifResult = (~valid, ~invalid, result) =>
-    switch result {
-    | Validation.Valid(true) => result |> valid
-    | Validation.ValidityBag(validity) when validity.valid => result |> valid
-    | Validation.Valid(false)
-    | Validation.ValidityBag(_) => result |> invalid
-    };
   let component = ReasonReact.reducerComponent("FormalityForm");
   let make =
       (
@@ -270,7 +263,7 @@ module Make = (Form: Config) => {
                      );
                 data
                 |> validator.validate(value)
-                |> ifResult(
+                |> Validation.ifResult(
                      ~valid=
                        (_) =>
                          ReasonReact.UpdateWithSideEffects(
@@ -307,7 +300,7 @@ module Make = (Form: Config) => {
               | None =>
                 data
                 |> validator.validate(value)
-                |> ifResult(
+                |> Validation.ifResult(
                      ~valid=
                        (_) =>
                          ReasonReact.UpdateWithSideEffects(
@@ -390,7 +383,7 @@ module Make = (Form: Config) => {
                      );
                 data
                 |> validator.validate(value)
-                |> ifResult(
+                |> Validation.ifResult(
                      ~valid=
                        (_) =>
                          ReasonReact.UpdateWithSideEffects(
@@ -424,7 +417,7 @@ module Make = (Form: Config) => {
               | None =>
                 data
                 |> validator.validate(value)
-                |> ifResult(
+                |> Validation.ifResult(
                      ~valid=
                        (_) =>
                          ReasonReact.UpdateWithSideEffects(
@@ -453,7 +446,7 @@ module Make = (Form: Config) => {
             | None =>
               data
               |> validator.validate(value)
-              |> ifResult(
+              |> Validation.ifResult(
                    ~valid=
                      result =>
                        switch validator.dependents {
@@ -525,7 +518,7 @@ module Make = (Form: Config) => {
             | Some(validateAsync) =>
               state.data
               |> validator.validate(value)
-              |> ifResult(
+              |> Validation.ifResult(
                    ~valid=
                      (_) =>
                        ReasonReact.UpdateWithSideEffects(
@@ -608,8 +601,7 @@ module Make = (Form: Config) => {
                    let currentResultInvalid =
                      switch (results' |> ResultsMap.get(field')) {
                      | Some(Validation.Valid(false)) => true
-                     | Some(Validation.ValidityBag(validity))
-                         when ! validity.valid =>
+                     | Some(Validation.ValidityBag(bag)) when ! bag.valid =>
                        true
                      | _ => false
                      };
@@ -623,16 +615,16 @@ module Make = (Form: Config) => {
                        validator'.validateAsync
                      ) {
                      | (true, Validation.Valid(true), Some(_)) => results'
-                     | (true, Validation.ValidityBag(validity), Some(_))
-                         when validity.valid => results'
+                     | (true, Validation.ValidityBag(bag), Some(_))
+                         when bag.valid => results'
                      | (_, _, _) =>
                        results' |> ResultsMap.add(field', Some(nextResult))
                      };
                    switch (valid', results |> ResultsMap.get(field')) {
                    | (false, _) => (false, results)
                    | (true, Some(Validation.Valid(valid))) => (valid, results)
-                   | (true, Some(Validation.ValidityBag(validity))) => (
-                       validity.valid,
+                   | (true, Some(Validation.ValidityBag(bag))) => (
+                       bag.valid,
                        results
                      )
                    | (_, None) => raise(NoResultInResultsMapOnSubmit(field'))

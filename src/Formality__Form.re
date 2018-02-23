@@ -114,13 +114,6 @@ module Make = (Form: Config) => {
          },
          (results, emittedFields)
        );
-  let ifResult = (~valid, ~invalid, result) =>
-    switch result {
-    | Validation.Valid(true) => result |> valid
-    | Validation.ValidityBag(validity) when validity.valid => result |> valid
-    | Validation.Valid(false)
-    | Validation.ValidityBag(_) => result |> invalid
-    };
   let component = ReasonReact.reducerComponent("FormalityForm");
   let make =
       (
@@ -175,7 +168,7 @@ module Make = (Form: Config) => {
             ) =>
             data
             |> validator.validate(value)
-            |> ifResult(
+            |> Validation.ifResult(
                  ~valid=
                    result =>
                      switch validator.dependents {
@@ -262,10 +255,7 @@ module Make = (Form: Config) => {
                  switch (valid', result) {
                  | (false, _) => (false, results)
                  | (true, Validation.Valid(valid)) => (valid, results)
-                 | (true, Validation.ValidityBag(validity)) => (
-                     validity.valid,
-                     results
-                   )
+                 | (true, Validation.ValidityBag(bag)) => (bag.valid, results)
                  };
                },
                Form.validators

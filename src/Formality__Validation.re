@@ -42,3 +42,11 @@ type notifiers = {
   onSuccess: unit => unit,
   onFailure: unit => unit /* TODO: notifiers.onFailure should accept errors */
 };
+
+let ifResult = (~valid, ~invalid, result) =>
+  switch result {
+  | Valid(true) => result |> valid
+  | ValidityBag(bag) when bag.valid => result |> valid
+  | Valid(false)
+  | ValidityBag(_) => result |> invalid
+  };
