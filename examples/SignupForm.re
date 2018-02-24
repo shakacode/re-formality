@@ -21,7 +21,6 @@ module SignupForm = {
     | (Password, value) => {...state, password: value}
     | (PasswordConfirmation, value) => {...state, passwordConfirmation: value}
     };
-  let strategy = Formality.Strategy.OnFirstSuccessOrFirstBlur;
   let debounceInterval = Formality.debounceInterval;
   module Validators =
     Formality.MakeValidators(
@@ -37,7 +36,7 @@ module SignupForm = {
       |> Validators.add(
            Email,
            {
-             strategy: None, /* None means global will be used */
+             strategy: Strategy.OnFirstSuccessOrFirstBlur,
              dependents: None,
              validate: (value, _) => {
                let emailRegex = [%bs.re {|/.*@.*\..+/|}];
@@ -87,7 +86,7 @@ module SignupForm = {
       |> Validators.add(
            Password,
            {
-             strategy: None, /* None means global will be used */
+             strategy: Strategy.OnFirstSuccessOrFirstBlur,
              dependents: Some([PasswordConfirmation]),
              validate: (value, _) => {
                let minLength = 4;
@@ -120,7 +119,7 @@ module SignupForm = {
       |> Validators.add(
            PasswordConfirmation,
            {
-             strategy: None,
+             strategy: Strategy.OnFirstSuccessOrFirstBlur,
              dependents: None,
              validate: (value, state) =>
                switch value {

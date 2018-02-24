@@ -17,7 +17,6 @@ module LoginForm = {
     | (Email, value) => {...state, email: value}
     | (Password, value) => {...state, password: value}
     };
-  let strategy = Formality.Strategy.OnFirstSuccessOrFirstBlur;
   module Validators =
     Formality.MakeValidators(
       {
@@ -31,7 +30,7 @@ module LoginForm = {
       |> Validators.add(
            Email,
            {
-             strategy: None, /* None means global will be used */
+             strategy: Strategy.OnFirstSuccessOrFirstBlur,
              dependents: None,
              validate: (value, _) => {
                let emailRegex = [%bs.re {|/.*@.*\..+/|}];
@@ -56,7 +55,7 @@ module LoginForm = {
       |> Validators.add(
            Password,
            {
-             strategy: Some(Strategy.OnFirstBlur),
+             strategy: Strategy.OnFirstBlur,
              dependents: None,
              validate: (value, _) =>
                switch value {
