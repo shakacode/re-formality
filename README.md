@@ -1,5 +1,10 @@
 # Formality
 
+[![npm version](https://img.shields.io/npm/v/re-formality.svg?style=flat-square)](https://www.npmjs.com/package/re-formality)
+[![build status](https://img.shields.io/travis/alexfedoseev/re-formality/master.svg?style=flat-square)](https://travis-ci.org/alexfedoseev/re-formality)
+[![dependencies status](https://img.shields.io/gemnasium/alexfedoseev/re-formality.svg?style=flat-square)](https://gemnasium.com/alexfedoseev/re-formality)
+[![license](https://img.shields.io/npm/l/re-formality.svg?style=flat-square)](https://www.npmjs.com/package/re-formality)
+
 Reasonable form validation tool for [`reason-react`](https://reasonml.github.io/reason-react/).
 
 ## Features
