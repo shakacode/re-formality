@@ -1,0 +1,11 @@
+language: node_js
+
+node_js:
+  - "8"
+
+script:
+  - yarn run test
+  - yarn run build
+
+cache:
+  yarn: true
