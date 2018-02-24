@@ -156,10 +156,11 @@ let make = (_) => {
       initialState={email: "", password: "", passwordConfirmation: ""}
       onSubmit=(
         (state, notify) => {
-          Js.log("Called with:");
-          Js.log(state);
-          Js.log("If api returned error this callback should be called:");
-          Js.log(notify.onFailure);
+          Js.log2("Called with:", state);
+          Js.log2(
+            "If api returned error this callback should be called:",
+            notify.onFailure
+          );
           let _ = Js.Global.setTimeout(notify.onSuccess, 500);
           ();
         }
