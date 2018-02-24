@@ -12,7 +12,6 @@ module type Config = {
   type message;
   let get: (field, state) => Validation.value;
   let update: ((field, Validation.value), state) => state;
-  let strategy: Strategy.t;
   type validators;
   let validators: validators;
   let debounceInterval: int;
@@ -170,7 +169,7 @@ module Make = (Form: Config) => {
     debounced;
   };
   type debouncedValidator = {
-    strategy: option(Strategy.t),
+    strategy: Strategy.t,
     dependents: option(list(Form.field)),
     validate: Validation.validate(Form.state, Form.message),
     validateAsync:
@@ -207,8 +206,6 @@ module Make = (Form: Config) => {
     | validator => Some(validator)
     | exception Not_found => None
     };
-  let getStrategy = (validator: debouncedValidator) =>
-    validator.strategy |> Js.Option.getWithDefault(Form.strategy);
   let validateDependents = (~data, ~results, ~emittedFields, dependents) =>
     dependents
     |> List.fold_left(
@@ -244,9 +241,8 @@ module Make = (Form: Config) => {
         switch (field |> getValidator) {
         | None => ReasonReact.Update({...state, data})
         | Some(validator) =>
-          let strategy = validator |> getStrategy;
           let emitted = state.emittedFields |> FieldsSet.mem(field);
-          switch (strategy, emitted, state.submittedOnce) {
+          switch (validator.strategy, emitted, state.submittedOnce) {
           | (_, true, _)
           | (_, _, true)
           | (Strategy.OnFirstChange, false, false) =>
@@ -508,7 +504,7 @@ module Make = (Form: Config) => {
         | (None, _)
         | (Some(_), true) => ReasonReact.NoUpdate
         | (Some(validator), false) =>
-          switch (validator |> getStrategy) {
+          switch validator.strategy {
           | Strategy.OnFirstChange
           | Strategy.OnFirstSuccess
           | Strategy.OnSubmit => ReasonReact.NoUpdate

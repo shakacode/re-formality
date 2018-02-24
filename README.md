@@ -47,13 +47,12 @@ module MyForm = {
     | (Email, value) => {...state, email: value}
     | (Password, value) => {...state, password: value}
     };
-  let strategy = Formality.Strategy.OnFirstSuccessOrFirstBlur;
   module Validators = Formality.MakeValidators({type t = field;});
   type validators = Validators.t(Formality.validator(field, state, message));
   let validators = Formality.(
     Validators.empty
     |> Validators.add(Email, {
-         strategy: None, /* None means global strategy will be used, you can override it w/ Some(Formality.Strategy.t) */
+         strategy: Strategy.OnFirstSuccessOrFirstBlur,
          dependents: None, /* You can define fields which must be revalidated on change of this field's value */
          validate: (value, _state) => {
            switch value {
@@ -63,7 +62,7 @@ module MyForm = {
          }
        })
     |> Validators.add(Password, {
-         strategy: None, /* None means global strategy will be used, you can override it w/ Some(Formality.Strategy.t) */
+         strategy: Strategy.OnFirstSuccessOrFirstBlur,
          dependents: None, /* You can define fields which must be revalidated on change of this field's value */
          validate: (value, _state) => {
            switch value {

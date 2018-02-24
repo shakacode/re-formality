@@ -16,13 +16,13 @@ type validate('state, 'message) = (value, 'state) => result('message);
 type validateAsync('message) = value => Js.Promise.t(result('message));
 
 type validator('field, 'state, 'message) = {
-  strategy: option(Formality__Strategy.t),
+  strategy: Formality__Strategy.t,
   dependents: option(list('field)),
   validate: validate('state, 'message)
 };
 
 type asyncValidator('field, 'state, 'message) = {
-  strategy: option(Formality__Strategy.t),
+  strategy: Formality__Strategy.t,
   dependents: option(list('field)),
   validate: validate('state, 'message),
   validateAsync: option(validateAsync('message))
