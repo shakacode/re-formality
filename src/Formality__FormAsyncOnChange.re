@@ -104,9 +104,9 @@ module Make = (Form: Config) => {
     results: Form.field => option(Validation.result(Form.message)),
     validating: Form.field => bool,
     submitting: bool,
-    change: (Form.field, ReactEventRe.Form.t) => unit,
-    blur: (Form.field, ReactEventRe.Focus.t) => unit,
-    submit: ReactEventRe.Form.t => unit
+    change: (Form.field, Validation.value) => unit,
+    blur: (Form.field, Validation.value) => unit,
+    submit: unit => unit
   };
   let getInitialState = data => {
     data,
@@ -660,16 +660,9 @@ module Make = (Form: Config) => {
         results: field => state.results |> ResultsMap.get(field),
         validating: field => state.validating |> FieldsSet.mem(field),
         submitting: state.submitting,
-        change: (field, event) =>
-          send(Change((field, event |> Utils.formEventTargetValue))),
-        blur: (field, event) =>
-          send(Blur((field, event |> Utils.focusEventTargetValue))),
-        submit: event => {
-          if (! ReactEventRe.Form.defaultPrevented(event)) {
-            event |> ReactEventRe.Form.preventDefault;
-          };
-          send(Submit);
-        }
+        change: (field, value) => Change((field, value)) |> send,
+        blur: (field, value) => Blur((field, value)) |> send,
+        submit: (_) => Submit |> send
       })
   };
 };
