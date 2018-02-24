@@ -166,7 +166,9 @@ let make = (_) => {
       )>
       ...(
            form =>
-             <form className="form" onSubmit=form.submit>
+             <form
+               className="form"
+               onSubmit=(form.submit |> Formality.Dom.preventDefault)>
                <div className="form-messages-area form-messages-area-lg" />
                <div className="form-content">
                  <h2 className="push-lg">
@@ -180,8 +182,16 @@ let make = (_) => {
                      id="signup--email"
                      value=form.state.email
                      disabled=(form.submitting |> Js.Boolean.to_js_boolean)
-                     onChange=(SignupForm.Email |> form.change)
-                     onBlur=(SignupForm.Email |> form.blur)
+                     onChange=(
+                       SignupForm.Email
+                       |> form.change
+                       |> Formality.Dom.valueOnChange
+                     )
+                     onBlur=(
+                       SignupForm.Email
+                       |> form.blur
+                       |> Formality.Dom.valueOnBlur
+                     )
                    />
                    (
                      switch (
@@ -226,8 +236,16 @@ let make = (_) => {
                      id="signup--password"
                      value=form.state.password
                      disabled=(form.submitting |> Js.Boolean.to_js_boolean)
-                     onChange=(SignupForm.Password |> form.change)
-                     onBlur=(SignupForm.Password |> form.blur)
+                     onChange=(
+                       SignupForm.Password
+                       |> form.change
+                       |> Formality.Dom.valueOnChange
+                     )
+                     onBlur=(
+                       SignupForm.Password
+                       |> form.blur
+                       |> Formality.Dom.valueOnBlur
+                     )
                    />
                    (
                      switch (SignupForm.Password |> form.results) {
@@ -264,8 +282,16 @@ let make = (_) => {
                      id="signup--passwordConfirmation"
                      value=form.state.passwordConfirmation
                      disabled=(form.submitting |> Js.Boolean.to_js_boolean)
-                     onChange=(SignupForm.PasswordConfirmation |> form.change)
-                     onBlur=(SignupForm.PasswordConfirmation |> form.blur)
+                     onChange=(
+                       SignupForm.PasswordConfirmation
+                       |> form.change
+                       |> Formality.Dom.valueOnChange
+                     )
+                     onBlur=(
+                       SignupForm.PasswordConfirmation
+                       |> form.blur
+                       |> Formality.Dom.valueOnBlur
+                     )
                    />
                    (
                      switch (SignupForm.PasswordConfirmation |> form.results) {

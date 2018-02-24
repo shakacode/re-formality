@@ -89,12 +89,14 @@ let make = (_) => {
     >
       ...(
             form =>
-              <form className="form" onSubmit=form.submit>
+              <form
+                className="form"
+                onSubmit=(form.submit |> Formality.Dom.preventDefault)>
                 <input
                   value=form.state.email
                   disabled=(form.submitting |> Js.Boolean.to_js_boolean)
-                  onChange=(MyForm.Email |> from.change)
-                  onBlur=(MyForm.Email |> form.blur)
+                  onChange=(MyForm.Email |> form.change |> Formality.Dom.valueOnChange)
+                  onBlur=(MyForm.Email |> form.blur |> Formality.Dom.valueOnBlur)
                 />
                 (
                   switch (MyForm.Email |> form.results) {
@@ -108,8 +110,8 @@ let make = (_) => {
                 <input
                   value=form.state.password
                   disabled=(form.submitting |> Js.Boolean.to_js_boolean)
-                  onChange=(MyForm.Password |> form.change)
-                  onBlur=(MyForm.Password |> form.blur)
+                  onChange=(MyForm.Password |> form.change |> Formality.Dom.valueOnChange)
+                  onBlur=(MyForm.Password |> form.blur |> Formality.Dom.valueOnBlur)
                 />
                 (
                   switch (MyForm.Password |> form.results) {

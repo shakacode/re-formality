@@ -93,7 +93,9 @@ let make = (_) => {
       )>
       ...(
            form =>
-             <form className="form" onSubmit=form.submit>
+             <form
+               className="form"
+               onSubmit=(form.submit |> Formality.Dom.preventDefault)>
                <div className="form-messages-area form-messages-area-lg" />
                <div className="form-content">
                  <h2 className="push-lg">
@@ -107,8 +109,16 @@ let make = (_) => {
                      id="login--email"
                      value=form.state.email
                      disabled=(form.submitting |> Js.Boolean.to_js_boolean)
-                     onChange=(LoginForm.Email |> form.change)
-                     onBlur=(LoginForm.Email |> form.blur)
+                     onChange=(
+                       LoginForm.Email
+                       |> form.change
+                       |> Formality.Dom.valueOnChange
+                     )
+                     onBlur=(
+                       LoginForm.Email
+                       |> form.blur
+                       |> Formality.Dom.valueOnBlur
+                     )
                    />
                    (
                      LoginForm.Email
@@ -144,8 +154,16 @@ let make = (_) => {
                      id="login--password"
                      value=form.state.password
                      disabled=(form.submitting |> Js.Boolean.to_js_boolean)
-                     onChange=(LoginForm.Password |> form.change)
-                     onBlur=(LoginForm.Password |> form.blur)
+                     onChange=(
+                       LoginForm.Password
+                       |> form.change
+                       |> Formality.Dom.valueOnChange
+                     )
+                     onBlur=(
+                       LoginForm.Password
+                       |> form.blur
+                       |> Formality.Dom.valueOnBlur
+                     )
                    />
                    (
                      LoginForm.Password
