@@ -41,19 +41,17 @@ module SignupForm = {
              validate: (value, _) => {
                let emailRegex = [%bs.re {|/.*@.*\..+/|}];
                switch value {
-               | "" =>
-                 ValidityBag({
+               | "" => {
                    valid: false,
-                   tag: None,
-                   message: "Email is required"
-                 })
-               | _ when ! (emailRegex |> Js.Re.test(value)) =>
-                 ValidityBag({
+                   message: Some("Email is required"),
+                   meta: None
+                 }
+               | _ when ! (emailRegex |> Js.Re.test(value)) => {
                    valid: false,
-                   tag: None,
-                   message: "Email is invalid"
-                 })
-               | _ => ValidityBag({valid: true, tag: None, message: "Nice!"})
+                   message: Some("Email is invalid"),
+                   meta: None
+                 }
+               | _ => {valid: true, message: Some("Nice!"), meta: None}
                };
              },
              validateAsync:
@@ -64,20 +62,16 @@ module SignupForm = {
                      |> Api.validateEmail
                      |> then_(valid =>
                           valid ?
-                            resolve(
-                              ValidityBag({
-                                valid: true,
-                                tag: None,
-                                message: "Nice!"
-                              })
-                            ) :
-                            resolve(
-                              ValidityBag({
-                                valid: false,
-                                tag: None,
-                                message: "Email is already taken"
-                              })
-                            )
+                            resolve({
+                              valid: true,
+                              message: Some("Nice!"),
+                              meta: None
+                            }) :
+                            resolve({
+                              valid: false,
+                              message: Some("Email is already taken"),
+                              meta: None
+                            })
                         )
                    )
                )
@@ -92,25 +86,22 @@ module SignupForm = {
                let minLength = 4;
                let strongLength = 6;
                switch value {
-               | "" =>
-                 ValidityBag({
+               | "" => {
                    valid: false,
-                   tag: None,
-                   message: "Password is required"
-                 })
-               | _ when String.length(value) < minLength =>
-                 ValidityBag({
+                   message: Some("Password is required"),
+                   meta: None
+                 }
+               | _ when String.length(value) < minLength => {
                    valid: false,
-                   tag: None,
-                   message: {j| $(minLength)+ characters, please|j}
-                 })
-               | _ when String.length(value) < strongLength =>
-                 ValidityBag({
+                   message: Some({j| $(minLength)+ characters, please|j}),
+                   meta: None
+                 }
+               | _ when String.length(value) < strongLength => {
                    valid: true,
-                   tag: Some("weak"),
-                   message: "Can be stronger... (still valid tho)"
-                 })
-               | _ => ValidityBag({valid: true, tag: None, message: "Nice!"})
+                   message: Some("Can be stronger... (still valid tho)"),
+                   meta: Some("weak")
+                 }
+               | _ => {valid: true, message: Some("Nice!"), meta: None}
                };
              },
              validateAsync: None
@@ -123,25 +114,22 @@ module SignupForm = {
              dependents: None,
              validate: (value, state) =>
                switch value {
-               | "" =>
-                 ValidityBag({
+               | "" => {
                    valid: false,
-                   tag: None,
-                   message: "Confirmation is required"
-                 })
-               | _ when value !== state.password =>
-                 ValidityBag({
+                   message: Some("Confirmation is required"),
+                   meta: None
+                 }
+               | _ when value !== state.password => {
                    valid: false,
-                   tag: None,
-                   message: "Password doesn't match"
-                 })
-               | _ => ValidityBag({valid: true, tag: None, message: "Match!"})
+                   message: Some("Password doesn't match"),
+                   meta: None
+                 }
+               | _ => {valid: true, message: Some("Match!"), meta: None}
                },
              validateAsync: None
            }
          )
     );
-  /* exception InvalidResult(field); */
 };
 
 module SignupFormContainer =
@@ -203,20 +191,17 @@ let make = (_) => {
                        <div className="form-message">
                          ("Checking..." |> ReasonReact.stringToElement)
                        </div>
-                     | (Some(result), false) =>
-                       switch result {
-                       | Formality.ValidityBag(bag) =>
-                         <div
-                           className=(
-                             Cn.make([
-                               "form-message",
-                               bag.valid ? "success" : "failure"
-                             ])
-                           )>
-                           (bag.message |> ReasonReact.stringToElement)
-                         </div>
-                       | _ => raise(Formality.ImpossibleResult)
-                       }
+                     | (Some({valid, message: Some(message)}), false) =>
+                       <div
+                         className=(
+                           Cn.make([
+                             "form-message",
+                             valid ? "success" : "failure"
+                           ])
+                         )>
+                         (message |> ReasonReact.stringToElement)
+                       </div>
+                     | (Some(_), false) => raise(Formality.ImpossibleResult)
                      | (None, false) => ReasonReact.nullElement
                      }
                    )
@@ -250,25 +235,24 @@ let make = (_) => {
                    />
                    (
                      switch (SignupForm.Password |> form.results) {
-                     | Some(result) =>
-                       switch result {
-                       | Formality.ValidityBag(bag) =>
-                         <div
-                           className=(
-                             Cn.make([
-                               "form-message",
-                               bag.valid ?
-                                 switch bag.tag {
-                                 | Some(tag) => tag
-                                 | None => "success"
-                                 } :
-                                 "failure"
-                             ])
-                           )>
-                           (bag.message |> ReasonReact.stringToElement)
-                         </div>
-                       | _ => raise(Formality.ImpossibleResult)
-                       }
+                     | Some({valid: true, message: Some(message), meta}) =>
+                       <div
+                         className=(
+                           Cn.make([
+                             "form-message",
+                             switch meta {
+                             | Some(meta) => meta
+                             | None => "success"
+                             }
+                           ])
+                         )>
+                         (message |> ReasonReact.stringToElement)
+                       </div>
+                     | Some({valid: false, message: Some(message)}) =>
+                       <div className=(Cn.make(["form-message", "failure"]))>
+                         (message |> ReasonReact.stringToElement)
+                       </div>
+                     | Some(_) => raise(Formality.ImpossibleResult)
                      | None => ReasonReact.nullElement
                      }
                    )
@@ -296,20 +280,17 @@ let make = (_) => {
                    />
                    (
                      switch (SignupForm.PasswordConfirmation |> form.results) {
-                     | Some(result) =>
-                       switch result {
-                       | Formality.ValidityBag(bag) =>
-                         <div
-                           className=(
-                             Cn.make([
-                               "form-message",
-                               bag.valid ? "success" : "failure"
-                             ])
-                           )>
-                           (bag.message |> ReasonReact.stringToElement)
-                         </div>
-                       | _ => raise(Formality.ImpossibleResult)
-                       }
+                     | Some({valid, message: Some(message)}) =>
+                       <div
+                         className=(
+                           Cn.make([
+                             "form-message",
+                             valid ? "success" : "failure"
+                           ])
+                         )>
+                         (message |> ReasonReact.stringToElement)
+                       </div>
+                     | Some(_) => raise(Formality.ImpossibleResult)
                      | None => ReasonReact.nullElement
                      }
                    )

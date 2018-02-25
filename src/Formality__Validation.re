@@ -1,15 +1,11 @@
 /* TODO: Make variant? */
 type value = string;
 
-type validityBag('message) = {
+type result('message) = {
   valid: bool,
-  tag: option(string),
-  message: 'message
+  message: option('message),
+  meta: option(string)
 };
-
-type result('message) =
-  | Valid(bool)
-  | ValidityBag(validityBag('message));
 
 type validate('state, 'message) = (value, 'state) => result('message);
 
@@ -45,8 +41,6 @@ type notifiers = {
 
 let ifResult = (~valid, ~invalid, result) =>
   switch result {
-  | Valid(true) => result |> valid
-  | ValidityBag(bag) when bag.valid => result |> valid
-  | Valid(false)
-  | ValidityBag(_) => result |> invalid
+  | {valid: true} => result |> valid
+  | {valid: false} => result |> invalid
   };
