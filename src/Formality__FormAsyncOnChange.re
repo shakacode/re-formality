@@ -596,10 +596,9 @@ module Make = (Form: Config) => {
                  (field', validator', (valid', results')) => {
                    let currentResultInvalid =
                      switch (results' |> ResultsMap.get(field')) {
-                     | Some(Validation.Valid(false)) => true
-                     | Some(Validation.ValidityBag(bag)) when ! bag.valid =>
-                       true
-                     | _ => false
+                     | Some({valid: false}) => true
+                     | Some({valid: true}) => false
+                     | None => false
                      };
                    let nextResult =
                      state.data
@@ -610,19 +609,13 @@ module Make = (Form: Config) => {
                        nextResult,
                        validator'.validateAsync
                      ) {
-                     | (true, Validation.Valid(true), Some(_)) => results'
-                     | (true, Validation.ValidityBag(bag), Some(_))
-                         when bag.valid => results'
+                     | (true, {valid: true}, Some(_)) => results'
                      | (_, _, _) =>
                        results' |> ResultsMap.add(field', Some(nextResult))
                      };
                    switch (valid', results |> ResultsMap.get(field')) {
                    | (false, _) => (false, results)
-                   | (true, Some(Validation.Valid(valid))) => (valid, results)
-                   | (true, Some(Validation.ValidityBag(bag))) => (
-                       bag.valid,
-                       results
-                     )
+                   | (true, Some({valid})) => (valid, results)
                    | (_, None) => raise(NoResultInResultsMapOnSubmit(field'))
                    };
                  },

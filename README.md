@@ -59,22 +59,36 @@ module MyForm = {
     |> Validators.add(Email, {
          strategy: Strategy.OnFirstSuccessOrFirstBlur,
          dependents: None, /* You can define fields which must be revalidated on change of this field's value */
-         validate: (value, _state) => {
+         validate: (value, _state) =>
            switch value {
-           | "" => Valid(false)
-           | _ => Valid(true)
+           | "" => {
+               valid: false,
+               message: Some("Uh oh error"),
+               meta: None
+             }
+           | _ => {
+               valid: true,
+               message: Some("Nice!"),
+               meta: None
+             }
            }
-         }
        })
     |> Validators.add(Password, {
          strategy: Strategy.OnFirstSuccessOrFirstBlur,
          dependents: None, /* You can define fields which must be revalidated on change of this field's value */
-         validate: (value, _state) => {
+         validate: (value, _state) =>
            switch value {
-           | "" => Valid(false)
-           | _ => Valid(true)
+           | "" => {
+               valid: false,
+               message: Some("Uh oh error"),
+               meta: None
+             }
+           | _ => {
+               valid: true,
+               message: Some("Nice!"),
+               meta: None
+             }
            }
-         }
        })
     );
 };
@@ -105,11 +119,11 @@ let make = (_) => {
                 />
                 (
                   switch (MyForm.Email |> form.results) {
-                  | Some(Formality.Valid(valid)) =>
+                  | Some({valid, message: Some(message)}) =>
                     <div className=(Cn.make(["form-message", valid ? "success" : "failure"]))>
-                      ((valid ? "Nice!" : "Uh oh error") |> ReasonReact.stringToElement)
+                      (message |> ReasonReact.stringToElement)
                     </div>
-                  | None => ReasonReact.nullElement
+                  | _ => ReasonReact.nullElement
                   }
                 )
                 <input
@@ -120,11 +134,11 @@ let make = (_) => {
                 />
                 (
                   switch (MyForm.Password |> form.results) {
-                  | Some(Formality.Valid(valid)) =>
+                  | Some({valid, message: Some(message)}) =>
                     <div className=(Cn.make(["form-message", valid ? "success" : "failure"]))>
-                      ((valid ? "Nice!" : "Uh oh error") |> ReasonReact.stringToElement)
+                      (message |> ReasonReact.stringToElement)
                     </div>
-                  | None => ReasonReact.nullElement
+                  | _ => ReasonReact.nullElement
                   }
                 )
                 <button disabled=(form.submitting |> Js.Boolean.to_js_boolean)>

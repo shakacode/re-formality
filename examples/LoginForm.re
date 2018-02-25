@@ -35,19 +35,17 @@ module LoginForm = {
              validate: (value, _) => {
                let emailRegex = [%bs.re {|/.*@.*\..+/|}];
                switch value {
-               | "" =>
-                 ValidityBag({
+               | "" => {
                    valid: false,
-                   tag: None,
-                   message: "Email is required"
-                 })
-               | _ when ! (emailRegex |> Js.Re.test(value)) =>
-                 ValidityBag({
+                   message: Some("Email is required"),
+                   meta: None
+                 }
+               | _ when ! (emailRegex |> Js.Re.test(value)) => {
                    valid: false,
-                   tag: None,
-                   message: "Email is invalid"
-                 })
-               | _ => ValidityBag({valid: true, tag: None, message: "Nice!"})
+                   message: Some("Email is invalid"),
+                   meta: None
+                 }
+               | _ => {valid: true, message: Some("Nice!"), meta: None}
                };
              }
            }
@@ -59,13 +57,12 @@ module LoginForm = {
              dependents: None,
              validate: (value, _) =>
                switch value {
-               | "" =>
-                 ValidityBag({
+               | "" => {
                    valid: false,
-                   tag: None,
-                   message: "Password is required"
-                 })
-               | _ => ValidityBag({valid: true, tag: None, message: "Nice!"})
+                   message: Some("Password is required"),
+                   meta: None
+                 }
+               | _ => {valid: true, message: Some("Nice!"), meta: None}
                }
            }
          )
@@ -122,29 +119,18 @@ let make = (_) => {
                      )
                    />
                    (
-                     LoginForm.Email
-                     |> form.results
-                     |> Formality.ifResult(
-                          ~none=() => ReasonReact.nullElement,
-                          ~valid=() => raise(Formality.ImpossibleResult),
-                          ~invalid=() => raise(Formality.ImpossibleResult),
-                          ~validWithBag=
-                            bag =>
-                              <div
-                                className=(
-                                  Cn.make(["form-message", "success"])
-                                )>
-                                (bag.message |> ReasonReact.stringToElement)
-                              </div>,
-                          ~invalidWithBag=
-                            bag =>
-                              <div
-                                className=(
-                                  Cn.make(["form-message", "failure"])
-                                )>
-                                (bag.message |> ReasonReact.stringToElement)
-                              </div>
-                        )
+                     switch (LoginForm.Email |> form.results) {
+                     | Some({valid: true, message: Some(message)}) =>
+                       <div className=(Cn.make(["form-message", "success"]))>
+                         (message |> ReasonReact.stringToElement)
+                       </div>
+                     | Some({valid: false, message: Some(message)}) =>
+                       <div className=(Cn.make(["form-message", "failure"]))>
+                         (message |> ReasonReact.stringToElement)
+                       </div>
+                     | None => ReasonReact.nullElement
+                     | _ => raise(Formality.ImpossibleResult)
+                     }
                    )
                  </div>
                  <div className="form-row">
@@ -167,35 +153,27 @@ let make = (_) => {
                      )
                    />
                    (
-                     LoginForm.Password
-                     |> form.results
-                     |> Formality.ifResult(
-                          ~none=() => ReasonReact.nullElement,
-                          ~valid=() => raise(Formality.ImpossibleResult),
-                          ~invalid=() => raise(Formality.ImpossibleResult),
-                          ~validWithBag=
-                            bag =>
-                              <div
-                                className=(
-                                  Cn.make([
-                                    "form-message",
-                                    switch bag.tag {
-                                    | Some(tag) => tag
-                                    | None => "success"
-                                    }
-                                  ])
-                                )>
-                                (bag.message |> ReasonReact.stringToElement)
-                              </div>,
-                          ~invalidWithBag=
-                            bag =>
-                              <div
-                                className=(
-                                  Cn.make(["form-message", "failure"])
-                                )>
-                                (bag.message |> ReasonReact.stringToElement)
-                              </div>
-                        )
+                     switch (LoginForm.Password |> form.results) {
+                     | Some({valid: true, message: Some(message), meta}) =>
+                       <div
+                         className=(
+                           Cn.make([
+                             "form-message",
+                             switch meta {
+                             | Some(meta) => meta
+                             | None => "success"
+                             }
+                           ])
+                         )>
+                         (message |> ReasonReact.stringToElement)
+                       </div>
+                     | Some({valid: false, message: Some(message)}) =>
+                       <div className=(Cn.make(["form-message", "failure"]))>
+                         (message |> ReasonReact.stringToElement)
+                       </div>
+                     | None => ReasonReact.nullElement
+                     | _ => raise(Formality.ImpossibleResult)
+                     }
                    )
                  </div>
                  <div className="form-row">
