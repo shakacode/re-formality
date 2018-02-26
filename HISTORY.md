@@ -1,11 +1,11 @@
 # 0.3.1
 
-#### Improvements
+## Improvements
 * Validation `result` type is renamed to `validationResult` to avoid possible conflicts with Pervasive's `result`.
 
 # 0.3.0
 
-#### Improvements
+## Improvements
 * **[ BREAKING ]** Validation `result` type is simplified. Now it's just record.
 
 ```diff
@@ -42,7 +42,7 @@ Thanks **[@thangngoc89](https://github.com/thangngoc89)** for suggestion!
 
 # 0.2.0
 
-#### Improvements
+## Improvements
 * **[ BREAKING ]** Global form `strategy` type is removed. Now strategy is defined via field validator. It means `strategy` field is not `option` anymore.
 
 ```diff
