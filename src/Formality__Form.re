@@ -49,7 +49,8 @@ module Make = (Form: Config) => {
     );
   module ResultsMap = {
     type key = ResultsMapOrigin.key;
-    type t = ResultsMapOrigin.t(option(Validation.result(Form.message)));
+    type t =
+      ResultsMapOrigin.t(option(Validation.validationResult(Form.message)));
     let empty = ResultsMapOrigin.empty;
     let add = ResultsMapOrigin.add;
     let get = (key: key, map: t) =>
@@ -73,7 +74,7 @@ module Make = (Form: Config) => {
     | HandleSubmissionError;
   type interface = {
     state: Form.state,
-    results: Form.field => option(Validation.result(Form.message)),
+    results: Form.field => option(Validation.validationResult(Form.message)),
     submitting: bool,
     change: (Form.field, Validation.value) => unit,
     blur: (Form.field, Validation.value) => unit,

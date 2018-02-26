@@ -1,15 +1,17 @@
 /* TODO: Make variant? */
 type value = string;
 
-type result('message) = {
+type validationResult('message) = {
   valid: bool,
   message: option('message),
   meta: option(string)
 };
 
-type validate('state, 'message) = (value, 'state) => result('message);
+type validate('state, 'message) =
+  (value, 'state) => validationResult('message);
 
-type validateAsync('message) = value => Js.Promise.t(result('message));
+type validateAsync('message) =
+  value => Js.Promise.t(validationResult('message));
 
 type validator('field, 'state, 'message) = {
   strategy: Formality__Strategy.t,
