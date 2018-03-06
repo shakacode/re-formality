@@ -11,5 +11,3 @@ module MakeWithAsyncValidationsOnChange = Formality__FormAsyncOnChange.Make;
 module MakeWithAsyncValidationsOnBlur = Formality__FormAsyncOnBlur.Make;
 
 let debounceInterval = Formality__FormAsyncOnChange.defaultDebounceInterval;
-
-exception ImpossibleResult;

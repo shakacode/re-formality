@@ -21,8 +21,9 @@ Reasonable form validation tool for [`reason-react`](https://reasonml.github.io/
 ## Installation
 
 ```shell
-# yarn / npm
+# yarn
 yarn add re-formality
+# or npm
 npm install --save re-formality
 ```
 
@@ -52,42 +53,27 @@ module MyForm = {
     | (Email, value) => {...state, email: value}
     | (Password, value) => {...state, password: value}
     };
+  let strategy = Formality.Strategy.OnFirstSuccessOrFirstBlur;
   module Validators = Formality.MakeValidators({type t = field;});
   type validators = Validators.t(Formality.validator(field, state, message));
   let validators = Formality.(
     Validators.empty
     |> Validators.add(Email, {
-         strategy: Strategy.OnFirstSuccessOrFirstBlur,
+         strategy,
          dependents: None, /* You can define fields which must be revalidated on change of this field's value */
          validate: (value, _state) =>
            switch value {
-           | "" => {
-               valid: false,
-               message: Some("Uh oh error"),
-               meta: None
-             }
-           | _ => {
-               valid: true,
-               message: Some("Nice!"),
-               meta: None
-             }
+           | "" => Invalid("Uh oh error")
+           | _ => Valid
            }
        })
     |> Validators.add(Password, {
-         strategy: Strategy.OnFirstSuccessOrFirstBlur,
+         strategy,
          dependents: None, /* You can define fields which must be revalidated on change of this field's value */
          validate: (value, _state) =>
            switch value {
-           | "" => {
-               valid: false,
-               message: Some("Uh oh error"),
-               meta: None
-             }
-           | _ => {
-               valid: true,
-               message: Some("Nice!"),
-               meta: None
-             }
+           | "" => Invalid("Uh oh error")
+           | _ => Valid
            }
        })
     );
@@ -119,11 +105,12 @@ let make = (_) => {
                 />
                 (
                   switch (MyForm.Email |> form.results) {
-                  | Some({valid, message: Some(message)}) =>
-                    <div className=(Cn.make(["form-message", valid ? "success" : "failure"]))>
+                  | Some(Invalid(message)) =>
+                    <div className=(Cn.make(["form-message", "failure"]))>
                       (message |> ReasonReact.stringToElement)
                     </div>
-                  | _ => ReasonReact.nullElement
+                  | Some(Valid)
+                  | None => ReasonReact.nullElement
                   }
                 )
                 <input
@@ -134,11 +121,12 @@ let make = (_) => {
                 />
                 (
                   switch (MyForm.Password |> form.results) {
-                  | Some({valid, message: Some(message)}) =>
-                    <div className=(Cn.make(["form-message", valid ? "success" : "failure"]))>
+                  | Some(Invalid(message)) =>
+                    <div className=(Cn.make(["form-message", "failure"]))>
                       (message |> ReasonReact.stringToElement)
                     </div>
-                  | _ => ReasonReact.nullElement
+                  | Some(Valid)
+                  | None => ReasonReact.nullElement
                   }
                 )
                 <button disabled=(form.submitting |> Js.Boolean.to_js_boolean)>

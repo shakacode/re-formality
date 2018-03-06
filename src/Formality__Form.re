@@ -250,7 +250,8 @@ module Make = (Form: Config) => {
                    results' |> ResultsMap.add(field', Some(result));
                  switch (valid', result) {
                  | (false, _) => (false, results)
-                 | (true, {valid}) => (valid, results)
+                 | (true, Validation.Invalid(_)) => (false, results)
+                 | (true, Validation.Valid) => (true, results)
                  };
                },
                Form.validators
