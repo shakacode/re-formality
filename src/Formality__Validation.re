@@ -1,11 +1,9 @@
 /* TODO: Make variant? */
 type value = string;
 
-type validationResult('message) = {
-  valid: bool,
-  message: option('message),
-  meta: option(string)
-};
+type validationResult('message) =
+  | Valid
+  | Invalid('message);
 
 type validate('state, 'message) =
   (value, 'state) => validationResult('message);
@@ -43,6 +41,6 @@ type notifiers = {
 
 let ifResult = (~valid, ~invalid, result) =>
   switch result {
-  | {valid: true} => result |> valid
-  | {valid: false} => result |> invalid
+  | Valid => result |> valid
+  | Invalid(_) => result |> invalid
   };

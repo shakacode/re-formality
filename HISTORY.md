@@ -1,3 +1,32 @@
+# 0.4.0
+
+## Improvements
+* **[ BREAKING ]** `validationResult` type is set back to variant. `meta` is removed.
+
+```diff
+- type validationResult('message) = {
+-   valid: bool,
+-   message: option('message),
+-   meta: option(string)
+- };
+
++ type validationResult('message) =
++ | Valid
++ | Invalid('message);
+```
+
+Validate function looks like this:
+
+```reason
+validate: (value, _state) =>
+  switch value {
+  | "" => Invalid("Uh oh error"),
+  | _ => Valid
+  }
+```
+
+* **[ BREAKING ]** `exception ImpossibleResult` is removed as with the change above we don't get into impossible state anymore! 🎉🎉🎉
+
 # 0.3.1
 
 ## Improvements

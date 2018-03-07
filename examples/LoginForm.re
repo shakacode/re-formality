@@ -35,17 +35,10 @@ module LoginForm = {
              validate: (value, _) => {
                let emailRegex = [%bs.re {|/.*@.*\..+/|}];
                switch value {
-               | "" => {
-                   valid: false,
-                   message: Some("Email is required"),
-                   meta: None
-                 }
-               | _ when ! (emailRegex |> Js.Re.test(value)) => {
-                   valid: false,
-                   message: Some("Email is invalid"),
-                   meta: None
-                 }
-               | _ => {valid: true, message: Some("Nice!"), meta: None}
+               | "" => Invalid("Email is required")
+               | _ when ! (emailRegex |> Js.Re.test(value)) =>
+                 Invalid("Email is invalid")
+               | _ => Valid
                };
              }
            }
@@ -57,12 +50,8 @@ module LoginForm = {
              dependents: None,
              validate: (value, _) =>
                switch value {
-               | "" => {
-                   valid: false,
-                   message: Some("Password is required"),
-                   meta: None
-                 }
-               | _ => {valid: true, message: Some("Nice!"), meta: None}
+               | "" => Invalid("Password is required")
+               | _ => Valid
                }
            }
          )
@@ -120,16 +109,15 @@ let make = (_) => {
                    />
                    (
                      switch (LoginForm.Email |> form.results) {
-                     | Some({valid: true, message: Some(message)}) =>
-                       <div className=(Cn.make(["form-message", "success"]))>
-                         (message |> ReasonReact.stringToElement)
-                       </div>
-                     | Some({valid: false, message: Some(message)}) =>
+                     | Some(Invalid(message)) =>
                        <div className=(Cn.make(["form-message", "failure"]))>
                          (message |> ReasonReact.stringToElement)
                        </div>
+                     | Some(Valid) =>
+                       <div className=(Cn.make(["form-message", "success"]))>
+                         ({j|✓|j} |> ReasonReact.stringToElement)
+                       </div>
                      | None => ReasonReact.nullElement
-                     | _ => raise(Formality.ImpossibleResult)
                      }
                    )
                  </div>
@@ -154,25 +142,15 @@ let make = (_) => {
                    />
                    (
                      switch (LoginForm.Password |> form.results) {
-                     | Some({valid: true, message: Some(message), meta}) =>
-                       <div
-                         className=(
-                           Cn.make([
-                             "form-message",
-                             switch meta {
-                             | Some(meta) => meta
-                             | None => "success"
-                             }
-                           ])
-                         )>
-                         (message |> ReasonReact.stringToElement)
-                       </div>
-                     | Some({valid: false, message: Some(message)}) =>
+                     | Some(Invalid(message)) =>
                        <div className=(Cn.make(["form-message", "failure"]))>
                          (message |> ReasonReact.stringToElement)
                        </div>
+                     | Some(Valid) =>
+                       <div className=(Cn.make(["form-message", "success"]))>
+                         ({j|✓|j} |> ReasonReact.stringToElement)
+                       </div>
                      | None => ReasonReact.nullElement
-                     | _ => raise(Formality.ImpossibleResult)
                      }
                    )
                  </div>
