@@ -1,3 +1,8 @@
+# 0.4.1
+
+## Improvements
+* In case of optional field (e.g. `"" => Valid`) if value is empty string container will always emit `None` (instead of `Some(Valid)`).
+
 # 0.4.0
 
 ## Improvements

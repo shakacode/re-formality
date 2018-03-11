@@ -44,3 +44,10 @@ let ifResult = (~valid, ~invalid, result) =>
   | Valid => result |> valid
   | Invalid(_) => result |> invalid
   };
+
+let resultToEmit = (value, result) =>
+  switch (result, value) {
+  | (Valid, "") => None
+  | (Valid, _)
+  | (Invalid(_), _) => Some(result)
+  };
