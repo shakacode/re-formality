@@ -102,17 +102,21 @@ module Make = (Form: Config) => {
            | (None, _)
            | (_, false) => (results', emittedFields')
            | (Some(validator), true) =>
-             let result =
-               data |> validator.validate(data |> Form.get(field'));
+             let value = data |> Form.get(field');
+             let result = data |> validator.validate(value);
              (
-               results' |> ResultsMap.add(field', Some(result)),
+               results'
+               |> ResultsMap.add(
+                    field',
+                    result |> Validation.resultToEmit(value),
+                  ),
                emittedFields' |> FieldsSet.add(field'),
              );
            };
          },
          (results, emittedFields),
        );
-  let component = ReasonReact.reducerComponent("FormalityForm");
+  let component = "FormalityForm" |> ReasonReact.reducerComponent;
   let make =
       (
         ~initialState: Form.state,
@@ -146,7 +150,12 @@ module Make = (Form: Config) => {
               ReasonReact.Update({
                 ...state,
                 data,
-                results: results |> ResultsMap.add(field, Some(result)),
+                results:
+                  results
+                  |> ResultsMap.add(
+                       field,
+                       result |> Validation.resultToEmit(value),
+                     ),
                 emittedFields: emittedFields |> FieldsSet.add(field),
               });
             | None =>
@@ -155,7 +164,11 @@ module Make = (Form: Config) => {
                 ...state,
                 data,
                 results:
-                  state.results |> ResultsMap.add(field, Some(result)),
+                  state.results
+                  |> ResultsMap.add(
+                       field,
+                       result |> Validation.resultToEmit(value),
+                     ),
                 emittedFields: state.emittedFields |> FieldsSet.add(field),
               });
             }
@@ -182,7 +195,11 @@ module Make = (Form: Config) => {
                          ...state,
                          data,
                          results:
-                           results |> ResultsMap.add(field, Some(result)),
+                           results
+                           |> ResultsMap.add(
+                                field,
+                                result |> Validation.resultToEmit(value),
+                              ),
                          emittedFields: emittedFields |> FieldsSet.add(field),
                        });
                      | None =>
@@ -191,7 +208,10 @@ module Make = (Form: Config) => {
                          data,
                          results:
                            state.results
-                           |> ResultsMap.add(field, Some(result)),
+                           |> ResultsMap.add(
+                                field,
+                                result |> Validation.resultToEmit(value),
+                              ),
                          emittedFields:
                            state.emittedFields |> FieldsSet.add(field),
                        })
@@ -236,7 +256,12 @@ module Make = (Form: Config) => {
             let result = state.data |> validator.validate(value);
             ReasonReact.Update({
               ...state,
-              results: state.results |> ResultsMap.add(field, Some(result)),
+              results:
+                state.results
+                |> ResultsMap.add(
+                     field,
+                     result |> Validation.resultToEmit(value),
+                   ),
               emittedFields: state.emittedFields |> FieldsSet.add(field),
             });
           }
@@ -246,13 +271,16 @@ module Make = (Form: Config) => {
           (true, state.results)
           |> Form.Validators.fold(
                (field', validator', (valid', results')) => {
-                 let result =
-                   state.data
-                   |> validator'.validate(state.data |> Form.get(field'));
+                 let value = state.data |> Form.get(field');
+                 let result = state.data |> validator'.validate(value);
                  let results =
-                   results' |> ResultsMap.add(field', Some(result));
+                   results'
+                   |> ResultsMap.add(
+                        field',
+                        result |> Validation.resultToEmit(value),
+                      );
                  switch (valid', result) {
-                 | (false, _) => (false, results)
+                 | (false, _)
                  | (true, Validation.Invalid(_)) => (false, results)
                  | (true, Validation.Valid) => (true, results)
                  };
@@ -267,8 +295,8 @@ module Make = (Form: Config) => {
                 onSubmit(
                   state.data,
                   {
-                    onSuccess: () => send(Reset),
-                    onFailure: () => send(HandleSubmissionError),
+                    onSuccess: () => Reset |> send,
+                    onFailure: () => HandleSubmissionError |> send,
                   },
                 )
             ),
