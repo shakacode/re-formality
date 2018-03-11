@@ -4,11 +4,11 @@ module LoginForm = {
     | Password;
   type state = {
     email: string,
-    password: string
+    password: string,
   };
   type message = string;
   let get = (field, state) =>
-    switch field {
+    switch (field) {
     | Email => state.email
     | Password => state.password
     };
@@ -21,7 +21,7 @@ module LoginForm = {
     Formality.MakeValidators(
       {
         type t = field;
-      }
+      },
     );
   type validators = Validators.t(Formality.validator(field, state, message));
   let validators =
@@ -34,14 +34,14 @@ module LoginForm = {
              dependents: None,
              validate: (value, _) => {
                let emailRegex = [%bs.re {|/.*@.*\..+/|}];
-               switch value {
+               switch (value) {
                | "" => Invalid("Email is required")
                | _ when ! (emailRegex |> Js.Re.test(value)) =>
                  Invalid("Email is invalid")
                | _ => Valid
                };
-             }
-           }
+             },
+           },
          )
       |> Validators.add(
            Password,
@@ -49,11 +49,11 @@ module LoginForm = {
              strategy: Strategy.OnFirstBlur,
              dependents: None,
              validate: (value, _) =>
-               switch value {
+               switch (value) {
                | "" => Invalid("Password is required")
                | _ => Valid
-               }
-           }
+               },
+           },
          )
     );
 };
@@ -72,7 +72,7 @@ let make = (_) => {
           Js.log2("Called with:", state);
           Js.log2(
             "If api returned error this callback should be called:",
-            notify.onFailure
+            notify.onFailure,
           );
           let _ = Js.Global.setTimeout(notify.onSuccess, 500);
           ();
@@ -167,5 +167,5 @@ let make = (_) => {
                </div>
              </form>
          )
-    </LoginFormContainer>
+    </LoginFormContainer>,
 };

@@ -14,14 +14,14 @@ type validateAsync('message) =
 type validator('field, 'state, 'message) = {
   strategy: Formality__Strategy.t,
   dependents: option(list('field)),
-  validate: validate('state, 'message)
+  validate: validate('state, 'message),
 };
 
 type asyncValidator('field, 'state, 'message) = {
   strategy: Formality__Strategy.t,
   dependents: option(list('field)),
   validate: validate('state, 'message),
-  validateAsync: option(validateAsync('message))
+  validateAsync: option(validateAsync('message)),
 };
 
 module type ValidatorsConfig = {type t;};
@@ -31,7 +31,7 @@ module MakeValidators = (Config: ValidatorsConfig) =>
     {
       type t = Config.t;
       let compare = Formality__Utils.comparator;
-    }
+    },
   );
 
 type notifiers = {
@@ -40,7 +40,7 @@ type notifiers = {
 };
 
 let ifResult = (~valid, ~invalid, result) =>
-  switch result {
+  switch (result) {
   | Valid => result |> valid
   | Invalid(_) => result |> invalid
   };

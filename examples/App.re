@@ -10,33 +10,33 @@ type action =
   | UpdateRoute(route);
 
 let getInitialRoute = () =>
-  switch locationHash {
+  switch (locationHash) {
   | "#signup" => Signup
   | "#login" => Login
   | _ => Signup
   };
 
-let component = ReasonReact.reducerComponent("App");
+let component = "App" |> ReasonReact.reducerComponent;
 
 let make = (_) => {
   ...component,
   initialState: () => {route: getInitialRoute()},
   reducer: (action, _) =>
-    switch action {
+    switch (action) {
     | UpdateRoute(route) => ReasonReact.Update({route: route})
     },
   subscriptions: ({send}) => [
     Sub(
       () =>
         ReasonReact.Router.watchUrl(url =>
-          switch url.hash {
+          switch (url.hash) {
           | "signup" => send(UpdateRoute(Signup))
           | "login" => send(UpdateRoute(Login))
           | _ => send(UpdateRoute(Signup))
           }
         ),
-      ReasonReact.Router.unwatchUrl
-    )
+      ReasonReact.Router.unwatchUrl,
+    ),
   ],
   render: ({state}) =>
     <div className="container">
@@ -52,10 +52,10 @@ let make = (_) => {
           className=(
             Cn.make([
               "nav-link",
-              switch state.route {
+              switch (state.route) {
               | Signup => "active"
               | _ => ""
-              }
+              },
             ])
           )
           onClick=((_) => ReasonReact.Router.push("#signup"))>
@@ -65,10 +65,10 @@ let make = (_) => {
           className=(
             Cn.make([
               "nav-link",
-              switch state.route {
+              switch (state.route) {
               | Login => "active"
               | _ => ""
-              }
+              },
             ])
           )
           onClick=((_) => ReasonReact.Router.push("#login"))>
@@ -76,10 +76,10 @@ let make = (_) => {
         </button>
       </div>
       (
-        switch state.route {
+        switch (state.route) {
         | Signup => <SignupForm />
         | Login => <LoginForm />
         }
       )
-    </div>
+    </div>,
 };

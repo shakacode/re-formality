@@ -36,7 +36,7 @@ module Make = (Form: Config) => {
       {
         type t = Form.field;
         let compare = Utils.comparator;
-      }
+      },
     );
   module FieldsSet = {
     type t = FieldsSetOrigin.t;
@@ -51,7 +51,7 @@ module Make = (Form: Config) => {
       {
         type t = Form.field;
         let compare = Utils.comparator;
-      }
+      },
     );
   module ResultsMap = {
     type key = ResultsMapOrigin.key;
@@ -72,7 +72,7 @@ module Make = (Form: Config) => {
     validating: FieldsSet.t,
     submitting: bool,
     submittedOnce: bool,
-    emittedFields: FieldsSet.t
+    emittedFields: FieldsSet.t,
   };
   type action =
     | Change((Form.field, Validation.value))
@@ -85,17 +85,17 @@ module Make = (Form: Config) => {
           ~value: Validation.value,
           ReasonReact.self(state, ReasonReact.noRetainedProps, action)
         ) =>
-        unit
+        unit,
       )
     | TriggerAsyncValidation(
         Form.field,
         Validation.value,
-        Validation.validateAsync(Form.message)
+        Validation.validateAsync(Form.message),
       )
     | ApplyAsyncResult(
         Form.field,
         Validation.value,
-        Validation.validationResult(Form.message)
+        Validation.validationResult(Form.message),
       )
     | Submit
     | Reset
@@ -107,7 +107,7 @@ module Make = (Form: Config) => {
     submitting: bool,
     change: (Form.field, Validation.value) => unit,
     blur: (Form.field, Validation.value) => unit,
-    submit: unit => unit
+    submit: unit => unit,
   };
   let getInitialState = data => {
     data,
@@ -115,7 +115,7 @@ module Make = (Form: Config) => {
     validating: FieldsSet.empty,
     submitting: false,
     submittedOnce: false,
-    emittedFields: FieldsSet.empty
+    emittedFields: FieldsSet.empty,
   };
   let debounce = (~validateAsync, ~wait) => {
     let lastSelf = ref(None);
@@ -124,14 +124,14 @@ module Make = (Form: Config) => {
     let lastCallTime = ref(None);
     let timerId = ref(None);
     let shouldInvoke = time =>
-      switch lastCallTime^ {
+      switch (lastCallTime^) {
       | None => true
       | Some(lastCallTime) =>
         let timeSinceLastCall = time - lastCallTime;
         timeSinceLastCall >= wait || timeSinceLastCall < 0;
       };
     let remainingWait = time =>
-      switch lastCallTime^ {
+      switch (lastCallTime^) {
       | None => wait
       | Some(lastCallTime) =>
         let timeSinceLastCall = time - lastCallTime;
@@ -180,25 +180,25 @@ module Make = (Form: Config) => {
           ~value: Validation.value,
           ReasonReact.self(state, ReasonReact.noRetainedProps, action)
         ) =>
-        unit
-      )
+        unit,
+      ),
   };
   let debouncedValidators =
     Form.validators
     |> Form.Validators.map(validator =>
-         switch validator.validateAsync {
+         switch (validator.validateAsync) {
          | Some(validateAsync) => {
              strategy: validator.strategy,
              dependents: validator.dependents,
              validate: validator.validate,
              validateAsync:
-               Some(debounce(~validateAsync, ~wait=Form.debounceInterval))
+               Some(debounce(~validateAsync, ~wait=Form.debounceInterval)),
            }
          | None => {
              strategy: validator.strategy,
              dependents: validator.dependents,
              validate: validator.validate,
-             validateAsync: None
+             validateAsync: None,
            }
          }
        );
@@ -217,26 +217,27 @@ module Make = (Form: Config) => {
            | (None, _)
            | (_, false) => (results', emittedFields')
            | (Some(validator), true) =>
-             let result = data |> validator.validate(data |> Form.get(field'));
+             let result =
+               data |> validator.validate(data |> Form.get(field'));
              (
                results' |> ResultsMap.add(field', Some(result)),
-               emittedFields' |> FieldsSet.add(field')
+               emittedFields' |> FieldsSet.add(field'),
              );
            };
          },
-         (results, emittedFields)
+         (results, emittedFields),
        );
   let component = ReasonReact.reducerComponent("FormalityForm");
   let make =
       (
         ~initialState: Form.state,
         ~onSubmit: (Form.state, Validation.notifiers) => unit,
-        children
+        children,
       ) => {
     ...component,
     initialState: () => getInitialState(initialState),
     reducer: (action, state) =>
-      switch action {
+      switch (action) {
       | Change((field, value)) =>
         let data = state.data |> Form.update((field, value));
         switch (field |> getValidator) {
@@ -247,16 +248,16 @@ module Make = (Form: Config) => {
           | (_, true, _)
           | (_, _, true)
           | (Strategy.OnFirstChange, false, false) =>
-            switch validator.validateAsync {
+            switch (validator.validateAsync) {
             | Some(validateAsync) =>
-              switch validator.dependents {
+              switch (validator.dependents) {
               | Some(dependents) =>
                 let (results, emittedFields) =
                   dependents
                   |> validateDependents(
                        ~data,
                        ~results=state.results,
-                       ~emittedFields=state.emittedFields
+                       ~emittedFields=state.emittedFields,
                      );
                 data
                 |> validator.validate(value)
@@ -271,16 +272,16 @@ module Make = (Form: Config) => {
                              validating:
                                state.validating |> FieldsSet.add(field),
                              emittedFields:
-                               emittedFields |> FieldsSet.add(field)
+                               emittedFields |> FieldsSet.add(field),
                            },
                            ({send}) =>
                              send(
                                InvokeDebouncedAsyncValidation(
                                  field,
                                  value,
-                                 validateAsync
-                               )
-                             )
+                                 validateAsync,
+                               ),
+                             ),
                          ),
                      ~invalid=
                        result =>
@@ -291,8 +292,9 @@ module Make = (Form: Config) => {
                              results |> ResultsMap.add(field, Some(result)),
                            validating:
                              state.validating |> FieldsSet.remove(field),
-                           emittedFields: emittedFields |> FieldsSet.add(field)
-                         })
+                           emittedFields:
+                             emittedFields |> FieldsSet.add(field),
+                         }),
                    );
               | None =>
                 data
@@ -309,16 +311,16 @@ module Make = (Form: Config) => {
                              validating:
                                state.validating |> FieldsSet.add(field),
                              emittedFields:
-                               state.emittedFields |> FieldsSet.add(field)
+                               state.emittedFields |> FieldsSet.add(field),
                            },
                            ({send}) =>
                              send(
                                InvokeDebouncedAsyncValidation(
                                  field,
                                  value,
-                                 validateAsync
-                               )
-                             )
+                                 validateAsync,
+                               ),
+                             ),
                          ),
                      ~invalid=
                        result =>
@@ -331,12 +333,12 @@ module Make = (Form: Config) => {
                            validating:
                              state.validating |> FieldsSet.remove(field),
                            emittedFields:
-                             state.emittedFields |> FieldsSet.add(field)
-                         })
+                             state.emittedFields |> FieldsSet.add(field),
+                         }),
                    )
               }
             | None =>
-              switch validator.dependents {
+              switch (validator.dependents) {
               | Some(dependents) =>
                 let result = data |> validator.validate(value);
                 let (results, emittedFields) =
@@ -344,39 +346,40 @@ module Make = (Form: Config) => {
                   |> validateDependents(
                        ~data,
                        ~results=state.results,
-                       ~emittedFields=state.emittedFields
+                       ~emittedFields=state.emittedFields,
                      );
                 ReasonReact.Update({
                   ...state,
                   data,
                   results: results |> ResultsMap.add(field, Some(result)),
-                  emittedFields: emittedFields |> FieldsSet.add(field)
+                  emittedFields: emittedFields |> FieldsSet.add(field),
                 });
               | None =>
                 let result = data |> validator.validate(value);
                 ReasonReact.Update({
                   ...state,
                   data,
-                  results: state.results |> ResultsMap.add(field, Some(result)),
-                  emittedFields: state.emittedFields |> FieldsSet.add(field)
+                  results:
+                    state.results |> ResultsMap.add(field, Some(result)),
+                  emittedFields: state.emittedFields |> FieldsSet.add(field),
                 });
               }
             }
           | (
               Strategy.OnFirstSuccess | Strategy.OnFirstSuccessOrFirstBlur,
               false,
-              false
+              false,
             ) =>
-            switch validator.validateAsync {
+            switch (validator.validateAsync) {
             | Some(validateAsync) =>
-              switch validator.dependents {
+              switch (validator.dependents) {
               | Some(dependents) =>
                 let (results, emittedFields) =
                   dependents
                   |> validateDependents(
                        ~data,
                        ~results=state.results,
-                       ~emittedFields=state.emittedFields
+                       ~emittedFields=state.emittedFields,
                      );
                 data
                 |> validator.validate(value)
@@ -391,16 +394,16 @@ module Make = (Form: Config) => {
                              validating:
                                state.validating |> FieldsSet.add(field),
                              emittedFields:
-                               emittedFields |> FieldsSet.add(field)
+                               emittedFields |> FieldsSet.add(field),
                            },
                            ({send}) =>
                              send(
                                InvokeDebouncedAsyncValidation(
                                  field,
                                  value,
-                                 validateAsync
-                               )
-                             )
+                                 validateAsync,
+                               ),
+                             ),
                          ),
                      ~invalid=
                        (_) =>
@@ -408,8 +411,8 @@ module Make = (Form: Config) => {
                            ...state,
                            data,
                            results,
-                           emittedFields
-                         })
+                           emittedFields,
+                         }),
                    );
               | None =>
                 data
@@ -426,18 +429,18 @@ module Make = (Form: Config) => {
                              validating:
                                state.validating |> FieldsSet.add(field),
                              emittedFields:
-                               state.emittedFields |> FieldsSet.add(field)
+                               state.emittedFields |> FieldsSet.add(field),
                            },
                            ({send}) =>
                              send(
                                InvokeDebouncedAsyncValidation(
                                  field,
                                  value,
-                                 validateAsync
-                               )
-                             )
+                                 validateAsync,
+                               ),
+                             ),
                          ),
-                     ~invalid=(_) => ReasonReact.Update({...state, data})
+                     ~invalid=(_) => ReasonReact.Update({...state, data}),
                    )
               }
             | None =>
@@ -446,21 +449,22 @@ module Make = (Form: Config) => {
               |> Validation.ifResult(
                    ~valid=
                      result =>
-                       switch validator.dependents {
+                       switch (validator.dependents) {
                        | Some(dependents) =>
                          let (results, emittedFields) =
                            validateDependents(
                              ~data,
                              ~results=state.results,
                              ~emittedFields=state.emittedFields,
-                             dependents
+                             dependents,
                            );
                          ReasonReact.Update({
                            ...state,
                            data,
                            results:
                              results |> ResultsMap.add(field, Some(result)),
-                           emittedFields: emittedFields |> FieldsSet.add(field)
+                           emittedFields:
+                             emittedFields |> FieldsSet.add(field),
                          });
                        | None =>
                          ReasonReact.Update({
@@ -470,28 +474,28 @@ module Make = (Form: Config) => {
                              state.results
                              |> ResultsMap.add(field, Some(result)),
                            emittedFields:
-                             state.emittedFields |> FieldsSet.add(field)
+                             state.emittedFields |> FieldsSet.add(field),
                          })
                        },
                    ~invalid=
                      (_) =>
-                       switch validator.dependents {
+                       switch (validator.dependents) {
                        | Some(dependents) =>
                          let (results, emittedFields) =
                            validateDependents(
                              ~data,
                              ~results=state.results,
                              ~emittedFields=state.emittedFields,
-                             dependents
+                             dependents,
                            );
                          ReasonReact.Update({
                            ...state,
                            data,
                            results,
-                           emittedFields
+                           emittedFields,
                          });
                        | None => ReasonReact.Update({...state, data})
-                       }
+                       },
                  )
             }
           | (Strategy.OnFirstBlur | Strategy.OnSubmit, false, false) =>
@@ -505,13 +509,13 @@ module Make = (Form: Config) => {
         | (None, _)
         | (Some(_), true) => ReasonReact.NoUpdate
         | (Some(validator), false) =>
-          switch validator.strategy {
+          switch (validator.strategy) {
           | Strategy.OnFirstChange
           | Strategy.OnFirstSuccess
           | Strategy.OnSubmit => ReasonReact.NoUpdate
           | Strategy.OnFirstBlur
           | Strategy.OnFirstSuccessOrFirstBlur =>
-            switch validator.validateAsync {
+            switch (validator.validateAsync) {
             | Some(validateAsync) =>
               state.data
               |> validator.validate(value)
@@ -523,44 +527,47 @@ module Make = (Form: Config) => {
                            ...state,
                            results:
                              state.results |> ResultsMap.add(field, None),
-                           validating: state.validating |> FieldsSet.add(field),
+                           validating:
+                             state.validating |> FieldsSet.add(field),
                            emittedFields:
-                             state.emittedFields |> FieldsSet.add(field)
+                             state.emittedFields |> FieldsSet.add(field),
                          },
                          ({send}) =>
                            send(
                              InvokeDebouncedAsyncValidation(
                                field,
                                value,
-                               validateAsync
-                             )
-                           )
+                               validateAsync,
+                             ),
+                           ),
                        ),
                    ~invalid=
                      result =>
                        ReasonReact.Update({
                          ...state,
                          results:
-                           state.results |> ResultsMap.add(field, Some(result)),
+                           state.results
+                           |> ResultsMap.add(field, Some(result)),
                          validating:
                            state.validating |> FieldsSet.remove(field),
                          emittedFields:
-                           state.emittedFields |> FieldsSet.add(field)
-                       })
+                           state.emittedFields |> FieldsSet.add(field),
+                       }),
                  )
             | None =>
               let result = state.data |> validator.validate(value);
               ReasonReact.Update({
                 ...state,
-                results: state.results |> ResultsMap.add(field, Some(result)),
-                emittedFields: state.emittedFields |> FieldsSet.add(field)
+                results:
+                  state.results |> ResultsMap.add(field, Some(result)),
+                emittedFields: state.emittedFields |> FieldsSet.add(field),
               });
             }
           }
         };
       | InvokeDebouncedAsyncValidation(field, value, validateAsync) =>
         ReasonReact.SideEffects(
-          (self => self |> validateAsync(~field, ~value))
+          (self => self |> validateAsync(~field, ~value)),
         )
       | TriggerAsyncValidation(field, value, validateAsync) =>
         ReasonReact.SideEffects(
@@ -575,7 +582,7 @@ module Make = (Form: Config) => {
                    })
                 |> ignore
               )
-          )
+          ),
         )
       | ApplyAsyncResult(field, value, result) =>
         value === (state.data |> Form.get(field)) ?
@@ -583,7 +590,7 @@ module Make = (Form: Config) => {
             ...state,
             results: state.results |> ResultsMap.add(field, Some(result)),
             validating: state.validating |> FieldsSet.remove(field),
-            emittedFields: state.emittedFields |> FieldsSet.add(field)
+            emittedFields: state.emittedFields |> FieldsSet.add(field),
           }) :
           ReasonReact.NoUpdate
       | Submit =>
@@ -608,7 +615,7 @@ module Make = (Form: Config) => {
                      switch (
                        currentResultInvalid,
                        nextResult,
-                       validator'.validateAsync
+                       validator'.validateAsync,
                      ) {
                      | (true, Validation.Valid, Some(_)) => results'
                      | (_, _, _) =>
@@ -618,10 +625,11 @@ module Make = (Form: Config) => {
                    | (false, _) => (false, results)
                    | (true, Some(Validation.Invalid(_))) => (false, results)
                    | (true, Some(Validation.Valid)) => (true, results)
-                   | (_, None) => raise(NoResultInResultsMapOnSubmit(field'))
+                   | (_, None) =>
+                     raise(NoResultInResultsMapOnSubmit(field'))
                    };
                  },
-                 debouncedValidators
+                 debouncedValidators,
                );
           valid ?
             ReasonReact.UpdateWithSideEffects(
@@ -633,16 +641,16 @@ module Make = (Form: Config) => {
                     state.data,
                     {
                       onSuccess: () => send(Reset),
-                      onFailure: () => send(HandleSubmissionError)
-                    }
+                      onFailure: () => send(HandleSubmissionError),
+                    },
                   )
-              )
+              ),
             ) :
             ReasonReact.Update({
               ...state,
               results,
               submitting: false,
-              submittedOnce: true
+              submittedOnce: true,
             });
         }
       | Reset => ReasonReact.Update(initialState |> getInitialState)
@@ -657,7 +665,7 @@ module Make = (Form: Config) => {
         submitting: state.submitting,
         change: (field, value) => Change((field, value)) |> send,
         blur: (field, value) => Blur((field, value)) |> send,
-        submit: (_) => Submit |> send
-      })
+        submit: (_) => Submit |> send,
+      }),
   };
 };

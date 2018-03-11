@@ -6,11 +6,11 @@ module SignupForm = {
   type state = {
     email: string,
     password: string,
-    passwordConfirmation: string
+    passwordConfirmation: string,
   };
   type message = string;
   let get = (field, state) =>
-    switch field {
+    switch (field) {
     | Email => state.email
     | Password => state.password
     | PasswordConfirmation => state.passwordConfirmation
@@ -19,14 +19,17 @@ module SignupForm = {
     switch (field, value) {
     | (Email, value) => {...state, email: value}
     | (Password, value) => {...state, password: value}
-    | (PasswordConfirmation, value) => {...state, passwordConfirmation: value}
+    | (PasswordConfirmation, value) => {
+        ...state,
+        passwordConfirmation: value,
+      }
     };
   let debounceInterval = Formality.debounceInterval;
   module Validators =
     Formality.MakeValidators(
       {
         type t = field;
-      }
+      },
     );
   type validators =
     Validators.t(Formality.asyncValidator(field, state, message));
@@ -40,7 +43,7 @@ module SignupForm = {
              dependents: None,
              validate: (value, _) => {
                let emailRegex = [%bs.re {|/.*@.*\..+/|}];
-               switch value {
+               switch (value) {
                | "" => Invalid("Email is required")
                | _ when ! (emailRegex |> Js.Re.test(value)) =>
                  Invalid("Email is invalid")
@@ -58,9 +61,9 @@ module SignupForm = {
                             resolve(Valid) :
                             resolve(Invalid("Email is already taken"))
                         )
-                   )
-               )
-           }
+                   ),
+               ),
+           },
          )
       |> Validators.add(
            Password,
@@ -69,15 +72,15 @@ module SignupForm = {
              dependents: Some([PasswordConfirmation]),
              validate: (value, _) => {
                let minLength = 4;
-               switch value {
+               switch (value) {
                | "" => Invalid("Password is required")
                | _ when String.length(value) < minLength =>
                  Invalid({j| $(minLength)+ characters, please|j})
                | _ => Valid
                };
              },
-             validateAsync: None
-           }
+             validateAsync: None,
+           },
          )
       |> Validators.add(
            PasswordConfirmation,
@@ -85,14 +88,14 @@ module SignupForm = {
              strategy: Strategy.OnFirstSuccessOrFirstBlur,
              dependents: None,
              validate: (value, state) =>
-               switch value {
+               switch (value) {
                | "" => Invalid("Confirmation is required")
                | _ when value !== state.password =>
                  Invalid("Password doesn't match")
                | _ => Valid
                },
-             validateAsync: None
-           }
+             validateAsync: None,
+           },
          )
     );
 };
@@ -112,7 +115,7 @@ let make = (_) => {
           Js.log2("Called with:", state);
           Js.log2(
             "If api returned error this callback should be called:",
-            notify.onFailure
+            notify.onFailure,
           );
           let _ = Js.Global.setTimeout(notify.onSuccess, 500);
           ();
@@ -150,7 +153,7 @@ let make = (_) => {
                    (
                      switch (
                        SignupForm.Email |> form.results,
-                       SignupForm.Email |> form.validating
+                       SignupForm.Email |> form.validating,
                      ) {
                      | (_, true) =>
                        <div className="form-message">
@@ -257,5 +260,5 @@ let make = (_) => {
                </div>
              </form>
          )
-    </SignupFormContainer>
+    </SignupFormContainer>,
 };

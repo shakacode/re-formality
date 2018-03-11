@@ -8,13 +8,13 @@ let validateEmail = value =>
         value !== takenEmail ?
           {
             Js.log("Remote validation succeeded");
-            [@bs] resolve(true);
+            resolve(. true);
           } :
           {
             Js.log("Remote validation failed");
-            [@bs] resolve(false);
+            resolve(. false);
           },
-      1500
+      1500,
     )
     |> ignore;
   });
