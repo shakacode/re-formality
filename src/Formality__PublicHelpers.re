@@ -1,3 +1,5 @@
+let emptyString = value => value === "";
+
 module Dom = {
   let valueOnChange = (handle, event) =>
     event |> ReactEventRe.Form.target |> Formality__Utils.targetValue |> handle;

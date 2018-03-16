@@ -2,6 +2,7 @@ module LoginForm = {
   type field =
     | Email
     | Password;
+  type value = string;
   type state = {
     email: string,
     password: string,
@@ -17,13 +18,15 @@ module LoginForm = {
     | (Email, value) => {...state, email: value}
     | (Password, value) => {...state, password: value}
     };
+  let valueEmpty = Formality.emptyString;
   module Validators =
     Formality.MakeValidators(
       {
         type t = field;
       },
     );
-  type validators = Validators.t(Formality.validator(field, state, message));
+  type validators =
+    Validators.t(Formality.validator(field, value, state, message));
   let validators =
     Formality.(
       Validators.empty

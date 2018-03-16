@@ -8,10 +8,12 @@ let defaultDebounceInterval = 700;
 
 module type Config = {
   type field;
+  type value;
   type state;
   type message;
-  let get: (field, state) => Validation.value;
-  let update: ((field, Validation.value), state) => state;
+  let get: (field, state) => value;
+  let update: ((field, value), state) => state;
+  let valueEmpty: value => bool;
   type validators;
   let validators: validators;
   let debounceInterval: int;
@@ -23,7 +25,8 @@ module type Config = {
       'a;
     let map:
       (
-        Validation.asyncValidator(field, state, message) => 'debouncedValidator,
+        Validation.asyncValidator(field, value, state, message) =>
+        'debouncedValidator,
         validators
       ) =>
       t('debouncedValidator);
@@ -75,26 +78,26 @@ module Make = (Form: Config) => {
     emittedFields: FieldsSet.t,
   };
   type action =
-    | Change((Form.field, Validation.value))
-    | Blur((Form.field, Validation.value))
+    | Change((Form.field, Form.value))
+    | Blur((Form.field, Form.value))
     | InvokeDebouncedAsyncValidation(
         Form.field,
-        Validation.value,
+        Form.value,
         (
           ~field: Form.field,
-          ~value: Validation.value,
+          ~value: Form.value,
           ReasonReact.self(state, ReasonReact.noRetainedProps, action)
         ) =>
         unit,
       )
     | TriggerAsyncValidation(
         Form.field,
-        Validation.value,
-        Validation.validateAsync(Form.message),
+        Form.value,
+        Validation.validateAsync(Form.value, Form.message),
       )
     | ApplyAsyncResult(
         Form.field,
-        Validation.value,
+        Form.value,
         Validation.validationResult(Form.message),
       )
     | Submit
@@ -105,8 +108,8 @@ module Make = (Form: Config) => {
     results: Form.field => option(Validation.validationResult(Form.message)),
     validating: Form.field => bool,
     submitting: bool,
-    change: (Form.field, Validation.value) => unit,
-    blur: (Form.field, Validation.value) => unit,
+    change: (Form.field, Form.value) => unit,
+    blur: (Form.field, Form.value) => unit,
     submit: unit => unit,
   };
   let getInitialState = data => {
@@ -172,12 +175,12 @@ module Make = (Form: Config) => {
   type debouncedValidator = {
     strategy: Strategy.t,
     dependents: option(list(Form.field)),
-    validate: Validation.validate(Form.state, Form.message),
+    validate: Validation.validate(Form.value, Form.state, Form.message),
     validateAsync:
       option(
         (
           ~field: Form.field,
-          ~value: Validation.value,
+          ~value: Form.value,
           ReasonReact.self(state, ReasonReact.noRetainedProps, action)
         ) =>
         unit,
@@ -223,7 +226,7 @@ module Make = (Form: Config) => {
                results'
                |> ResultsMap.add(
                     field',
-                    result |> Validation.resultToEmit(value),
+                    value |> Form.valueEmpty ? None : Some(result),
                   ),
                emittedFields' |> FieldsSet.add(field'),
              );
@@ -357,7 +360,7 @@ module Make = (Form: Config) => {
                     results
                     |> ResultsMap.add(
                          field,
-                         result |> Validation.resultToEmit(value),
+                         value |> Form.valueEmpty ? None : Some(result),
                        ),
                   emittedFields: emittedFields |> FieldsSet.add(field),
                 });
@@ -370,7 +373,7 @@ module Make = (Form: Config) => {
                     state.results
                     |> ResultsMap.add(
                          field,
-                         result |> Validation.resultToEmit(value),
+                         value |> Form.valueEmpty ? None : Some(result),
                        ),
                   emittedFields: state.emittedFields |> FieldsSet.add(field),
                 });
@@ -474,7 +477,8 @@ module Make = (Form: Config) => {
                              results
                              |> ResultsMap.add(
                                   field,
-                                  result |> Validation.resultToEmit(value),
+                                  value |> Form.valueEmpty ?
+                                    None : Some(result),
                                 ),
                            emittedFields:
                              emittedFields |> FieldsSet.add(field),
@@ -487,7 +491,8 @@ module Make = (Form: Config) => {
                              state.results
                              |> ResultsMap.add(
                                   field,
-                                  result |> Validation.resultToEmit(value),
+                                  value |> Form.valueEmpty ?
+                                    None : Some(result),
                                 ),
                            emittedFields:
                              state.emittedFields |> FieldsSet.add(field),
@@ -577,7 +582,7 @@ module Make = (Form: Config) => {
                   state.results
                   |> ResultsMap.add(
                        field,
-                       result |> Validation.resultToEmit(value),
+                       value |> Form.valueEmpty ? None : Some(result),
                      ),
                 emittedFields: state.emittedFields |> FieldsSet.add(field),
               });
@@ -640,7 +645,7 @@ module Make = (Form: Config) => {
                        results'
                        |> ResultsMap.add(
                             field',
-                            result |> Validation.resultToEmit(value),
+                            value |> Form.valueEmpty ? None : Some(result),
                           )
                      };
                    switch (valid', results |> ResultsMap.get(field')) {

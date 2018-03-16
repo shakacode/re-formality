@@ -38,6 +38,7 @@ module MyForm = {
   type field =
     | Email
     | Password;
+  type value = string;
   type state = {
     email: string,
     password: string
@@ -53,6 +54,7 @@ module MyForm = {
     | (Email, value) => {...state, email: value}
     | (Password, value) => {...state, password: value}
     };
+  let valueEmpty = value => value === "";
   let strategy = Formality.Strategy.OnFirstSuccessOrFirstBlur;
   module Validators = Formality.MakeValidators({type t = field;});
   type validators = Validators.t(Formality.validator(field, state, message));

@@ -1,3 +1,17 @@
+# 0.5.0
+
+## Improvements
+* **[ BREAKING ]** `value` is user-defined type (was `string`).
+
+In form config:
+
+```diff
++ type value = string;
++ let valueEmpty = value => value === "";
+/* or */
++ let valueEmpty = Formality.emptyString;
+```
+
 # 0.4.1
 
 ## Improvements
