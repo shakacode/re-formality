@@ -102,8 +102,18 @@ let make = (_) => {
                 <input
                   value=form.state.email
                   disabled=(form.submitting |> Js.Boolean.to_js_boolean)
-                  onChange=(MyForm.Email |> form.change |> Formality.Dom.valueOnChange)
-                  onBlur=(MyForm.Email |> form.blur |> Formality.Dom.valueOnBlur)
+                  onChange=(
+                    event =>
+                      event
+                      |> Formality.Dom.toValueOnChange
+                      |> form.change(MyForm.Email)
+                  )
+                  onBlur=(
+                    event =>
+                      event
+                      |> Formality.Dom.toValueOnBlur
+                      |> form.blur(MyForm.Email)
+                  )
                 />
                 (
                   switch (MyForm.Email |> form.results) {
@@ -118,8 +128,18 @@ let make = (_) => {
                 <input
                   value=form.state.password
                   disabled=(form.submitting |> Js.Boolean.to_js_boolean)
-                  onChange=(MyForm.Password |> form.change |> Formality.Dom.valueOnChange)
-                  onBlur=(MyForm.Password |> form.blur |> Formality.Dom.valueOnBlur)
+                  onChange=(
+                    event =>
+                      event
+                      |> Formality.Dom.toValueOnChange
+                      |> form.change(MyForm.Password)
+                  )
+                  onBlur=(
+                    event =>
+                      event
+                      |> Formality.Dom.toValueOnBlur
+                      |> form.blur(MyForm.Password)
+                  )
                 />
                 (
                   switch (MyForm.Password |> form.results) {

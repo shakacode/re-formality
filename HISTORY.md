@@ -12,6 +12,23 @@ In form config:
 + let valueEmpty = Formality.emptyString;
 ```
 
+* **[ BREAKING ]** `Formality.Dom.valueOnChange` replaced with `Formality.Dom.toValueOnChange` and `Formality.Dom.valueOnBlur` replaced with `Formality.Dom.toValueOnBlur` to make DOM helpers more composable with non-string `value`. Also, subjectively, handlers are more transparent this way.
+
+```diff
+- onChange=(
+-   LoginForm.Email
+-   |> form.change
+-   |> Formality.Dom.valueOnChange
+- )
+
++ onChange=(
++   event =>
++     event
++     |> Formality.Dom.toValueOnChange
++     |> form.change(LoginForm.Email)
++ )
+```
+
 # 0.4.1
 
 ## Improvements
