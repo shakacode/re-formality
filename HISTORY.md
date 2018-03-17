@@ -29,6 +29,9 @@ In form config:
 + )
 ```
 
+## Fixes
+* Fix regressions related to empty values validation on form submission
+
 # 0.4.1
 
 ## Improvements

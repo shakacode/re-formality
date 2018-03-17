@@ -64,7 +64,6 @@ module Make = (Form: Config) => {
       | exception Not_found => None
       };
   };
-  exception NoResultInResultsMapOnSubmit(Form.field);
   type state = {
     data: Form.state,
     results: ResultsMap.t,
@@ -516,19 +515,20 @@ module Make = (Form: Config) => {
                        validator'.validateAsync,
                      ) {
                      | (true, Validation.Valid, Some(_)) => results'
-                     | (_, _, _) =>
+                     | (_, Validation.Valid, _) =>
                        results'
                        |> ResultsMap.add(
                             field',
                             value |> Form.valueEmpty ? None : Some(result),
                           )
+                     | (_, _, _) =>
+                       results' |> ResultsMap.add(field', Some(result))
                      };
                    switch (valid', results |> ResultsMap.get(field')) {
                    | (false, _)
                    | (true, Some(Validation.Invalid(_))) => (false, results)
-                   | (true, Some(Validation.Valid)) => (true, results)
-                   | (_, None) =>
-                     raise(NoResultInResultsMapOnSubmit(field'))
+                   | (true, Some(Validation.Valid))
+                   | (_, None) => (true, results)
                    };
                  },
                  Form.validators,

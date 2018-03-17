@@ -279,11 +279,16 @@ module Make = (Form: Config) => {
                  let value = state.data |> Form.get(field');
                  let result = state.data |> validator'.validate(value);
                  let results =
-                   results'
-                   |> ResultsMap.add(
-                        field',
-                        value |> Form.valueEmpty ? None : Some(result),
-                      );
+                   switch (result) {
+                   | Validation.Valid =>
+                     results'
+                     |> ResultsMap.add(
+                          field',
+                          value |> Form.valueEmpty ? None : Some(result),
+                        )
+                   | Validation.Invalid(_) =>
+                     results' |> ResultsMap.add(field', Some(result))
+                   };
                  switch (valid', result) {
                  | (false, _)
                  | (true, Validation.Invalid(_)) => (false, results)
