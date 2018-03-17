@@ -3,6 +3,7 @@ module SignupForm = {
     | Email
     | Password
     | PasswordConfirmation;
+  type value = string;
   type state = {
     email: string,
     password: string,
@@ -24,6 +25,7 @@ module SignupForm = {
         passwordConfirmation: value,
       }
     };
+  let valueEmpty = Formality.emptyString;
   let debounceInterval = Formality.debounceInterval;
   module Validators =
     Formality.MakeValidators(
@@ -32,7 +34,7 @@ module SignupForm = {
       },
     );
   type validators =
-    Validators.t(Formality.asyncValidator(field, state, message));
+    Validators.t(Formality.asyncValidator(field, value, state, message));
   let validators =
     Formality.(
       Validators.empty
@@ -140,14 +142,16 @@ let make = (_) => {
                      value=form.state.email
                      disabled=(form.submitting |> Js.Boolean.to_js_boolean)
                      onChange=(
-                       SignupForm.Email
-                       |> form.change
-                       |> Formality.Dom.valueOnChange
+                       event =>
+                         event
+                         |> Formality.Dom.toValueOnChange
+                         |> form.change(SignupForm.Email)
                      )
                      onBlur=(
-                       SignupForm.Email
-                       |> form.blur
-                       |> Formality.Dom.valueOnBlur
+                       event =>
+                         event
+                         |> Formality.Dom.toValueOnBlur
+                         |> form.blur(SignupForm.Email)
                      )
                    />
                    (
@@ -188,14 +192,16 @@ let make = (_) => {
                      value=form.state.password
                      disabled=(form.submitting |> Js.Boolean.to_js_boolean)
                      onChange=(
-                       SignupForm.Password
-                       |> form.change
-                       |> Formality.Dom.valueOnChange
+                       event =>
+                         event
+                         |> Formality.Dom.toValueOnChange
+                         |> form.change(SignupForm.Password)
                      )
                      onBlur=(
-                       SignupForm.Password
-                       |> form.blur
-                       |> Formality.Dom.valueOnBlur
+                       event =>
+                         event
+                         |> Formality.Dom.toValueOnBlur
+                         |> form.blur(SignupForm.Password)
                      )
                    />
                    (
@@ -223,14 +229,16 @@ let make = (_) => {
                      value=form.state.passwordConfirmation
                      disabled=(form.submitting |> Js.Boolean.to_js_boolean)
                      onChange=(
-                       SignupForm.PasswordConfirmation
-                       |> form.change
-                       |> Formality.Dom.valueOnChange
+                       event =>
+                         event
+                         |> Formality.Dom.toValueOnChange
+                         |> form.change(SignupForm.PasswordConfirmation)
                      )
                      onBlur=(
-                       SignupForm.PasswordConfirmation
-                       |> form.blur
-                       |> Formality.Dom.valueOnBlur
+                       event =>
+                         event
+                         |> Formality.Dom.toValueOnBlur
+                         |> form.blur(SignupForm.PasswordConfirmation)
                      )
                    />
                    (

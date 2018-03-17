@@ -2,6 +2,7 @@ module LoginForm = {
   type field =
     | Email
     | Password;
+  type value = string;
   type state = {
     email: string,
     password: string,
@@ -17,13 +18,15 @@ module LoginForm = {
     | (Email, value) => {...state, email: value}
     | (Password, value) => {...state, password: value}
     };
+  let valueEmpty = Formality.emptyString;
   module Validators =
     Formality.MakeValidators(
       {
         type t = field;
       },
     );
-  type validators = Validators.t(Formality.validator(field, state, message));
+  type validators =
+    Validators.t(Formality.validator(field, value, state, message));
   let validators =
     Formality.(
       Validators.empty
@@ -97,14 +100,16 @@ let make = (_) => {
                      value=form.state.email
                      disabled=(form.submitting |> Js.Boolean.to_js_boolean)
                      onChange=(
-                       LoginForm.Email
-                       |> form.change
-                       |> Formality.Dom.valueOnChange
+                       event =>
+                         event
+                         |> Formality.Dom.toValueOnChange
+                         |> form.change(LoginForm.Email)
                      )
                      onBlur=(
-                       LoginForm.Email
-                       |> form.blur
-                       |> Formality.Dom.valueOnBlur
+                       event =>
+                         event
+                         |> Formality.Dom.toValueOnBlur
+                         |> form.blur(LoginForm.Email)
                      )
                    />
                    (
@@ -130,14 +135,16 @@ let make = (_) => {
                      value=form.state.password
                      disabled=(form.submitting |> Js.Boolean.to_js_boolean)
                      onChange=(
-                       LoginForm.Password
-                       |> form.change
-                       |> Formality.Dom.valueOnChange
+                       event =>
+                         event
+                         |> Formality.Dom.toValueOnChange
+                         |> form.change(LoginForm.Password)
                      )
                      onBlur=(
-                       LoginForm.Password
-                       |> form.blur
-                       |> Formality.Dom.valueOnBlur
+                       event =>
+                         event
+                         |> Formality.Dom.toValueOnBlur
+                         |> form.blur(LoginForm.Password)
                      )
                    />
                    (

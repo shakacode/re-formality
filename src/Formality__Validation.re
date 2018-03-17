@@ -1,27 +1,24 @@
-/* TODO: Make variant? */
-type value = string;
-
 type validationResult('message) =
   | Valid
   | Invalid('message);
 
-type validate('state, 'message) =
-  (value, 'state) => validationResult('message);
+type validate('value, 'state, 'message) =
+  ('value, 'state) => validationResult('message);
 
-type validateAsync('message) =
-  value => Js.Promise.t(validationResult('message));
+type validateAsync('value, 'message) =
+  'value => Js.Promise.t(validationResult('message));
 
-type validator('field, 'state, 'message) = {
+type validator('field, 'value, 'state, 'message) = {
   strategy: Formality__Strategy.t,
   dependents: option(list('field)),
-  validate: validate('state, 'message),
+  validate: validate('value, 'state, 'message),
 };
 
-type asyncValidator('field, 'state, 'message) = {
+type asyncValidator('field, 'value, 'state, 'message) = {
   strategy: Formality__Strategy.t,
   dependents: option(list('field)),
-  validate: validate('state, 'message),
-  validateAsync: option(validateAsync('message)),
+  validate: validate('value, 'state, 'message),
+  validateAsync: option(validateAsync('value, 'message)),
 };
 
 module type ValidatorsConfig = {type t;};
@@ -43,11 +40,4 @@ let ifResult = (~valid, ~invalid, result) =>
   switch (result) {
   | Valid => result |> valid
   | Invalid(_) => result |> invalid
-  };
-
-let resultToEmit = (value, result) =>
-  switch (result, value) {
-  | (Valid, "") => None
-  | (Valid, _)
-  | (Invalid(_), _) => Some(result)
   };
