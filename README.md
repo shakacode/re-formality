@@ -57,7 +57,7 @@ module MyForm = {
   let valueEmpty = value => value === "";
   let strategy = Formality.Strategy.OnFirstSuccessOrFirstBlur;
   module Validators = Formality.MakeValidators({type t = field;});
-  type validators = Validators.t(Formality.validator(field, state, message));
+  type validators = Validators.t(Formality.validator(field, value, state, message));
   let validators = Formality.(
     Validators.empty
     |> Validators.add(Email, {
