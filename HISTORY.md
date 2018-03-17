@@ -1,3 +1,8 @@
+# 0.6.0
+
+## Chore
+* `bs-platform@^2.2.2` is added to `peerDependencies`.
+
 # 0.5.0
 
 ## Improvements
@@ -31,6 +36,9 @@ In form config:
 
 ## Fixes
 * Fix regressions related to empty values validation on form submission
+
+## Chore
+* `bs-platform` updated to `2.2.2`.
 
 # 0.4.1
 

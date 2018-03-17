@@ -32,7 +32,8 @@
     "url": "https://github.com/alexfedoseev/re-formality.git"
   },
   "peerDependencies": {
-    "reason-react": "^0.3.0"
+    "reason-react": "^0.3.0",
+    "bs-platform": "^2.2.2"
   },
   "devDependencies": {
     "bs-platform": "2.2.2",
