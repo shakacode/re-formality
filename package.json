@@ -6,14 +6,14 @@
   "author": "Alex Fedoseev <alex.fedoseev@gmail.com>",
   "license": "MIT",
   "scripts": {
-    "bs:watch": "bsb -clean-world -make-world -w",
-    "wp:watch": "webpack -w",
+    "start": "bsb -clean-world -make-world && webpack --watch",
     "build": "bsb -clean-world -make-world && webpack --optimize-minimize",
     "clean": "bsb -clean-world && rm -rf build examples/build",
-    "preversion": "yarn run clean",
-    "predeploy": "yarn run clean && mkdir build && yarn run build && cp -R examples/{index.html,index.css,build} build/",
+    "test": "exit 0",
+    "refmt": "find -E . -regex '.+\\.rei?' -exec refmt --in-place {} \\;",
     "deploy": "now deploy build --public",
-    "test": "exit 0"
+    "preversion": "yarn run clean && yarn run refmt",
+    "predeploy": "yarn run clean && mkdir build && yarn run build && cp -R examples/{index.html,index.css,build} build/"
   },
   "files": [
     "src",
