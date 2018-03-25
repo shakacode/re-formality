@@ -2,6 +2,8 @@ module Validation = Formality__Validation;
 
 module Strategy = Formality__Strategy;
 
+module FormStatus = Formality__FormStatus;
+
 module Utils = Formality__Utils;
 
 module type Config = {
@@ -64,8 +66,8 @@ module Make = (Form: Config) => {
   };
   type state = {
     data: Form.state,
+    status: FormStatus.t(Form.field, Form.message),
     results: ResultsMap.t,
-    submitting: bool,
     submittedOnce: bool,
     emittedFields: FieldsSet.t,
   };
@@ -73,10 +75,15 @@ module Make = (Form: Config) => {
     | Change((Form.field, Form.value))
     | Blur((Form.field, Form.value))
     | Submit
-    | Reset
-    | HandleSubmissionError;
+    | SetSubmittedStatus(option(Form.state))
+    | SetSubmissionFailedStatus(
+        list((Form.field, Form.message)),
+        option(Form.message),
+      )
+    | Reset;
   type interface = {
     state: Form.state,
+    status: FormStatus.t(Form.field, Form.message),
     results: Form.field => option(Validation.validationResult(Form.message)),
     submitting: bool,
     change: (Form.field, Form.value) => unit,
@@ -85,8 +92,8 @@ module Make = (Form: Config) => {
   };
   let getInitialState = data => {
     data,
+    status: FormStatus.Editing,
     results: ResultsMap.empty,
-    submitting: false,
     submittedOnce: false,
     emittedFields: FieldsSet.empty,
   };
@@ -123,7 +130,16 @@ module Make = (Form: Config) => {
   let make =
       (
         ~initialState: Form.state,
-        ~onSubmit: (Form.state, Validation.notifiers) => unit,
+        ~onSubmit:
+           (
+             Form.state,
+             Validation.submissionCallbacks(
+               Form.field,
+               Form.state,
+               Form.message,
+             )
+           ) =>
+           unit,
         children,
       ) => {
     ...component,
@@ -299,14 +315,25 @@ module Make = (Form: Config) => {
              );
         valid ?
           ReasonReact.UpdateWithSideEffects(
-            {...state, results, submitting: true, submittedOnce: true},
+            {
+              ...state,
+              results,
+              status: FormStatus.Submitting,
+              submittedOnce: true,
+            },
             (
               ({state, send}) =>
                 onSubmit(
                   state.data,
                   {
-                    onSuccess: () => Reset |> send,
-                    onFailure: () => HandleSubmissionError |> send,
+                    notifyOnSuccess: data => SetSubmittedStatus(data) |> send,
+                    notifyOnFailure: (fieldLevelErrors, serverMessage) =>
+                      SetSubmissionFailedStatus(
+                        fieldLevelErrors,
+                        serverMessage,
+                      )
+                      |> send,
+                    reset: () => Reset |> send,
                   },
                 )
             ),
@@ -314,18 +341,29 @@ module Make = (Form: Config) => {
           ReasonReact.Update({
             ...state,
             results,
-            submitting: false,
+            status: FormStatus.Editing,
             submittedOnce: true,
           });
+      | SetSubmittedStatus(data) =>
+        switch (data) {
+        | Some(data) =>
+          ReasonReact.Update({...state, data, status: FormStatus.Submitted})
+        | None => ReasonReact.Update({...state, status: FormStatus.Submitted})
+        }
+      | SetSubmissionFailedStatus(fieldLevelErrors, serverMessage) =>
+        ReasonReact.Update({
+          ...state,
+          status:
+            FormStatus.SubmissionFailed(fieldLevelErrors, serverMessage),
+        })
       | Reset => ReasonReact.Update(initialState |> getInitialState)
-      | HandleSubmissionError =>
-        ReasonReact.Update({...state, submitting: false})
       },
     render: ({state, send}) =>
       children({
         state: state.data,
+        status: state.status,
         results: field => state.results |> ResultsMap.get(field),
-        submitting: state.submitting,
+        submitting: state.status === FormStatus.Submitting,
         change: (field, value) => Change((field, value)) |> send,
         blur: (field, value) => Blur((field, value)) |> send,
         submit: () => Submit |> send,

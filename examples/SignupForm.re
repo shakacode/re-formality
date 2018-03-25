@@ -113,14 +113,16 @@ let make = (_) => {
     <SignupFormContainer
       initialState={email: "", password: "", passwordConfirmation: ""}
       onSubmit=(
-        (state, notify) => {
+        (state, form) => {
           Js.log2("Called with:", state);
-          Js.log2(
-            "If api returned error this callback should be called:",
-            notify.onFailure,
-          );
-          let _ = Js.Global.setTimeout(notify.onSuccess, 500);
-          ();
+          Js.Global.setTimeout(
+            () => {
+              form.notifyOnSuccess(None);
+              Js.Global.setTimeout(form.reset, 3000) |> ignore;
+            },
+            500,
+          )
+          |> ignore;
         }
       )>
       ...(
@@ -264,6 +266,15 @@ let make = (_) => {
                        |> ReasonReact.stringToElement
                      )
                    </button>
+                   (
+                     switch (form.status) {
+                     | Formality.FormStatus.Submitted =>
+                       <div className=(Cn.make(["form-status", "success"]))>
+                         ({j|✓ Signed Up|j} |> ReasonReact.stringToElement)
+                       </div>
+                     | _ => ReasonReact.nullElement
+                     }
+                   )
                  </div>
                </div>
              </form>

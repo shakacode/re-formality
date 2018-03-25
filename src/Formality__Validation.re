@@ -21,6 +21,12 @@ type asyncValidator('field, 'value, 'state, 'message) = {
   validateAsync: option(validateAsync('value, 'message)),
 };
 
+type submissionCallbacks('field, 'state, 'message) = {
+  notifyOnSuccess: option('state) => unit,
+  notifyOnFailure: (list(('field, 'message)), option('message)) => unit,
+  reset: unit => unit,
+};
+
 module type ValidatorsConfig = {type t;};
 
 module MakeValidators = (Config: ValidatorsConfig) =>
@@ -30,11 +36,6 @@ module MakeValidators = (Config: ValidatorsConfig) =>
       let compare = Formality__Utils.comparator;
     },
   );
-
-type notifiers = {
-  onSuccess: unit => unit,
-  onFailure: unit => unit /* TODO: notifiers.onFailure should accept errors */
-};
 
 let ifResult = (~valid, ~invalid, result) =>
   switch (result) {

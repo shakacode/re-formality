@@ -1,3 +1,49 @@
+# 0.7.0
+
+## Features
+* Form `status` is added.
+
+```reason
+type t('field, 'message) =
+  | Editing
+  | Submitting
+  | Submitted
+  | SubmissionFailed(list(('field, 'message)), option('message));
+```
+
+You can access this type via `Formality.FormStatus` module.
+
+Current `status` is exposed via `form` argument of the `children` function. `form.submitting` is kept for convenience.
+
+* **[ BREAKING ]** `onSubmit` handler is changed.
+
+Submission callbacks:
+
+```diff
+- type notifiers = {
+-   onSuccess: unit => unit,
+-   onFailure: unit => unit,
+- };
+
++ type submissionCallbacks('field, 'state, 'message) = {
++   notifyOnSuccess: option('state) => unit,
++   notifyOnFailure: (list(('field, 'message)), option('message)) => unit,
++   reset: unit => unit,
++ };
+```
+
+`onSubmit` prop:
+
+```diff
+- onSubmit=((state, {onSuccess, onFailure}) => ...)
++ onSubmit=((state, {notifyOnSuccess, notifyOnFailure, reset}) => ...)
+```
+
+Previously, if `onSuccess` was called, form was reset. Now, each callback sets appropriate form `status`, or you can explicitly `reset` a form. Also with this change, you can store errors returned from a server in form status `SubmissionFailed(list(('field, 'message)), option('message))` and render them in UI.
+
+## Chore
+* `bs-platform` is updated to `2.2.3`.
+
 # 0.6.0
 
 ## Chore
@@ -5,7 +51,7 @@
 
 # 0.5.0
 
-## Improvements
+## Features
 * **[ BREAKING ]** `value` is user-defined type (was `string`).
 
 In form config:
