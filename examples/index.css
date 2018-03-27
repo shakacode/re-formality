@@ -189,19 +189,25 @@ button:disabled {
   color: #777;
 }
 
-.form-message {
-  margin-left: 40px;
+.form-message,
+.form-status {
   font-size: 14px;
 }
 
-.form-message.success {
+.form-message {
+  margin-left: 40px;
+}
+
+.form-status {
+  margin-left: 20px;
+}
+
+.form-message.success,
+.form-status.success {
   color: green;
 }
 
-.form-message.weak {
-  color: #b3a709;
-}
-
-.form-message.failure {
+.form-message.failure,
+.form-status.failure {
   color: red;
 }

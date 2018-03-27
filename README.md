@@ -90,8 +90,8 @@ let make = (_) => {
   render: (_) =>
     <FormContainer
       initialState={email: "", password: ""}
-      onSubmit=((state, notify) => {
-        /* Submit form and either notify.onSuccess / notify.onFailure */
+      onSubmit=((state, {notifyOnSuccess, notifyOnFailure, reset}) => {
+        /* Submit form and either notifyOnSuccess / notifyOnFailure / reset */
       })
     >
       ...(

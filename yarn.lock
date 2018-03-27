@@ -248,9 +248,9 @@ browserify-zlib@^0.2.0:
   dependencies:
     pako "~1.0.5"
 
-bs-platform@2.2.2:
-  version "2.2.2"
-  resolved "https://registry.yarnpkg.com/bs-platform/-/bs-platform-2.2.2.tgz#95ff37719771bbf310e8376fedd1148865c0da19"
+bs-platform@2.2.3:
+  version "2.2.3"
+  resolved "https://registry.yarnpkg.com/bs-platform/-/bs-platform-2.2.3.tgz#d905ae10a5f3621e6a739041dfa0b58483a2174f"
 
 buffer-xor@^1.0.3:
   version "1.0.3"
@@ -1564,9 +1564,9 @@ rc@^1.1.7:
     minimist "^1.2.0"
     strip-json-comments "~2.0.1"
 
-re-classnames@0.0.3:
-  version "0.0.3"
-  resolved "https://registry.yarnpkg.com/re-classnames/-/re-classnames-0.0.3.tgz#991511e847a3d9ce38bddeadc28f74e2b0333979"
+re-classnames@1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/re-classnames/-/re-classnames-1.0.0.tgz#5bb1f068ccb066e932cb79944437b8ba8372a028"
 
 "react-dom@>=15.0.0 || >=16.0.0":
   version "16.2.0"
