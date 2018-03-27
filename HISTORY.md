@@ -1,3 +1,9 @@
+# 0.7.1
+
+## Improvements
+* Added interface file.
+* Added docs.
+
 # 0.7.0
 
 ## Features
