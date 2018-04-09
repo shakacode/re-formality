@@ -19,10 +19,12 @@ module LoginForm = {
     | (Password, value) => {...state, password: value}
     };
   let valueEmpty = Formality.emptyString;
+  let comparator = Pervasives.compare;
   module Validators =
     Formality.MakeValidators(
       {
         type t = field;
+        let comparator = Pervasives.compare;
       },
     );
   type validators =

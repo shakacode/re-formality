@@ -14,6 +14,7 @@ module type Config = {
   let get: (field, state) => value;
   let update: ((field, value), state) => state;
   let valueEmpty: value => bool;
+  let comparator: (field, field) => int;
   type validators;
   let validators: validators;
   module Validators: {
@@ -35,7 +36,7 @@ module Make = (Form: Config) => {
     Set.Make(
       {
         type t = Form.field;
-        let compare = Utils.comparator;
+        let compare = Form.comparator;
       },
     );
   module FieldsSet = {
@@ -49,7 +50,7 @@ module Make = (Form: Config) => {
     Map.Make(
       {
         type t = Form.field;
-        let compare = Utils.comparator;
+        let compare = Form.comparator;
       },
     );
   module ResultsMap = {

@@ -122,8 +122,12 @@ module MyForm = {
     | (Password, value) => {...state, password: value}
     };
   let valueEmpty = value => value === "";
+  let comparator = Pervasives.compare;
   let strategy = Formality.Strategy.OnFirstSuccessOrFirstBlur;
-  module Validators = Formality.MakeValidators({type t = field;});
+  module Validators = Formality.MakeValidators({
+    type t = field;
+    let comparator = Pervasives.compare;
+  });
   type validators = Validators.t(Formality.validator(field, value, state, message));
   let validators = Formality.(
     Validators.empty
@@ -328,6 +332,24 @@ For convenience, `Formality` exposes helper for the most common case:
 let valueEmpty = Formality.emptyString;
 ```
 
+#### `let comparator: (field, field) => int`
+This is required. `Pervasives.compare` would fit for most common case:
+
+```reason
+let comparator = Pervasives.compare;
+```
+
+You might need to provide custom implementation, for example:
+
+```reason
+type field = (int, int);
+let comparator = ((x0, y0), (x1, y1)) =>
+  switch (Pervasives.compare(x0, x1)) {
+  | 0 => Pervasives.compare(y0, y1)
+  | c => c
+  };
+```
+
 #### `module Validators`
 This is a module that will be populated with fields validators. Under the hood, this is `Map` where a key is of `field` type and a value is of `validator` type (see details below).
 
@@ -336,6 +358,7 @@ Same boilerplate for all forms:
 ```reason
 module Validators = Formality.MakeValidators({
   type t = field;
+  let comparator = Pervasives.compare;
 });
 ```
 

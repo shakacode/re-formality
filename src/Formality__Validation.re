@@ -27,13 +27,13 @@ type submissionCallbacks('field, 'state, 'message) = {
   reset: unit => unit,
 };
 
-module type ValidatorsConfig = {type t;};
+module type ValidatorsConfig = {type t; let comparator: (t, t) => int;};
 
 module MakeValidators = (Config: ValidatorsConfig) =>
   Map.Make(
     {
       type t = Config.t;
-      let compare = Formality__Utils.comparator;
+      let compare = Config.comparator;
     },
   );
 
