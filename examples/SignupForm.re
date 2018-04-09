@@ -26,11 +26,13 @@ module SignupForm = {
       }
     };
   let valueEmpty = Formality.emptyString;
+  let comparator = Pervasives.compare;
   let debounceInterval = Formality.debounceInterval;
   module Validators =
     Formality.MakeValidators(
       {
         type t = field;
+        let comparator = Pervasives.compare;
       },
     );
   type validators =
