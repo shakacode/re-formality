@@ -1,4 +1,4 @@
-let emptyString = value => value === "";
+let emptyString = value => value == "";
 
 module Dom = {
   let targetValue = element : string => (element |> ReactDOMRe.domElementToObj)##value;
