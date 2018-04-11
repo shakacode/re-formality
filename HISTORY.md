@@ -1,3 +1,9 @@
+# 0.7.2
+
+## Fixes
+* Fixed Map comparator. Thanks **[@jihchi](https://github.com/jihchi)**!
+* Fixed equality check in empty string helper. Thanks **[@rauanmayemir](https://github.com/rauanmayemir)**!
+
 # 0.7.1
 
 ## Improvements
