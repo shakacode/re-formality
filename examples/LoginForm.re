@@ -100,7 +100,7 @@ let make = (_) => {
                    <input
                      id="login--email"
                      value=form.state.email
-                     disabled=(form.submitting |> Js.Boolean.to_js_boolean)
+                     disabled=form.submitting
                      onChange=(
                        event =>
                          event
@@ -135,7 +135,7 @@ let make = (_) => {
                    <input
                      id="login--password"
                      value=form.state.password
-                     disabled=(form.submitting |> Js.Boolean.to_js_boolean)
+                     disabled=form.submitting
                      onChange=(
                        event =>
                          event
@@ -164,9 +164,7 @@ let make = (_) => {
                    )
                  </div>
                  <div className="form-row">
-                   <button
-                     className="push-lg"
-                     disabled=(form.submitting |> Js.Boolean.to_js_boolean)>
+                   <button className="push-lg" disabled=form.submitting>
                      (
                        (form.submitting ? "Submitting..." : "Submit")
                        |> ReasonReact.stringToElement
