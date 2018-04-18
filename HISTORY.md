@@ -1,3 +1,8 @@
+# 0.8.0
+
+## Chore
+* `bs-platform` updated to `3.0.0`. Thanks **[@jihchi](https://github.com/jihchi)**!
+
 # 0.7.2
 
 ## Fixes
