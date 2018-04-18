@@ -1564,9 +1564,9 @@ rc@^1.1.7:
     minimist "^1.2.0"
     strip-json-comments "~2.0.1"
 
-re-classnames@1.0.0:
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/re-classnames/-/re-classnames-1.0.0.tgz#5bb1f068ccb066e932cb79944437b8ba8372a028"
+re-classnames@1.1.0:
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/re-classnames/-/re-classnames-1.1.0.tgz#cc09b24918c0e339613f0177ebe44fb53c420c8c"
 
 "react-dom@>=15.0.0 || >=16.0.0":
   version "16.2.0"
