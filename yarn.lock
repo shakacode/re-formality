@@ -248,9 +248,9 @@ browserify-zlib@^0.2.0:
   dependencies:
     pako "~1.0.5"
 
-bs-platform@2.2.3:
-  version "2.2.3"
-  resolved "https://registry.yarnpkg.com/bs-platform/-/bs-platform-2.2.3.tgz#d905ae10a5f3621e6a739041dfa0b58483a2174f"
+bs-platform@^3.0.0:
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/bs-platform/-/bs-platform-3.0.0.tgz#38f200730db52fdea37819376b6ac3dfb20244c0"
 
 buffer-xor@^1.0.3:
   version "1.0.3"
