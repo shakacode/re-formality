@@ -531,7 +531,7 @@ When you deal with DOM you can use exposed helpers to extract string value from 
 ```reason
 <input
   value=form.state.email
-  disabled=(form.submitting |> Js.Boolean.to_js_boolean)
+  disabled=form.submitting
   onChange=(
     event =>
       event
