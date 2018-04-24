@@ -118,7 +118,10 @@ module Make = (Form: Config) => {
                results'
                |> ResultsMap.add(
                     field',
-                    value |> Form.valueEmpty ? None : Some(result),
+                    switch (result, value |> Form.valueEmpty) {
+                    | (Valid, true) => None
+                    | _ => Some(result)
+                    },
                   ),
                emittedFields' |> FieldsSet.add(field'),
              );
@@ -173,7 +176,10 @@ module Make = (Form: Config) => {
                   results
                   |> ResultsMap.add(
                        field,
-                       value |> Form.valueEmpty ? None : Some(result),
+                       switch (result, value |> Form.valueEmpty) {
+                       | (Valid, true) => None
+                       | _ => Some(result)
+                       },
                      ),
                 emittedFields: emittedFields |> FieldsSet.add(field),
               });
@@ -186,7 +192,10 @@ module Make = (Form: Config) => {
                   state.results
                   |> ResultsMap.add(
                        field,
-                       value |> Form.valueEmpty ? None : Some(result),
+                       switch (result, value |> Form.valueEmpty) {
+                       | (Valid, true) => None
+                       | _ => Some(result)
+                       },
                      ),
                 emittedFields: state.emittedFields |> FieldsSet.add(field),
               });
@@ -281,7 +290,10 @@ module Make = (Form: Config) => {
                 state.results
                 |> ResultsMap.add(
                      field,
-                     value |> Form.valueEmpty ? None : Some(result),
+                     switch (result, value |> Form.valueEmpty) {
+                     | (Valid, true) => None
+                     | _ => Some(result)
+                     },
                    ),
               emittedFields: state.emittedFields |> FieldsSet.add(field),
             });
@@ -296,19 +308,19 @@ module Make = (Form: Config) => {
                  let result = state.data |> validator'.validate(value);
                  let results =
                    switch (result) {
-                   | Validation.Valid =>
+                   | Valid =>
                      results'
                      |> ResultsMap.add(
                           field',
                           value |> Form.valueEmpty ? None : Some(result),
                         )
-                   | Validation.Invalid(_) =>
+                   | Invalid(_) =>
                      results' |> ResultsMap.add(field', Some(result))
                    };
                  switch (valid', result) {
                  | (false, _)
-                 | (true, Validation.Invalid(_)) => (false, results)
-                 | (true, Validation.Valid) => (true, results)
+                 | (true, Invalid(_)) => (false, results)
+                 | (true, Valid) => (true, results)
                  };
                },
                Form.validators,

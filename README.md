@@ -168,7 +168,7 @@ let make = (_) => {
                 onSubmit=(form.submit |> Formality.Dom.preventDefault)>
                 <input
                   value=form.state.email
-                  disabled=(form.submitting |> Js.Boolean.to_js_boolean)
+                  disabled=form.submitting
                   onChange=(
                     event =>
                       event
@@ -194,7 +194,7 @@ let make = (_) => {
                 )
                 <input
                   value=form.state.password
-                  disabled=(form.submitting |> Js.Boolean.to_js_boolean)
+                  disabled=form.submitting
                   onChange=(
                     event =>
                       event
@@ -218,7 +218,7 @@ let make = (_) => {
                   | None => ReasonReact.nullElement
                   }
                 )
-                <button disabled=(form.submitting |> Js.Boolean.to_js_boolean)>
+                <button disabled=form.submitting>
                   ((form.submitting ? "Submitting..." : "Submit") |> ReasonReact.stringToElement)
                 </button>
               </form>

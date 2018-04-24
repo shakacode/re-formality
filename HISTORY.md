@@ -1,3 +1,8 @@
+# 0.8.1
+
+## Fixes
+* Fixed emitting of invalid result when value is empty.
+
 # 0.8.0
 
 ## Chore

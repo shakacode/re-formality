@@ -133,7 +133,10 @@ module Make = (Form: Config) => {
                results'
                |> ResultsMap.add(
                     field',
-                    value |> Form.valueEmpty ? None : Some(result),
+                    switch (result, value |> Form.valueEmpty) {
+                    | (Valid, true) => None
+                    | _ => Some(result)
+                    },
                   ),
                emittedFields' |> FieldsSet.add(field'),
              );
@@ -206,7 +209,7 @@ module Make = (Form: Config) => {
                              emittedFields |> FieldsSet.add(field),
                          }),
                    );
-              | None /* validateAsync: Some -> validator.dependents: None */ =>
+              | None =>
                 data
                 |> validator.validate(value)
                 |> Validation.ifResult(
@@ -233,7 +236,7 @@ module Make = (Form: Config) => {
                          }),
                    )
               }
-            | None /* validateAsync: None */ =>
+            | None =>
               switch (validator.dependents) {
               | Some(dependents) =>
                 let result = data |> validator.validate(value);
@@ -251,11 +254,14 @@ module Make = (Form: Config) => {
                     results
                     |> ResultsMap.add(
                          field,
-                         value |> Form.valueEmpty ? None : Some(result),
+                         switch (result, value |> Form.valueEmpty) {
+                         | (Valid, true) => None
+                         | _ => Some(result)
+                         },
                        ),
                   emittedFields: emittedFields |> FieldsSet.add(field),
                 });
-              | None /* validateAsync: None -> validator.dependents: None */ =>
+              | None =>
                 let result = data |> validator.validate(value);
                 ReasonReact.Update({
                   ...state,
@@ -264,7 +270,10 @@ module Make = (Form: Config) => {
                     state.results
                     |> ResultsMap.add(
                          field,
-                         value |> Form.valueEmpty ? None : Some(result),
+                         switch (result, value |> Form.valueEmpty) {
+                         | (Valid, true) => None
+                         | _ => Some(result)
+                         },
                        ),
                   emittedFields: state.emittedFields |> FieldsSet.add(field),
                 });
@@ -306,7 +315,7 @@ module Make = (Form: Config) => {
                            emittedFields,
                          }),
                    );
-              | None /* validateAsync: Some -> validator.dependents: None */ =>
+              | None =>
                 data
                 |> validator.validate(value)
                 |> Validation.ifResult(
@@ -321,7 +330,7 @@ module Make = (Form: Config) => {
                      ~invalid=(_) => ReasonReact.Update({...state, data}),
                    )
               }
-            | None /* validateAsync: None */ =>
+            | None =>
               data
               |> validator.validate(value)
               |> Validation.ifResult(
@@ -476,7 +485,10 @@ module Make = (Form: Config) => {
                   state.results
                   |> ResultsMap.add(
                        field,
-                       value |> Form.valueEmpty ? None : Some(result),
+                       switch (result, value |> Form.valueEmpty) {
+                       | (Valid, true) => None
+                       | _ => Some(result)
+                       },
                      ),
                 emittedFields: state.emittedFields |> FieldsSet.add(field),
               });
@@ -519,8 +531,8 @@ module Make = (Form: Config) => {
                    let value = state.data |> Form.get(field');
                    let currentResultInvalid =
                      switch (results' |> ResultsMap.get(field')) {
-                     | Some(Validation.Invalid(_)) => true
-                     | Some(Validation.Valid) => false
+                     | Some(Invalid(_)) => true
+                     | Some(Valid) => false
                      | None => false
                      };
                    let result = state.data |> validator'.validate(value);
@@ -530,8 +542,8 @@ module Make = (Form: Config) => {
                        result,
                        validator'.validateAsync,
                      ) {
-                     | (true, Validation.Valid, Some(_)) => results'
-                     | (_, Validation.Valid, _) =>
+                     | (true, Valid, Some(_)) => results'
+                     | (_, Valid, _) =>
                        results'
                        |> ResultsMap.add(
                             field',
@@ -542,8 +554,8 @@ module Make = (Form: Config) => {
                      };
                    switch (valid', results |> ResultsMap.get(field')) {
                    | (false, _)
-                   | (true, Some(Validation.Invalid(_))) => (false, results)
-                   | (true, Some(Validation.Valid))
+                   | (true, Some(Invalid(_))) => (false, results)
+                   | (true, Some(Valid))
                    | (_, None) => (true, results)
                    };
                  },
