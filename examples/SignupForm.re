@@ -142,7 +142,7 @@ let make = (_) => {
                    <input
                      id="signup--email"
                      value=form.state.email
-                     disabled=(form.submitting)
+                     disabled=form.submitting
                      onChange=(
                        event =>
                          event
@@ -192,7 +192,7 @@ let make = (_) => {
                    <input
                      id="signup--password"
                      value=form.state.password
-                     disabled=(form.submitting)
+                     disabled=form.submitting
                      onChange=(
                        event =>
                          event
