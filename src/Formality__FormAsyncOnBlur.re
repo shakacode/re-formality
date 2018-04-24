@@ -209,7 +209,7 @@ module Make = (Form: Config) => {
                              emittedFields |> FieldsSet.add(field),
                          }),
                    );
-              | None /* validateAsync: Some -> validator.dependents: None */ =>
+              | None =>
                 data
                 |> validator.validate(value)
                 |> Validation.ifResult(
@@ -236,7 +236,7 @@ module Make = (Form: Config) => {
                          }),
                    )
               }
-            | None /* validateAsync: None */ =>
+            | None =>
               switch (validator.dependents) {
               | Some(dependents) =>
                 let result = data |> validator.validate(value);
@@ -261,7 +261,7 @@ module Make = (Form: Config) => {
                        ),
                   emittedFields: emittedFields |> FieldsSet.add(field),
                 });
-              | None /* validateAsync: None -> validator.dependents: None */ =>
+              | None =>
                 let result = data |> validator.validate(value);
                 ReasonReact.Update({
                   ...state,
@@ -315,7 +315,7 @@ module Make = (Form: Config) => {
                            emittedFields,
                          }),
                    );
-              | None /* validateAsync: Some -> validator.dependents: None */ =>
+              | None =>
                 data
                 |> validator.validate(value)
                 |> Validation.ifResult(
@@ -330,7 +330,7 @@ module Make = (Form: Config) => {
                      ~invalid=(_) => ReasonReact.Update({...state, data}),
                    )
               }
-            | None /* validateAsync: None */ =>
+            | None =>
               data
               |> validator.validate(value)
               |> Validation.ifResult(
