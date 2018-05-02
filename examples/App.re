@@ -41,10 +41,10 @@ let make = (_) => {
   render: ({state}) =>
     <div className="container">
       <div className="header">
-        <h1> ("Formality" |> ReasonReact.stringToElement) </h1>
+        <h1> ("Formality" |> ReasonReact.string) </h1>
         <a
           href="https://github.com/alexfedoseev/re-formality" className="link">
-          ("Github" |> ReasonReact.stringToElement)
+          ("Github" |> ReasonReact.string)
         </a>
       </div>
       <div className="nav">
@@ -59,7 +59,7 @@ let make = (_) => {
             ])
           )
           onClick=((_) => ReasonReact.Router.push("#signup"))>
-          ("Signup" |> ReasonReact.stringToElement)
+          ("Signup" |> ReasonReact.string)
         </button>
         <button
           className=(
@@ -72,7 +72,7 @@ let make = (_) => {
             ])
           )
           onClick=((_) => ReasonReact.Router.push("#login"))>
-          ("Login" |> ReasonReact.stringToElement)
+          ("Login" |> ReasonReact.string)
         </button>
       </div>
       (
