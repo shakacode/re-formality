@@ -90,12 +90,10 @@ let make = (_) => {
                onSubmit=(form.submit |> Formality.Dom.preventDefault)>
                <div className="form-messages-area form-messages-area-lg" />
                <div className="form-content">
-                 <h2 className="push-lg">
-                   ("Login" |> ReasonReact.stringToElement)
-                 </h2>
+                 <h2 className="push-lg"> ("Login" |> ReasonReact.string) </h2>
                  <div className="form-row">
                    <label htmlFor="login--email" className="label-lg">
-                     ("Email" |> ReasonReact.stringToElement)
+                     ("Email" |> ReasonReact.string)
                    </label>
                    <input
                      id="login--email"
@@ -118,19 +116,19 @@ let make = (_) => {
                      switch (LoginForm.Email |> form.results) {
                      | Some(Invalid(message)) =>
                        <div className=(Cn.make(["form-message", "failure"]))>
-                         (message |> ReasonReact.stringToElement)
+                         (message |> ReasonReact.string)
                        </div>
                      | Some(Valid) =>
                        <div className=(Cn.make(["form-message", "success"]))>
-                         ({j|✓|j} |> ReasonReact.stringToElement)
+                         ({j|✓|j} |> ReasonReact.string)
                        </div>
-                     | None => ReasonReact.nullElement
+                     | None => ReasonReact.null
                      }
                    )
                  </div>
                  <div className="form-row">
                    <label htmlFor="login--password" className="label-lg">
-                     ("Password" |> ReasonReact.stringToElement)
+                     ("Password" |> ReasonReact.string)
                    </label>
                    <input
                      id="login--password"
@@ -153,13 +151,13 @@ let make = (_) => {
                      switch (LoginForm.Password |> form.results) {
                      | Some(Invalid(message)) =>
                        <div className=(Cn.make(["form-message", "failure"]))>
-                         (message |> ReasonReact.stringToElement)
+                         (message |> ReasonReact.string)
                        </div>
                      | Some(Valid) =>
                        <div className=(Cn.make(["form-message", "success"]))>
-                         ({j|✓|j} |> ReasonReact.stringToElement)
+                         ({j|✓|j} |> ReasonReact.string)
                        </div>
-                     | None => ReasonReact.nullElement
+                     | None => ReasonReact.null
                      }
                    )
                  </div>
@@ -167,16 +165,16 @@ let make = (_) => {
                    <button className="push-lg" disabled=form.submitting>
                      (
                        (form.submitting ? "Submitting..." : "Submit")
-                       |> ReasonReact.stringToElement
+                       |> ReasonReact.string
                      )
                    </button>
                    (
                      switch (form.status) {
                      | Formality.FormStatus.Submitted =>
                        <div className=(Cn.make(["form-status", "success"]))>
-                         ({j|✓ Logged In|j} |> ReasonReact.stringToElement)
+                         ({j|✓ Logged In|j} |> ReasonReact.string)
                        </div>
-                     | _ => ReasonReact.nullElement
+                     | _ => ReasonReact.null
                      }
                    )
                  </div>
