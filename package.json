@@ -6,8 +6,8 @@
   "author": "Alex Fedoseev <alex.fedoseev@gmail.com>",
   "license": "MIT",
   "scripts": {
-    "start": "bsb -clean-world -make-world && webpack --watch",
-    "build": "bsb -clean-world -make-world && webpack --optimize-minimize",
+    "start": "bsb -clean-world -make-world && NODE_ENV=development webpack --mode development --watch",
+    "build": "bsb -clean-world -make-world && NODE_ENV=production webpack --mode production",
     "clean": "bsb -clean-world && rm -rf build examples/build",
     "test": "exit 0",
     "refmt": "find -E . -regex '.+\\.rei?' -exec refmt --in-place {} \\;",
@@ -37,8 +37,9 @@
   },
   "devDependencies": {
     "bs-platform": "^3.0.0",
-    "re-classnames": "1.1.0",
+    "re-classnames": "2.0.0",
     "reason-react": "0.4.1",
-    "webpack": "3.11.0"
+    "webpack": "4.8.3",
+    "webpack-cli": "2.1.3"
   }
 }
