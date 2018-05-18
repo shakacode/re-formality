@@ -107,6 +107,7 @@ module Make = (Form: Config) => {
         list((Form.field, Form.message)),
         option(Form.message),
       )
+    | DismissSubmissionResult
     | Reset;
   type interface = {
     state: Form.state,
@@ -117,6 +118,7 @@ module Make = (Form: Config) => {
     change: (Form.field, Form.value) => unit,
     blur: (Form.field, Form.value) => unit,
     submit: unit => unit,
+    dismissSubmissionResult: unit => unit,
   };
   let getInitialState = data => {
     data,
@@ -731,6 +733,14 @@ module Make = (Form: Config) => {
           status:
             FormStatus.SubmissionFailed(fieldLevelErrors, serverMessage),
         })
+      | DismissSubmissionResult =>
+        switch (state.status) {
+        | FormStatus.Editing
+        | FormStatus.Submitting => ReasonReact.NoUpdate
+        | FormStatus.Submitted
+        | FormStatus.SubmissionFailed(_, _) =>
+          ReasonReact.Update({...state, status: FormStatus.Editing})
+        }
       | Reset => ReasonReact.Update(initialState |> getInitialState)
       },
     render: ({state, send}) =>
@@ -743,6 +753,7 @@ module Make = (Form: Config) => {
         change: (field, value) => Change((field, value)) |> send,
         blur: (field, value) => Blur((field, value)) |> send,
         submit: (_) => Submit |> send,
+        dismissSubmissionResult: () => DismissSubmissionResult |> send,
       }),
   };
 };
