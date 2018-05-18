@@ -1,3 +1,8 @@
+# 0.9.0
+
+## Improvements
+* Added `form.dismissSubmissionResult` to dismiss server errors without resetting the form. Under the hood, it changes `FormStatus.Submitted` & `FormStatus.SubmissionFailed` statuses to `FormStatus.Editing`.
+
 # 0.8.1
 
 ## Fixes

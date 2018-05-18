@@ -485,6 +485,7 @@ type form = {
   change: (field, value) => unit,
   blur: (field, value) => unit,
   submit: unit => unit,
+  dismissSubmissionResult: unit => unit,
 };
 ```
 
@@ -553,6 +554,9 @@ Use it as `onSubmit` handler of the `<form />` element:
 ```reason
 <form onSubmit=(form.submit |> Formality.Dom.preventDefault) />
 ```
+
+##### `form.dismissSubmissionResult`
+Use it when you want to let user dismissing alerts with errors from server or success message without resetting the form. Under the hood, it changes `FormStatus.Submitted` & `FormStatus.SubmissionFailed` statuses back to `FormStatus.Editing`.
 
 ### Async validations
 Some validations can't be performed locally, e.g. on signup, you want to validate if user's email is available or it's already taken.
