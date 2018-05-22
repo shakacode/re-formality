@@ -63,6 +63,17 @@ module Make = (Form: Config) => {
       | result => result
       | exception Not_found => None
       };
+    let getAggregatedResult = (map: t) =>
+      ResultsMapOrigin.fold(
+        (_key, result, aggregate) =>
+          switch (aggregate, result) {
+          | (false, _)
+          | (true, Some(_)) => false
+          | (true, None) => true
+          },
+        map,
+        true,
+      );
   };
   type state = {
     data: Form.state,
@@ -91,6 +102,7 @@ module Make = (Form: Config) => {
     blur: (Form.field, Form.value) => unit,
     submit: unit => unit,
     dismissSubmissionResult: unit => unit,
+    isValid: unit => bool,
   };
   let getInitialState = data => {
     data,
@@ -390,6 +402,7 @@ module Make = (Form: Config) => {
         blur: (field, value) => Blur((field, value)) |> send,
         submit: () => Submit |> send,
         dismissSubmissionResult: () => DismissSubmissionResult |> send,
+        isValid: () => state.results |> ResultsMap.getAggregatedResult,
       }),
   };
 };
