@@ -1,32 +1,38 @@
 module LoginForm = {
+  type value = string;
+  type message = string;
+
   type field =
     | Email
     | Password;
-  type value = string;
+
   type state = {
     email: string,
     password: string,
   };
-  type message = string;
+
   let get = (field, state) =>
     switch (field) {
     | Email => state.email
     | Password => state.password
     };
+
   let update = ((field, value), state) =>
     switch (field, value) {
     | (Email, value) => {...state, email: value}
     | (Password, value) => {...state, password: value}
     };
+
   let valueEmpty = Formality.emptyString;
+
   module Validators =
-    Formality.MakeValidators(
-      {
-        type t = field;
-      },
-    );
+    Formality.MakeValidators({
+      type t = field;
+    });
+
   type validators =
     Validators.t(Formality.validator(field, value, state, message));
+
   let validators =
     Formality.(
       Validators.empty
@@ -63,11 +69,11 @@ module LoginForm = {
 
 module LoginFormContainer = Formality.Make(LoginForm);
 
-let component = "LoginForm" |> ReasonReact.statelessComponent;
+let component = ReasonReact.statelessComponent(__MODULE__);
 
-let make = (_) => {
+let make = _ => {
   ...component,
-  render: (_) =>
+  render: _ =>
     <LoginFormContainer
       initialState={email: "", password: ""}
       onSubmit=(

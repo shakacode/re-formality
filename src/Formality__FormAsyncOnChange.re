@@ -1,9 +1,6 @@
 module Validation = Formality__Validation;
-
 module Strategy = Formality__Strategy;
-
 module FormStatus = Formality__FormStatus;
-
 module Utils = Formality__Utils;
 
 let defaultDebounceInterval = 700;
@@ -13,18 +10,26 @@ module type Config = {
   type value;
   type state;
   type message;
+
   let get: (field, state) => value;
   let update: ((field, value), state) => state;
+
   let valueEmpty: value => bool;
+
+  let debounceInterval: int;
+
   type validators;
   let validators: validators;
-  let debounceInterval: int;
+
   module Validators: {
     type t(+'a);
+
     let find: (field, t('debouncedValidator)) => 'debouncedValidator;
+
     let fold:
       ((field, 'debouncedValidator, 'a) => 'a, t('debouncedValidator), 'a) =>
       'a;
+
     let map:
       (
         Validation.asyncValidator(field, value, state, message) =>
@@ -37,12 +42,11 @@ module type Config = {
 
 module Make = (Form: Config) => {
   module FieldsSetOrigin =
-    Set.Make(
-      {
-        type t = Form.field;
-        let compare = Utils.comparator;
-      },
-    );
+    Set.Make({
+      type t = Form.field;
+      let compare = Utils.comparator;
+    });
+
   module FieldsSet = {
     type t = FieldsSetOrigin.t;
     let empty = FieldsSetOrigin.empty;
@@ -51,13 +55,13 @@ module Make = (Form: Config) => {
     let add = FieldsSetOrigin.add;
     let remove = FieldsSetOrigin.remove;
   };
+
   module ResultsMapOrigin =
-    Map.Make(
-      {
-        type t = Form.field;
-        let compare = Utils.comparator;
-      },
-    );
+    Map.Make({
+      type t = Form.field;
+      let compare = Utils.comparator;
+    });
+
   module ResultsMap = {
     type key = ResultsMapOrigin.key;
     type t =
@@ -70,6 +74,7 @@ module Make = (Form: Config) => {
       | exception Not_found => None
       };
   };
+
   type state = {
     data: Form.state,
     status: FormStatus.t(Form.field, Form.message),
@@ -78,6 +83,7 @@ module Make = (Form: Config) => {
     submittedOnce: bool,
     emittedFields: FieldsSet.t,
   };
+
   type action =
     | Change((Form.field, Form.value))
     | Blur((Form.field, Form.value))
@@ -109,6 +115,7 @@ module Make = (Form: Config) => {
       )
     | DismissSubmissionResult
     | Reset;
+
   type interface = {
     state: Form.state,
     status: FormStatus.t(Form.field, Form.message),
@@ -120,6 +127,7 @@ module Make = (Form: Config) => {
     submit: unit => unit,
     dismissSubmissionResult: unit => unit,
   };
+
   let getInitialState = data => {
     data,
     status: FormStatus.Editing,
@@ -128,6 +136,7 @@ module Make = (Form: Config) => {
     submittedOnce: false,
     emittedFields: FieldsSet.empty,
   };
+
   let debounce = (~validateAsync, ~wait) => {
     let lastSelf = ref(None);
     let lastField = ref(None);
@@ -180,6 +189,7 @@ module Make = (Form: Config) => {
     };
     debounced;
   };
+
   type debouncedValidator = {
     strategy: Strategy.t,
     dependents: option(list(Form.field)),
@@ -194,6 +204,7 @@ module Make = (Form: Config) => {
         unit,
       ),
   };
+
   let debouncedValidators =
     Form.validators
     |> Form.Validators.map(validator =>
@@ -213,11 +224,13 @@ module Make = (Form: Config) => {
            }
          }
        );
+
   let getValidator = field =>
     switch (debouncedValidators |> Form.Validators.find(field)) {
     | validator => Some(validator)
     | exception Not_found => None
     };
+
   let validateDependents = (~data, ~results, ~emittedFields, dependents) =>
     dependents
     |> List.fold_left(
@@ -245,6 +258,7 @@ module Make = (Form: Config) => {
          },
          (results, emittedFields),
        );
+
   let component = "FormalityForm" |> ReasonReact.reducerComponent;
   let make =
       (
@@ -290,7 +304,7 @@ module Make = (Form: Config) => {
                 |> validator.validate(value)
                 |> Validation.ifResult(
                      ~valid=
-                       (_) =>
+                       _ =>
                          ReasonReact.UpdateWithSideEffects(
                            {
                              ...state,
@@ -327,7 +341,7 @@ module Make = (Form: Config) => {
                 |> validator.validate(value)
                 |> Validation.ifResult(
                      ~valid=
-                       (_) =>
+                       _ =>
                          ReasonReact.UpdateWithSideEffects(
                            {
                              ...state,
@@ -405,6 +419,7 @@ module Make = (Form: Config) => {
                 });
               }
             }
+
           | (
               Strategy.OnFirstSuccess | Strategy.OnFirstSuccessOrFirstBlur,
               false,
@@ -425,7 +440,7 @@ module Make = (Form: Config) => {
                 |> validator.validate(value)
                 |> Validation.ifResult(
                      ~valid=
-                       (_) =>
+                       _ =>
                          ReasonReact.UpdateWithSideEffects(
                            {
                              ...state,
@@ -445,7 +460,7 @@ module Make = (Form: Config) => {
                              |> send,
                          ),
                      ~invalid=
-                       (_) =>
+                       _ =>
                          ReasonReact.Update({
                            ...state,
                            data,
@@ -458,7 +473,7 @@ module Make = (Form: Config) => {
                 |> validator.validate(value)
                 |> Validation.ifResult(
                      ~valid=
-                       (_) =>
+                       _ =>
                          ReasonReact.UpdateWithSideEffects(
                            {
                              ...state,
@@ -478,7 +493,7 @@ module Make = (Form: Config) => {
                              )
                              |> send,
                          ),
-                     ~invalid=(_) => ReasonReact.Update({...state, data}),
+                     ~invalid=_ => ReasonReact.Update({...state, data}),
                    )
               }
             | None =>
@@ -525,7 +540,7 @@ module Make = (Form: Config) => {
                          })
                        },
                    ~invalid=
-                     (_) =>
+                     _ =>
                        switch (validator.dependents) {
                        | Some(dependents) =>
                          let (results, emittedFields) =
@@ -545,10 +560,12 @@ module Make = (Form: Config) => {
                        },
                  )
             }
+
           | (Strategy.OnFirstBlur | Strategy.OnSubmit, false, false) =>
             ReasonReact.Update({...state, data})
           };
         };
+
       | Blur((field, value)) =>
         let validator = field |> getValidator;
         let emitted = state.emittedFields |> FieldsSet.mem(field);
@@ -568,7 +585,7 @@ module Make = (Form: Config) => {
               |> validator.validate(value)
               |> Validation.ifResult(
                    ~valid=
-                     (_) =>
+                     _ =>
                        ReasonReact.UpdateWithSideEffects(
                          {
                            ...state,
@@ -618,10 +635,12 @@ module Make = (Form: Config) => {
             }
           }
         };
+
       | InvokeDebouncedAsyncValidation(field, value, validateAsync) =>
         ReasonReact.SideEffects(
           (self => self |> validateAsync(~field, ~value)),
         )
+
       | TriggerAsyncValidation(field, value, validateAsync) =>
         ReasonReact.SideEffects(
           (
@@ -637,6 +656,7 @@ module Make = (Form: Config) => {
               )
           ),
         )
+
       | ApplyAsyncResult(field, value, result) =>
         value === (state.data |> Form.get(field)) ?
           ReasonReact.Update({
@@ -646,6 +666,7 @@ module Make = (Form: Config) => {
             emittedFields: state.emittedFields |> FieldsSet.add(field),
           }) :
           ReasonReact.NoUpdate
+
       | Submit =>
         switch (state.validating |> FieldsSet.isEmpty, state.status) {
         | (false, _)
@@ -721,18 +742,21 @@ module Make = (Form: Config) => {
               submittedOnce: true,
             });
         }
+
       | SetSubmittedStatus(data) =>
         switch (data) {
         | Some(data) =>
           ReasonReact.Update({...state, data, status: FormStatus.Submitted})
         | None => ReasonReact.Update({...state, status: FormStatus.Submitted})
         }
+
       | SetSubmissionFailedStatus(fieldLevelErrors, serverMessage) =>
         ReasonReact.Update({
           ...state,
           status:
             FormStatus.SubmissionFailed(fieldLevelErrors, serverMessage),
         })
+
       | DismissSubmissionResult =>
         switch (state.status) {
         | FormStatus.Editing
@@ -741,6 +765,7 @@ module Make = (Form: Config) => {
         | FormStatus.SubmissionFailed(_, _) =>
           ReasonReact.Update({...state, status: FormStatus.Editing})
         }
+
       | Reset => ReasonReact.Update(initialState |> getInitialState)
       },
     render: ({state, send}) =>
@@ -752,7 +777,7 @@ module Make = (Form: Config) => {
         submitting: state.status === FormStatus.Submitting,
         change: (field, value) => Change((field, value)) |> send,
         blur: (field, value) => Blur((field, value)) |> send,
-        submit: (_) => Submit |> send,
+        submit: _ => Submit |> send,
         dismissSubmissionResult: () => DismissSubmissionResult |> send,
       }),
   };

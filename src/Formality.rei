@@ -1,3 +1,11 @@
+module MakeValidators = Formality__Validation.MakeValidators;
+module Dom = Formality__PublicHelpers.Dom;
+module Strategy = Formality__Strategy;
+module FormStatus = Formality__FormStatus;
+module Make = Formality__Form.Make;
+module MakeWithAsyncValidationsOnChange = Formality__FormAsyncOnChange.Make;
+module MakeWithAsyncValidationsOnBlur = Formality__FormAsyncOnBlur.Make;
+
 type validationResult('message) =
   Formality__Validation.validationResult('message) =
     | Valid | Invalid('message);
@@ -26,17 +34,3 @@ type asyncValidator('field, 'value, 'state, 'message) =
 let debounceInterval: int;
 
 let emptyString: string => bool;
-
-module MakeValidators = Formality__Validation.MakeValidators;
-
-module Dom = Formality__PublicHelpers.Dom;
-
-module Strategy = Formality__Strategy;
-
-module FormStatus = Formality__FormStatus;
-
-module Make = Formality__Form.Make;
-
-module MakeWithAsyncValidationsOnChange = Formality__FormAsyncOnChange.Make;
-
-module MakeWithAsyncValidationsOnBlur = Formality__FormAsyncOnBlur.Make;

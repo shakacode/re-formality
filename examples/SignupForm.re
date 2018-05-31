@@ -1,21 +1,25 @@
 module SignupForm = {
+  type value = string;
+  type message = string;
+
   type field =
     | Email
     | Password
     | PasswordConfirmation;
-  type value = string;
+
   type state = {
     email: string,
     password: string,
     passwordConfirmation: string,
   };
-  type message = string;
+
   let get = (field, state) =>
     switch (field) {
     | Email => state.email
     | Password => state.password
     | PasswordConfirmation => state.passwordConfirmation
     };
+
   let update = ((field, value), state) =>
     switch (field, value) {
     | (Email, value) => {...state, email: value}
@@ -25,16 +29,18 @@ module SignupForm = {
         passwordConfirmation: value,
       }
     };
+
   let valueEmpty = Formality.emptyString;
   let debounceInterval = Formality.debounceInterval;
+
   module Validators =
-    Formality.MakeValidators(
-      {
-        type t = field;
-      },
-    );
+    Formality.MakeValidators({
+      type t = field;
+    });
+
   type validators =
     Validators.t(Formality.asyncValidator(field, value, state, message));
+
   let validators =
     Formality.(
       Validators.empty
@@ -105,11 +111,11 @@ module SignupForm = {
 module SignupFormContainer =
   Formality.MakeWithAsyncValidationsOnChange(SignupForm);
 
-let component = "SignupForm" |> ReasonReact.statelessComponent;
+let component = ReasonReact.statelessComponent(__MODULE__);
 
-let make = (_) => {
+let make = _ => {
   ...component,
-  render: (_) =>
+  render: _ =>
     <SignupFormContainer
       initialState={email: "", password: "", passwordConfirmation: ""}
       onSubmit=(

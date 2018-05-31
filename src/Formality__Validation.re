@@ -30,12 +30,10 @@ type submissionCallbacks('field, 'state, 'message) = {
 module type ValidatorsConfig = {type t;};
 
 module MakeValidators = (Config: ValidatorsConfig) =>
-  Map.Make(
-    {
-      type t = Config.t;
-      let compare = Formality__Utils.comparator;
-    },
-  );
+  Map.Make({
+    type t = Config.t;
+    let compare = Formality__Utils.comparator;
+  });
 
 let ifResult = (~valid, ~invalid, result) =>
   switch (result) {

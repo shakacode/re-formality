@@ -16,9 +16,9 @@ let getInitialRoute = () =>
   | _ => Signup
   };
 
-let component = "App" |> ReasonReact.reducerComponent;
+let component = ReasonReact.reducerComponent(__MODULE__);
 
-let make = (_) => {
+let make = _ => {
   ...component,
   initialState: () => {route: getInitialRoute()},
   reducer: (action, _) =>
@@ -58,7 +58,7 @@ let make = (_) => {
               },
             ])
           )
-          onClick=((_) => ReasonReact.Router.push("#signup"))>
+          onClick=(_ => ReasonReact.Router.push("#signup"))>
           ("Signup" |> ReasonReact.string)
         </button>
         <button
@@ -71,7 +71,7 @@ let make = (_) => {
               },
             ])
           )
-          onClick=((_) => ReasonReact.Router.push("#login"))>
+          onClick=(_ => ReasonReact.Router.push("#login"))>
           ("Login" |> ReasonReact.string)
         </button>
       </div>
