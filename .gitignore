@@ -1,8 +1,9 @@
 node_modules/
 lib/
-build/
-examples/build/
+dist/
 .merlin
 .bsb.lock
 *.bs.js
 yarn-error.log
+.cache
+.DS_Store

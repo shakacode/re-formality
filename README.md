@@ -2,7 +2,6 @@
 
 [![npm version](https://img.shields.io/npm/v/re-formality.svg?style=flat-square)](https://www.npmjs.com/package/re-formality)
 [![build status](https://img.shields.io/travis/alexfedoseev/re-formality/master.svg?style=flat-square)](https://travis-ci.org/alexfedoseev/re-formality)
-[![dependencies status](https://img.shields.io/gemnasium/alexfedoseev/re-formality.svg?style=flat-square)](https://gemnasium.com/alexfedoseev/re-formality)
 [![license](https://img.shields.io/npm/l/re-formality.svg?style=flat-square)](https://www.npmjs.com/package/re-formality)
 
 Reasonable form validation tool for [`reason-react`](https://reasonml.github.io/reason-react/).
@@ -44,8 +43,8 @@ Then add it to `bsconfig.json`:
 ```
 
 ## Examples
-* Signup form: [live](https://formality.now.sh/#signup) &middot; [src](examples/SignupForm.re)
-* Login form: [live](https://formality.now.sh/#login) &middot; [src](examples/LoginForm.re)
+* Signup form: [live](https://re-formality.now.sh/#signup) &middot; [src](./examples/SignupForm.re)
+* Login form: [live](https://re-formality.now.sh/#login) &middot; [src](./examples/LoginForm.re)
 
 ## Concepts
 The main purpose of this library is to provide great form validation UX. To achieve this, `Formality` follows the following principle:
