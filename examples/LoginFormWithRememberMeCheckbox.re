@@ -1,29 +1,43 @@
 module LoginForm = {
-  type value = string;
+  type value =
+    | String(string)
+    | Bool(bool);
+
   type message = string;
 
   type field =
     | Email
-    | Password;
+    | Password
+    | Remember;
 
   type state = {
     email: string,
     password: string,
+    remember: bool,
   };
 
   let get = (field, state) =>
     switch (field) {
-    | Email => state.email
-    | Password => state.password
+    | Email => String(state.email)
+    | Password => String(state.password)
+    | Remember => Bool(state.remember)
     };
 
   let update = ((field, value), state) =>
     switch (field, value) {
-    | (Email, value) => {...state, email: value}
-    | (Password, value) => {...state, password: value}
+    | (Email, String(value)) => {...state, email: value}
+    | (Password, String(value)) => {...state, password: value}
+    | (Remember, Bool(value)) => {...state, remember: value}
+    /* TODO: Sadly, we can catch it only at runtime. Something to improve. */
+    | _ => failwith("Config.update function received bad input")
     };
 
-  let valueEmpty = Formality.emptyString;
+  let valueEmpty = value =>
+    switch (value) {
+    | String(value) when value === "" => true
+    | String(_)
+    | Bool(_) => false
+    };
 
   module Validators =
     Formality.MakeValidators({
@@ -44,10 +58,11 @@ module LoginForm = {
              validate: (value, _) => {
                let emailRegex = [%bs.re {|/.*@.*\..+/|}];
                switch (value) {
-               | "" => Invalid("Email is required")
-               | _ when ! (emailRegex |> Js.Re.test(value)) =>
+               | String("") => Invalid("Email is required")
+               | String(value) when ! (emailRegex |> Js.Re.test(value)) =>
                  Invalid("Email is invalid")
-               | _ => Valid
+               | String(_) => Valid
+               | _ => failwith("Email validator received bad input") /* sadly, as well */
                };
              },
            },
@@ -59,8 +74,9 @@ module LoginForm = {
              dependents: None,
              validate: (value, _) =>
                switch (value) {
-               | "" => Invalid("Password is required")
-               | _ => Valid
+               | String("") => Invalid("Password is required")
+               | String(_) => Valid
+               | _ => failwith("Password validator received bad input") /* sadly, as well */
                },
            },
          )
@@ -75,7 +91,7 @@ let make = _ => {
   ...component,
   render: _ =>
     <LoginFormContainer
-      initialState={email: "", password: ""}
+      initialState={email: "", password: "", remember: false}
       onSubmit=(
         (state, form) => {
           Js.log2("Called with:", state);
@@ -109,13 +125,15 @@ let make = _ => {
                      onChange=(
                        event =>
                          event
-                         |> Formality.Dom.toValueOnChange
+                         |. Formality.Dom.toValueOnChange
+                         |. LoginForm.String
                          |> form.change(LoginForm.Email)
                      )
                      onBlur=(
                        event =>
                          event
-                         |> Formality.Dom.toValueOnBlur
+                         |. Formality.Dom.toValueOnBlur
+                         |. LoginForm.String
                          |> form.blur(LoginForm.Email)
                      )
                    />
@@ -145,13 +163,15 @@ let make = _ => {
                      onChange=(
                        event =>
                          event
-                         |> Formality.Dom.toValueOnChange
+                         |. Formality.Dom.toValueOnChange
+                         |. LoginForm.String
                          |> form.change(LoginForm.Password)
                      )
                      onBlur=(
                        event =>
                          event
-                         |> Formality.Dom.toValueOnBlur
+                         |. Formality.Dom.toValueOnBlur
+                         |. LoginForm.String
                          |> form.blur(LoginForm.Password)
                      )
                    />
@@ -168,6 +188,32 @@ let make = _ => {
                      | None => ReasonReact.null
                      }
                    )
+                 </div>
+                 <div className="form-row">
+                   <input
+                     id="login--remember"
+                     type_="checkbox"
+                     checked=form.state.remember
+                     disabled=form.submitting
+                     className="push-lg"
+                     onChange=(
+                       event =>
+                         event
+                         |. Formality.Dom.toCheckedOnChange
+                         |. LoginForm.Bool
+                         |> form.change(LoginForm.Remember)
+                     )
+                     onBlur=(
+                       event =>
+                         event
+                         |. Formality.Dom.toCheckedOnBlur
+                         |. LoginForm.Bool
+                         |> form.blur(LoginForm.Remember)
+                     )
+                   />
+                   <label htmlFor="login--remember">
+                     ("Remember me" |> ReasonReact.string)
+                   </label>
                  </div>
                  <div className="form-row">
                    <button className="push-lg" disabled=form.submitting>
