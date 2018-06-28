@@ -146,7 +146,7 @@ button {
   font-weight: 300;
 }
 
-input {
+input[type="text"] {
   display: inline-flex;
   border: 1px solid #ccc;
   padding: 8px;

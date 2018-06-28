@@ -147,6 +147,7 @@ let make = _ => {
                    </label>
                    <input
                      id="signup--email"
+                     type_="text"
                      value=form.state.email
                      disabled=form.submitting
                      onChange=(
@@ -194,6 +195,7 @@ let make = _ => {
                    </label>
                    <input
                      id="signup--password"
+                     type_="text"
                      value=form.state.password
                      disabled=form.submitting
                      onChange=(
@@ -231,6 +233,7 @@ let make = _ => {
                    </label>
                    <input
                      id="signup--passwordConfirmation"
+                     type_="text"
                      value=form.state.passwordConfirmation
                      disabled=form.submitting
                      onChange=(

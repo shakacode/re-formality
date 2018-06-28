@@ -1,3 +1,8 @@
+# 0.9.1
+
+## Improvements
+* Added `Formality.Dom.toCheckedOnChange` & `Formality.Dom.toCheckedOnBlur` helpers.
+
 # 0.9.0
 
 ## Improvements

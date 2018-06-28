@@ -2,7 +2,8 @@
 
 type route =
   | Signup
-  | Login;
+  | Login
+  | LoginFormWithRememberMe;
 
 type state = {route};
 
@@ -13,6 +14,7 @@ let getInitialRoute = () =>
   switch (locationHash) {
   | "#signup" => Signup
   | "#login" => Login
+  | "#login-remember-me" => LoginFormWithRememberMe
   | _ => Signup
   };
 
@@ -30,9 +32,11 @@ let make = _ => {
       () =>
         ReasonReact.Router.watchUrl(url =>
           switch (url.hash) {
-          | "signup" => send(UpdateRoute(Signup))
-          | "login" => send(UpdateRoute(Login))
-          | _ => send(UpdateRoute(Signup))
+          | "signup" => UpdateRoute(Signup) |> send
+          | "login" => UpdateRoute(Login) |> send
+          | "login-remember-me" =>
+            UpdateRoute(LoginFormWithRememberMe) |> send
+          | _ => UpdateRoute(Signup) |> send
           }
         ),
       ReasonReact.Router.unwatchUrl,
@@ -74,11 +78,25 @@ let make = _ => {
           onClick=(_ => ReasonReact.Router.push("#login"))>
           ("Login" |> ReasonReact.string)
         </button>
+        <button
+          className=(
+            Cn.make([
+              "nav-link",
+              switch (state.route) {
+              | LoginFormWithRememberMe => "active"
+              | _ => ""
+              },
+            ])
+          )
+          onClick=(_ => ReasonReact.Router.push("#login-remember-me"))>
+          ("Login With Remember Me" |> ReasonReact.string)
+        </button>
       </div>
       (
         switch (state.route) {
         | Signup => <SignupForm />
         | Login => <LoginForm />
+        | LoginFormWithRememberMe => <LoginFormWithRememberMeCheckbox />
         }
       )
     </div>,
