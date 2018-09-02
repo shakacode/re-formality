@@ -1,24 +1,21 @@
 let emptyString = value => value == "";
 
 module Dom = {
-  let targetValue = element : string => (element |> ReactDOMRe.domElementToObj)##value;
-  let targetChecked = element : bool => (element |> ReactDOMRe.domElementToObj)##checked;
-
   let toValueOnChange = event =>
-    event |> ReactEventRe.Form.target |> targetValue;
+    event->ReactEvent.Form.target##value;
 
   let toValueOnBlur = event =>
-    event |> ReactEventRe.Focus.target |> targetValue;
+    event->ReactEvent.Focus.target##value;
 
   let toCheckedOnChange = event =>
-    event |> ReactEventRe.Form.target |> targetChecked;
+    event->ReactEvent.Form.target##checked;
 
   let toCheckedOnBlur = event =>
-    event |> ReactEventRe.Focus.target |> targetChecked;
+    event->ReactEvent.Focus.target##checked;
 
   let preventDefault = (submit, event) => {
-    if (! (event |> ReactEventRe.Form.defaultPrevented)) {
-      event |> ReactEventRe.Form.preventDefault;
+    if (!event->ReactEvent.Form.defaultPrevented) {
+      event->ReactEvent.Form.preventDefault;
     };
     submit();
   };

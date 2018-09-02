@@ -45,7 +45,7 @@ module LoginForm = {
                let emailRegex = [%bs.re {|/.*@.*\..+/|}];
                switch (value) {
                | "" => Invalid("Email is required")
-               | _ when ! (emailRegex |> Js.Re.test(value)) =>
+               | _ when !(emailRegex |> Js.Re.test(value)) =>
                  Invalid("Email is invalid")
                | _ => Valid
                };

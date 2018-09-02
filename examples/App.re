@@ -27,21 +27,18 @@ let make = _ => {
     switch (action) {
     | UpdateRoute(route) => ReasonReact.Update({route: route})
     },
-  subscriptions: ({send}) => [
-    Sub(
-      () =>
-        ReasonReact.Router.watchUrl(url =>
-          switch (url.hash) {
-          | "signup" => UpdateRoute(Signup) |> send
-          | "login" => UpdateRoute(Login) |> send
-          | "login-remember-me" =>
-            UpdateRoute(LoginFormWithRememberMe) |> send
-          | _ => UpdateRoute(Signup) |> send
-          }
-        ),
-      ReasonReact.Router.unwatchUrl,
-    ),
-  ],
+  didMount: ({send, onUnmount}) => {
+    let watcherID =
+      ReasonReact.Router.watchUrl(url =>
+        switch (url.hash) {
+        | "signup" => UpdateRoute(Signup) |> send
+        | "login" => UpdateRoute(Login) |> send
+        | "login-remember-me" => UpdateRoute(LoginFormWithRememberMe) |> send
+        | _ => UpdateRoute(Signup) |> send
+        }
+      );
+    onUnmount(() => ReasonReact.Router.unwatchUrl(watcherID));
+  },
   render: ({state}) =>
     <div className="container">
       <div className="header">
