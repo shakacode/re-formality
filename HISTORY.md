@@ -1,3 +1,8 @@
+# 0.10.0
+
+## Chore
+* `bs-platform` updated to `4.0.5` & `reason-react` to `0.5.3`. Thanks **[@jihchi](https://github.com/jihchi)**!
+
 # 0.9.1
 
 ## Improvements
