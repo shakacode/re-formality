@@ -59,7 +59,7 @@ module LoginForm = {
                let emailRegex = [%bs.re {|/.*@.*\..+/|}];
                switch (value) {
                | String("") => Invalid("Email is required")
-               | String(value) when ! (emailRegex |> Js.Re.test(value)) =>
+               | String(value) when !(emailRegex |> Js.Re.test(value)) =>
                  Invalid("Email is invalid")
                | String(_) => Valid
                | _ => failwith("Email validator received bad input") /* sadly, as well */
@@ -124,16 +124,12 @@ let make = _ => {
                      disabled=form.submitting
                      onChange=(
                        event =>
-                         event
-                         |. Formality.Dom.toValueOnChange
-                         |. LoginForm.String
+                         event->Formality.Dom.toValueOnChange->LoginForm.String
                          |> form.change(LoginForm.Email)
                      )
                      onBlur=(
                        event =>
-                         event
-                         |. Formality.Dom.toValueOnBlur
-                         |. LoginForm.String
+                         event->Formality.Dom.toValueOnBlur->LoginForm.String
                          |> form.blur(LoginForm.Email)
                      )
                    />
@@ -162,16 +158,12 @@ let make = _ => {
                      disabled=form.submitting
                      onChange=(
                        event =>
-                         event
-                         |. Formality.Dom.toValueOnChange
-                         |. LoginForm.String
+                         event->Formality.Dom.toValueOnChange->LoginForm.String
                          |> form.change(LoginForm.Password)
                      )
                      onBlur=(
                        event =>
-                         event
-                         |. Formality.Dom.toValueOnBlur
-                         |. LoginForm.String
+                         event->Formality.Dom.toValueOnBlur->LoginForm.String
                          |> form.blur(LoginForm.Password)
                      )
                    />
@@ -198,16 +190,12 @@ let make = _ => {
                      className="push-lg"
                      onChange=(
                        event =>
-                         event
-                         |. Formality.Dom.toCheckedOnChange
-                         |. LoginForm.Bool
+                         event->Formality.Dom.toCheckedOnChange->LoginForm.Bool
                          |> form.change(LoginForm.Remember)
                      )
                      onBlur=(
                        event =>
-                         event
-                         |. Formality.Dom.toCheckedOnBlur
-                         |. LoginForm.Bool
+                         event->Formality.Dom.toCheckedOnBlur->LoginForm.Bool
                          |> form.blur(LoginForm.Remember)
                      )
                    />
