@@ -1,6 +1,0 @@
-{
-  "path": {
-    "bsb": "./node_modules/.bin/bsb",
-    "bsc": "./node_modules/.bin/bsc"
-  }
-}

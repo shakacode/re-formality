@@ -32,7 +32,7 @@ module type ValidatorsConfig = {type t;};
 module MakeValidators = (Config: ValidatorsConfig) =>
   Map.Make({
     type t = Config.t;
-    let compare = Formality__Utils.comparator;
+    let compare = Pervasives.compare;
   });
 
 let ifResult = (~valid, ~invalid, result) =>

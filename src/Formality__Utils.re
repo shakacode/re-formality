@@ -1,1 +1,0 @@
-let comparator = Pervasives.compare;

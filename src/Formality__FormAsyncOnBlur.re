@@ -1,7 +1,6 @@
 module Validation = Formality__Validation;
 module Strategy = Formality__Strategy;
 module FormStatus = Formality__FormStatus;
-module Utils = Formality__Utils;
 
 module type Config = {
   type field;
@@ -37,7 +36,7 @@ module Make = (Form: Config) => {
   module FieldsSetOrigin =
     Set.Make({
       type t = Form.field;
-      let compare = Utils.comparator;
+      let compare = Pervasives.compare;
     });
 
   module FieldsSet = {
@@ -52,7 +51,7 @@ module Make = (Form: Config) => {
   module ResultsMapOrigin =
     Map.Make({
       type t = Form.field;
-      let compare = Utils.comparator;
+      let compare = Pervasives.compare;
     });
 
   module ResultsMap = {

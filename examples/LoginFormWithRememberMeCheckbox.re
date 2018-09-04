@@ -92,7 +92,7 @@ let make = _ => {
   render: _ =>
     <LoginFormContainer
       initialState={email: "", password: "", remember: false}
-      onSubmit=(
+      onSubmit={
         (state, form) => {
           Js.log2("Called with:", state);
           Js.Global.setTimeout(
@@ -104,124 +104,124 @@ let make = _ => {
           )
           |> ignore;
         }
-      )>
-      ...(
+      }>
+      ...{
            form =>
              <form
                className="form"
-               onSubmit=(form.submit |> Formality.Dom.preventDefault)>
+               onSubmit={form.submit |> Formality.Dom.preventDefault}>
                <div className="form-messages-area form-messages-area-lg" />
                <div className="form-content">
-                 <h2 className="push-lg"> ("Login" |> ReasonReact.string) </h2>
+                 <h2 className="push-lg"> {"Login" |> ReasonReact.string} </h2>
                  <div className="form-row">
                    <label htmlFor="login--email" className="label-lg">
-                     ("Email" |> ReasonReact.string)
+                     {"Email" |> ReasonReact.string}
                    </label>
                    <input
                      id="login--email"
                      type_="text"
-                     value=form.state.email
-                     disabled=form.submitting
-                     onChange=(
+                     value={form.state.email}
+                     disabled={form.submitting}
+                     onChange={
                        event =>
                          event->Formality.Dom.toValueOnChange->LoginForm.String
                          |> form.change(LoginForm.Email)
-                     )
-                     onBlur=(
+                     }
+                     onBlur={
                        event =>
                          event->Formality.Dom.toValueOnBlur->LoginForm.String
                          |> form.blur(LoginForm.Email)
-                     )
+                     }
                    />
-                   (
+                   {
                      switch (LoginForm.Email |> form.results) {
                      | Some(Invalid(message)) =>
-                       <div className=(Cn.make(["form-message", "failure"]))>
-                         (message |> ReasonReact.string)
+                       <div className={Cn.make(["form-message", "failure"])}>
+                         {message |> ReasonReact.string}
                        </div>
                      | Some(Valid) =>
-                       <div className=(Cn.make(["form-message", "success"]))>
-                         ({j|✓|j} |> ReasonReact.string)
+                       <div className={Cn.make(["form-message", "success"])}>
+                         {{j|✓|j} |> ReasonReact.string}
                        </div>
                      | None => ReasonReact.null
                      }
-                   )
+                   }
                  </div>
                  <div className="form-row">
                    <label htmlFor="login--password" className="label-lg">
-                     ("Password" |> ReasonReact.string)
+                     {"Password" |> ReasonReact.string}
                    </label>
                    <input
                      id="login--password"
                      type_="text"
-                     value=form.state.password
-                     disabled=form.submitting
-                     onChange=(
+                     value={form.state.password}
+                     disabled={form.submitting}
+                     onChange={
                        event =>
                          event->Formality.Dom.toValueOnChange->LoginForm.String
                          |> form.change(LoginForm.Password)
-                     )
-                     onBlur=(
+                     }
+                     onBlur={
                        event =>
                          event->Formality.Dom.toValueOnBlur->LoginForm.String
                          |> form.blur(LoginForm.Password)
-                     )
+                     }
                    />
-                   (
+                   {
                      switch (LoginForm.Password |> form.results) {
                      | Some(Invalid(message)) =>
-                       <div className=(Cn.make(["form-message", "failure"]))>
-                         (message |> ReasonReact.string)
+                       <div className={Cn.make(["form-message", "failure"])}>
+                         {message |> ReasonReact.string}
                        </div>
                      | Some(Valid) =>
-                       <div className=(Cn.make(["form-message", "success"]))>
-                         ({j|✓|j} |> ReasonReact.string)
+                       <div className={Cn.make(["form-message", "success"])}>
+                         {{j|✓|j} |> ReasonReact.string}
                        </div>
                      | None => ReasonReact.null
                      }
-                   )
+                   }
                  </div>
                  <div className="form-row">
                    <input
                      id="login--remember"
                      type_="checkbox"
-                     checked=form.state.remember
-                     disabled=form.submitting
+                     checked={form.state.remember}
+                     disabled={form.submitting}
                      className="push-lg"
-                     onChange=(
+                     onChange={
                        event =>
                          event->Formality.Dom.toCheckedOnChange->LoginForm.Bool
                          |> form.change(LoginForm.Remember)
-                     )
-                     onBlur=(
+                     }
+                     onBlur={
                        event =>
                          event->Formality.Dom.toCheckedOnBlur->LoginForm.Bool
                          |> form.blur(LoginForm.Remember)
-                     )
+                     }
                    />
                    <label htmlFor="login--remember">
-                     ("Remember me" |> ReasonReact.string)
+                     {"Remember me" |> ReasonReact.string}
                    </label>
                  </div>
                  <div className="form-row">
-                   <button className="push-lg" disabled=form.submitting>
-                     (
+                   <button className="push-lg" disabled={form.submitting}>
+                     {
                        (form.submitting ? "Submitting..." : "Submit")
                        |> ReasonReact.string
-                     )
+                     }
                    </button>
-                   (
+                   {
                      switch (form.status) {
                      | Formality.FormStatus.Submitted =>
-                       <div className=(Cn.make(["form-status", "success"]))>
-                         ({j|✓ Logged In|j} |> ReasonReact.string)
+                       <div className={Cn.make(["form-status", "success"])}>
+                         {{j|✓ Logged In|j} |> ReasonReact.string}
                        </div>
                      | _ => ReasonReact.null
                      }
-                   )
+                   }
                  </div>
                </div>
              </form>
-         )
+         }
     </LoginFormContainer>,
 };

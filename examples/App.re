@@ -1,4 +1,4 @@
-[@bs.val] external locationHash : string = "window.location.hash";
+[@bs.val] external locationHash: string = "window.location.hash";
 
 type route =
   | Signup
@@ -42,15 +42,15 @@ let make = _ => {
   render: ({state}) =>
     <div className="container">
       <div className="header">
-        <h1> ("Formality" |> ReasonReact.string) </h1>
+        <h1> {"Formality" |> ReasonReact.string} </h1>
         <a
           href="https://github.com/alexfedoseev/re-formality" className="link">
-          ("Github" |> ReasonReact.string)
+          {"Github" |> ReasonReact.string}
         </a>
       </div>
       <div className="nav">
         <button
-          className=(
+          className={
             Cn.make([
               "nav-link",
               switch (state.route) {
@@ -58,12 +58,12 @@ let make = _ => {
               | _ => ""
               },
             ])
-          )
-          onClick=(_ => ReasonReact.Router.push("#signup"))>
-          ("Signup" |> ReasonReact.string)
+          }
+          onClick={_ => ReasonReact.Router.push("#signup")}>
+          {"Signup" |> ReasonReact.string}
         </button>
         <button
-          className=(
+          className={
             Cn.make([
               "nav-link",
               switch (state.route) {
@@ -71,12 +71,12 @@ let make = _ => {
               | _ => ""
               },
             ])
-          )
-          onClick=(_ => ReasonReact.Router.push("#login"))>
-          ("Login" |> ReasonReact.string)
+          }
+          onClick={_ => ReasonReact.Router.push("#login")}>
+          {"Login" |> ReasonReact.string}
         </button>
         <button
-          className=(
+          className={
             Cn.make([
               "nav-link",
               switch (state.route) {
@@ -84,17 +84,17 @@ let make = _ => {
               | _ => ""
               },
             ])
-          )
-          onClick=(_ => ReasonReact.Router.push("#login-remember-me"))>
-          ("Login With Remember Me" |> ReasonReact.string)
+          }
+          onClick={_ => ReasonReact.Router.push("#login-remember-me")}>
+          {"Login With Remember Me" |> ReasonReact.string}
         </button>
       </div>
-      (
+      {
         switch (state.route) {
         | Signup => <SignupForm />
         | Login => <LoginForm />
         | LoginFormWithRememberMe => <LoginFormWithRememberMeCheckbox />
         }
-      )
+      }
     </div>,
 };
