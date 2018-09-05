@@ -103,7 +103,7 @@ let make = _ => {
                    </label>
                    <input
                      id="login--email"
-                     type_="text"
+                     type_="email"
                      value={form.state.email}
                      disabled={form.submitting}
                      onChange={
@@ -139,7 +139,7 @@ let make = _ => {
                    </label>
                    <input
                      id="login--password"
-                     type_="text"
+                     type_="password"
                      value={form.state.password}
                      disabled={form.submitting}
                      onChange={
