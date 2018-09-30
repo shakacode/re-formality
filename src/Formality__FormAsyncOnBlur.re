@@ -76,7 +76,10 @@ module Make = (Form: Config) => {
     emittedFields: FieldsSet.t,
   };
 
+  type retainedProps = {initialState: Form.state};
+
   type action =
+    | Initialize(Form.state)
     | Change((Form.field, Form.value))
     | Blur((Form.field, Form.value))
     | TriggerAsyncValidation(
@@ -153,9 +156,12 @@ module Make = (Form: Config) => {
          (results, emittedFields),
        );
 
-  let component = "FormalityForm" |> ReasonReact.reducerComponent;
+  let component =
+    "FormalityForm" |> ReasonReact.reducerComponentWithRetainedProps;
+
   let make =
       (
+        ~enableReinitialize=false,
         ~initialState: Form.state,
         ~onSubmit:
            (
@@ -170,7 +176,15 @@ module Make = (Form: Config) => {
         children,
       ) => {
     ...component,
+    retainedProps: {
+      initialState: initialState,
+    },
     initialState: () => getInitialState(initialState),
+    didUpdate: ({newSelf, oldSelf}) =>
+      if (enableReinitialize
+          && initialState != oldSelf.retainedProps.initialState) {
+        newSelf.send(Initialize(initialState));
+      },
     reducer: (action, state) =>
       switch (action) {
       | Change((field, value)) =>
@@ -635,6 +649,9 @@ module Make = (Form: Config) => {
         }
 
       | Reset => ReasonReact.Update(initialState |> getInitialState)
+
+      | Initialize(initialState) =>
+        ReasonReact.Update(initialState |> getInitialState)
       },
     render: ({state, send}) =>
       children({
