@@ -425,12 +425,13 @@ module MyAsyncFormContainer = Formality.MakeWithAsyncValidationsOnBlur(MyForm);
 
 ### Rendering
 
-Form container accepts 3 props:
+Form container accepts 4 props:
 
 ```reason
 render: (_) =>
   <MyFormContainer
     initialState={email: "", password: ""}
+    enableReinitialize=true
     onSubmit=((state, {notifyOnSuccess, notifyOnFailure, reset}) => {
       /* Submit form and either notifyOnSuccess / notifyOnFailure / reset */
     })
@@ -441,6 +442,9 @@ render: (_) =>
 
 #### `initialState`
 It's `state` record with initial values for each form field.
+
+#### `enableReinitialize`
+Defaults to `false`. Controls whether reset the form if `initialState` changes (using deep equality).
 
 #### `onSubmit`
 This handler will be triggered on form submission (only when all validators returned `Valid`).
