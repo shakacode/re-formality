@@ -11,6 +11,7 @@
 
 ### Chore
 * `bs-platform` updated to `4.0.6`.
+* Use `re-debouncer`.
 
 ## 0.10.0
 ### Chore

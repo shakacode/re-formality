@@ -8,7 +8,10 @@
       "subdirs": true,
     },
   ],
-  "bs-dependencies": ["reason-react"],
+  "bs-dependencies": [
+    "reason-react",
+    "re-debouncer"
+  ],
   "bs-dev-dependencies": ["re-classnames"],
   "reason": {
     "react-jsx": 2,

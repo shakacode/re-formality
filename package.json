@@ -46,5 +46,8 @@
     "parcel-bundler": "1.9.7",
     "re-classnames": "2.1.0",
     "reason-react": "0.5.3"
+  },
+  "dependencies": {
+    "re-debouncer": "0.0.1"
   }
 }

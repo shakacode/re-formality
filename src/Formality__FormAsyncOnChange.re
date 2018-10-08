@@ -46,9 +46,11 @@ module Make = (Form: Config) => {
         Form.field,
         Form.value,
         (
-          ~field: Form.field,
-          ~value: Form.value,
-          React.self(state, React.noRetainedProps, action)
+          (
+            Form.field,
+            Form.value,
+            React.self(state, React.noRetainedProps, action),
+          )
         ) =>
         unit,
       )
@@ -92,59 +94,6 @@ module Make = (Form: Config) => {
     submittedOnce: false,
   };
 
-  let debounce = (~validateAsync, ~wait) => {
-    let lastSelf = ref(None);
-    let lastField = ref(None);
-    let lastValue = ref(None);
-    let lastCallTime = ref(None);
-    let timerId = ref(None);
-    let shouldInvoke = time =>
-      switch (lastCallTime^) {
-      | None => true
-      | Some(lastCallTime) =>
-        let timeSinceLastCall = time - lastCallTime;
-        timeSinceLastCall >= wait || timeSinceLastCall < 0;
-      };
-    let remainingWait = time =>
-      switch (lastCallTime^) {
-      | None => wait
-      | Some(lastCallTime) =>
-        let timeSinceLastCall = time - lastCallTime;
-        wait - timeSinceLastCall;
-      };
-    let rec timerExpired = () => {
-      let time = Js.Date.now() |> int_of_float;
-      time |> shouldInvoke ?
-        invoke() :
-        timerId :=
-          Some(Js.Global.setTimeout(timerExpired, time |> remainingWait));
-    }
-    and invoke = () => {
-      timerId := None;
-      if (lastValue^ |> Js.Option.isSome) {
-        let field = lastField^;
-        let value = lastValue^;
-        let self = lastSelf^;
-        lastSelf := None;
-        lastValue := None;
-        switch (field, value, self) {
-        | (Some(field), Some(value), Some({React.send})) =>
-          send(TriggerAsyncValidation(field, value, validateAsync))
-        | _ => ()
-        };
-      };
-    };
-    let debounced = (~field, ~value, self) => {
-      let time = Js.Date.now() |> int_of_float;
-      lastCallTime := Some(time);
-      lastField := Some(field);
-      lastValue := Some(value);
-      lastSelf := Some(self);
-      timerId := Some(Js.Global.setTimeout(timerExpired, wait));
-    };
-    debounced;
-  };
-
   type debouncedValidator = {
     field: Form.field,
     strategy: Strategy.t,
@@ -153,32 +102,32 @@ module Make = (Form: Config) => {
     validateAsync:
       option(
         (
-          ~field: Form.field,
-          ~value: Form.value,
-          React.self(state, React.noRetainedProps, action)
+          (
+            Form.field,
+            Form.value,
+            React.self(state, React.noRetainedProps, action),
+          )
         ) =>
         unit,
       ),
   };
 
+  let debounce = (~wait, fn) => {
+    let fn = ((field, value, {React.send})) =>
+      TriggerAsyncValidation(field, value, fn)->send;
+    fn->(Debouncer.make(~wait));
+  };
+
   let debouncedValidators =
     Form.validators->List.map(validator =>
-      switch (validator.validateAsync) {
-      | Some(validateAsync) => {
-          field: validator.field,
-          strategy: validator.strategy,
-          dependents: validator.dependents,
-          validate: validator.validate,
-          validateAsync:
-            Some(debounce(~validateAsync, ~wait=Form.debounceInterval)),
-        }
-      | None => {
-          field: validator.field,
-          strategy: validator.strategy,
-          dependents: validator.dependents,
-          validate: validator.validate,
-          validateAsync: None,
-        }
+      {
+        field: validator.field,
+        strategy: validator.strategy,
+        dependents: validator.dependents,
+        validate: validator.validate,
+        validateAsync:
+          validator.validateAsync
+          ->Option.map(fn => fn->debounce(~wait=Form.debounceInterval)),
       }
     );
 
@@ -419,7 +368,7 @@ module Make = (Form: Config) => {
         };
 
       | InvokeDebouncedAsyncValidation(field, value, validateAsync) =>
-        React.SideEffects(validateAsync(~field, ~value))
+        React.SideEffects((self => (field, value, self)->validateAsync))
 
       | TriggerAsyncValidation(field, value, validateAsync) =>
         React.SideEffects(
