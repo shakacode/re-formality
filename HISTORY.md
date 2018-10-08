@@ -6,6 +6,9 @@
 * **[ BREAKING ]** Validators are simply `list(validators)` now (instead of `Map`).
 * `Belt` (internal change).
 
+### Deprecations
+* `Formality.Dom.toValue*` & `Formality.Dom.toChecked*` helpers are deprecated in favor of common getters.
+
 ### Chore
 * `bs-platform` updated to `4.0.6`.
 
