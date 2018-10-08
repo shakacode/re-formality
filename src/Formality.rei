@@ -1,4 +1,3 @@
-module MakeValidators = Formality__Validation.MakeValidators;
 module Dom = Formality__PublicHelpers.Dom;
 module Strategy = Formality__Strategy;
 module FormStatus = Formality__FormStatus;
@@ -18,6 +17,7 @@ type validateAsync('value, 'message) =
 
 type validator('field, 'value, 'state, 'message) =
   Formality__Validation.validator('field, 'value, 'state, 'message) = {
+    field: 'field,
     strategy: Formality__Strategy.t,
     dependents: option(list('field)),
     validate: validate('value, 'state, 'message),
@@ -25,6 +25,7 @@ type validator('field, 'value, 'state, 'message) =
 
 type asyncValidator('field, 'value, 'state, 'message) =
   Formality__Validation.asyncValidator('field, 'value, 'state, 'message) = {
+    field: 'field,
     strategy: Formality__Strategy.t,
     dependents: option(list('field)),
     validate: validate('value, 'state, 'message),

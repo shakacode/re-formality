@@ -16,5 +16,5 @@ let validateEmail = value =>
           },
       1500,
     )
-    |> ignore;
+    ->ignore;
   });
