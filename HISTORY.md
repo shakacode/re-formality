@@ -1,43 +1,50 @@
-# 0.10.0
+# History
 
-## Chore
+## UNRELEASED
+### Major
+* **[ BREAKING ]** Fast-pipe & data-first style. Please, follow compiler warnings to update your forms. Also, see updated [examples](./examples).
+* **[ BREAKING ]** Validators are simply `list(validators)` now (instead of `Map`).
+* `Belt` (internal change).
+
+### Deprecations
+* `Formality.Dom.toValue*` & `Formality.Dom.toChecked*` helpers are deprecated in favor of common getters.
+
+### Chore
+* `bs-platform` updated to `4.0.6`.
+* Use `re-debouncer`.
+
+## 0.10.0
+### Chore
 * `bs-platform` updated to `4.0.5` & `reason-react` to `0.5.3`. Thanks **[@jihchi](https://github.com/jihchi)**!
 
-# 0.9.1
-
-## Improvements
+## 0.9.1
+### Improvements
 * Added `Formality.Dom.toCheckedOnChange` & `Formality.Dom.toCheckedOnBlur` helpers.
 
-# 0.9.0
-
-## Improvements
+## 0.9.0
+### Improvements
 * Added `form.dismissSubmissionResult` to dismiss server errors without resetting the form. Under the hood, it changes `FormStatus.Submitted` & `FormStatus.SubmissionFailed` statuses to `FormStatus.Editing`.
 
-# 0.8.1
-
-## Fixes
+## 0.8.1
+### Fixes
 * Fixed emitting of invalid result when value is empty.
 
-# 0.8.0
-
-## Chore
+## 0.8.0
+### Chore
 * `bs-platform` updated to `3.0.0`. Thanks **[@jihchi](https://github.com/jihchi)**!
 
-# 0.7.2
-
-## Fixes
+## 0.7.2
+### Fixes
 * Fixed Map comparator. Thanks **[@jihchi](https://github.com/jihchi)**!
 * Fixed equality check in empty string helper. Thanks **[@rauanmayemir](https://github.com/rauanmayemir)**!
 
-# 0.7.1
-
-## Improvements
+## 0.7.1
+### Improvements
 * Added interface file.
 * Added docs.
 
-# 0.7.0
-
-## Features
+## 0.7.0
+### Features
 * Form `status` is added.
 
 ```reason
@@ -78,17 +85,15 @@ Submission callbacks:
 
 Previously, if `onSuccess` was called, form was reset. Now, each callback sets appropriate form `status`, or you can explicitly `reset` a form. Also with this change, you can store errors returned from a server in form status `SubmissionFailed(list(('field, 'message)), option('message))` and render them in UI.
 
-## Chore
+### Chore
 * `bs-platform` is updated to `2.2.3`.
 
-# 0.6.0
-
-## Chore
+## 0.6.0
+### Chore
 * `bs-platform@^2.2.2` is added to `peerDependencies`.
 
-# 0.5.0
-
-## Features
+## 0.5.0
+### Features
 * **[ BREAKING ]** `value` is user-defined type (was `string`).
 
 In form config:
@@ -117,20 +122,18 @@ In form config:
 + )
 ```
 
-## Fixes
+### Fixes
 * Fix regressions related to empty values validation on form submission
 
-## Chore
+### Chore
 * `bs-platform` updated to `2.2.2`.
 
-# 0.4.1
-
-## Improvements
+## 0.4.1
+### Improvements
 * In case of optional field (e.g. `"" => Valid`) if value is empty string container will always emit `None` (instead of `Some(Valid)`).
 
-# 0.4.0
-
-## Improvements
+## 0.4.0
+### Improvements
 * **[ BREAKING ]** `validationResult` type is set back to variant. `meta` is removed.
 
 ```diff
@@ -157,14 +160,12 @@ validate: (value, _state) =>
 
 * **[ BREAKING ]** `exception ImpossibleResult` is removed as with the change above we don't get into impossible state anymore! 🎉🎉🎉
 
-# 0.3.1
-
-## Improvements
+## 0.3.1
+### Improvements
 * Validation `result` type is renamed to `validationResult` to avoid possible conflicts with Pervasive's `result`.
 
-# 0.3.0
-
-## Improvements
+## 0.3.0
+### Improvements
 * **[ BREAKING ]** Validation `result` type is simplified. Now it's just record.
 
 ```diff
@@ -199,9 +200,8 @@ validate: (value, _state) =>
 
 Thanks **[@thangngoc89](https://github.com/thangngoc89)** for suggestion!
 
-# 0.2.0
-
-## Improvements
+## 0.2.0
+### Improvements
 * **[ BREAKING ]** Global form `strategy` type is removed. Now strategy is defined via field validator. It means `strategy` field is not `option` anymore.
 
 ```diff
@@ -237,5 +237,5 @@ Thanks **[@thangngoc89](https://github.com/thangngoc89)** for suggestion!
 
 Thanks **[@grsabreu](https://github.com/grsabreu)** & **[@wokalski](https://github.com/wokalski)** for suggestions!
 
-# 0.1.0
+## 0.1.0
 Initial release.

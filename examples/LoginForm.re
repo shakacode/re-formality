@@ -11,13 +11,13 @@ module LoginForm = {
     password: string,
   };
 
-  let get = (field, state) =>
+  let get = (state, field) =>
     switch (field) {
     | Email => state.email
     | Password => state.password
     };
 
-  let update = ((field, value), state) =>
+  let set = (state, (field, value)) =>
     switch (field, value) {
     | (Email, value) => {...state, email: value}
     | (Password, value) => {...state, password: value}
@@ -25,51 +25,38 @@ module LoginForm = {
 
   let valueEmpty = Formality.emptyString;
 
-  module Validators =
-    Formality.MakeValidators({
-      type t = field;
-    });
-
-  type validators =
-    Validators.t(Formality.validator(field, value, state, message));
-
   let validators =
-    Formality.(
-      Validators.empty
-      |> Validators.add(
-           Email,
-           {
-             strategy: Strategy.OnFirstSuccessOrFirstBlur,
-             dependents: None,
-             validate: (value, _) => {
-               let emailRegex = [%bs.re {|/.*@.*\..+/|}];
-               switch (value) {
-               | "" => Invalid("Email is required")
-               | _ when !(emailRegex |> Js.Re.test(value)) =>
-                 Invalid("Email is invalid")
-               | _ => Valid
-               };
-             },
-           },
-         )
-      |> Validators.add(
-           Password,
-           {
-             strategy: Strategy.OnFirstBlur,
-             dependents: None,
-             validate: (value, _) =>
-               switch (value) {
-               | "" => Invalid("Password is required")
-               | _ => Valid
-               },
-           },
-         )
-    );
+    Formality.[
+      {
+        field: Email,
+        strategy: Strategy.OnFirstSuccessOrFirstBlur,
+        dependents: None,
+        validate: (value, _state) => {
+          let emailRegex = [%bs.re {|/.*@.*\..+/|}];
+          switch (value) {
+          | "" => Invalid("Email is required")
+          | _ when !emailRegex->Js.Re.test(value, _) =>
+            Invalid("Email is invalid")
+          | _ => Valid
+          };
+        },
+      },
+      {
+        field: Password,
+        strategy: Strategy.OnFirstBlur,
+        dependents: None,
+        validate: (value, _state) =>
+          switch (value) {
+          | "" => Invalid("Password is required")
+          | _ => Valid
+          },
+      },
+    ];
 };
 
 module LoginFormContainer = Formality.Make(LoginForm);
 
-let component = ReasonReact.statelessComponent(__MODULE__);
+let component = React.statelessComponent(__MODULE__);
 
 let make = _ => {
   ...component,
@@ -82,24 +69,24 @@ let make = _ => {
           Js.Global.setTimeout(
             () => {
               form.notifyOnSuccess(None);
-              Js.Global.setTimeout(form.reset, 3000) |> ignore;
+              form.reset->Js.Global.setTimeout(3000)->ignore;
             },
             500,
           )
-          |> ignore;
+          ->ignore;
         }
       }>
       ...{
            form =>
              <form
                className="form"
-               onSubmit={form.submit |> Formality.Dom.preventDefault}>
+               onSubmit={form.submit->Formality.Dom.preventDefault}>
                <div className="form-messages-area form-messages-area-lg" />
                <div className="form-content">
-                 <h2 className="push-lg"> {"Login" |> ReasonReact.string} </h2>
+                 <h2 className="push-lg"> "Login"->React.string </h2>
                  <div className="form-row">
                    <label htmlFor="login--email" className="label-lg">
-                     {"Email" |> ReasonReact.string}
+                     "Email"->React.string
                    </label>
                    <input
                      id="login--email"
@@ -108,34 +95,32 @@ let make = _ => {
                      disabled={form.submitting}
                      onChange={
                        event =>
-                         event
-                         |> Formality.Dom.toValueOnChange
-                         |> form.change(LoginForm.Email)
+                         event->ReactEvent.Form.target##value
+                         ->(form.change(Email))
                      }
                      onBlur={
                        event =>
-                         event
-                         |> Formality.Dom.toValueOnBlur
-                         |> form.blur(LoginForm.Email)
+                         event->ReactEvent.Focus.target##value
+                         ->(form.blur(Email))
                      }
                    />
                    {
-                     switch (LoginForm.Email |> form.results) {
+                     switch (Email->(form.results)) {
                      | Some(Invalid(message)) =>
                        <div className={Cn.make(["form-message", "failure"])}>
-                         {message |> ReasonReact.string}
+                         message->React.string
                        </div>
                      | Some(Valid) =>
                        <div className={Cn.make(["form-message", "success"])}>
-                         {{j|✓|j} |> ReasonReact.string}
+                         {j|✓|j}->React.string
                        </div>
-                     | None => ReasonReact.null
+                     | None => React.null
                      }
                    }
                  </div>
                  <div className="form-row">
                    <label htmlFor="login--password" className="label-lg">
-                     {"Password" |> ReasonReact.string}
+                     "Password"->React.string
                    </label>
                    <input
                      id="login--password"
@@ -144,45 +129,41 @@ let make = _ => {
                      disabled={form.submitting}
                      onChange={
                        event =>
-                         event
-                         |> Formality.Dom.toValueOnChange
-                         |> form.change(LoginForm.Password)
+                         event->ReactEvent.Form.target##value
+                         ->(form.change(Password))
                      }
                      onBlur={
                        event =>
-                         event
-                         |> Formality.Dom.toValueOnBlur
-                         |> form.blur(LoginForm.Password)
+                         event->ReactEvent.Focus.target##value
+                         ->(form.blur(Password))
                      }
                    />
                    {
-                     switch (LoginForm.Password |> form.results) {
+                     switch (Password->(form.results)) {
                      | Some(Invalid(message)) =>
                        <div className={Cn.make(["form-message", "failure"])}>
-                         {message |> ReasonReact.string}
+                         message->React.string
                        </div>
                      | Some(Valid) =>
                        <div className={Cn.make(["form-message", "success"])}>
-                         {{j|✓|j} |> ReasonReact.string}
+                         {j|✓|j}->React.string
                        </div>
-                     | None => ReasonReact.null
+                     | None => React.null
                      }
                    }
                  </div>
                  <div className="form-row">
                    <button className="push-lg" disabled={form.submitting}>
-                     {
-                       (form.submitting ? "Submitting..." : "Submit")
-                       |> ReasonReact.string
-                     }
+                     (form.submitting ? "Submitting..." : "Submit")
+                     ->React.string
                    </button>
                    {
                      switch (form.status) {
-                     | Formality.FormStatus.Submitted =>
+                     | Submitted =>
                        <div className={Cn.make(["form-status", "success"])}>
-                         {{j|✓ Logged In|j} |> ReasonReact.string}
+                         {j|✓ Logged In|j}->React.string
                        </div>
-                     | _ => ReasonReact.null
+                     | _ => React.null
                      }
                    }
                  </div>
