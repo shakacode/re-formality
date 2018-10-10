@@ -1,26 +1,29 @@
-type validationResult('message) =
+type result('message) =
   | Valid
-  | Invalid('message);
+  | Invalid('message)
+  | Optional;
 
-type validate('value, 'state, 'message) =
-  ('value, 'state) => validationResult('message);
+type validate('state, 'message) = 'state => result('message);
 
-type validateAsync('value, 'message) =
-  'value => Js.Promise.t(validationResult('message));
+type validateAsync('state, 'message) =
+  'state => Js.Promise.t(result('message));
 
-type validator('field, 'value, 'state, 'message) = {
+type checkEquality('state) = ('state, 'state) => bool;
+
+type validator('field, 'state, 'message) = {
   field: 'field,
   strategy: Formality__Strategy.t,
   dependents: option(list('field)),
-  validate: validate('value, 'state, 'message),
+  validate: validate('state, 'message),
 };
 
-type asyncValidator('field, 'value, 'state, 'message) = {
+type asyncValidator('field, 'state, 'message) = {
   field: 'field,
   strategy: Formality__Strategy.t,
   dependents: option(list('field)),
-  validate: validate('value, 'state, 'message),
-  validateAsync: option(validateAsync('value, 'message)),
+  validate: validate('state, 'message),
+  validateAsync:
+    option((validateAsync('state, 'message), checkEquality('state))),
 };
 
 type submissionCallbacks('field, 'state, 'message) = {

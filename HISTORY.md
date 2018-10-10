@@ -2,12 +2,16 @@
 
 ## UNRELEASED
 ### Major
-* **[ BREAKING ]** Fast-pipe & data-first style. Please, follow compiler warnings to update your forms. Also, see updated [examples](./examples).
-* **[ BREAKING ]** Validators are simply `list(validators)` now (instead of `Map`).
-* `Belt` (internal change).
+There are a number of big changes in public API. Higher level changes are outlined below. Please, see updated documentation, inspect [`src/Formality.rei`](./src/Formality.rei) and follow compiler warnings to update your forms. Also, see updated [examples](./examples).
+
+* **[ BREAKING ]** Fast-pipe & data-first style.
+* **[ BREAKING ]** `value` type is removed from config. It 100% decouples forms from particular value type.
+* **[ BREAKING ]** Validation `result` type received new constructor: `Optional`. It should be used when optional field's value is empty. You can safely remove confusing `valueEmpty` function from configs. Make sure that all validators of optional fields are updated.
+* **[ BREAKING ]** Validators are simply `list(validators)` now (instead of `Map`) and due to `value` removal each validator receives single argument: `state`.
+* Switch to `Belt` (internal change).
 
 ### Deprecations
-* `Formality.Dom.toValue*` & `Formality.Dom.toChecked*` helpers are deprecated in favor of common getters.
+* `Formality.Dom.toValue*` & `Formality.Dom.toChecked*` helpers are deprecated in favor of common `ReasonReact` getters.
 
 ### Chore
 * `bs-platform` updated to `4.0.6`.

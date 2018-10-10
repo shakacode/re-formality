@@ -2,20 +2,15 @@ module Validation = Formality__Validation;
 module Strategy = Formality__Strategy;
 module FormStatus = Formality__FormStatus;
 
-module type Config = {
+module type Form = {
   type field;
-  type value;
   type state;
   type message;
-
-  let get: (state, field) => value;
-  let set: (state, (field, value)) => state;
-  let valueEmpty: value => bool;
-  let validators: list(Validation.validator(field, value, state, message));
+  let validators: list(Validation.validator(field, state, message));
 };
 
-module Make = (Form: Config) => {
-  module FieldsComparator =
+module Make = (Form: Form) => {
+  module FieldComparator =
     Id.MakeComparable({
       type t = Form.field;
       let cmp = Pervasives.compare;
@@ -24,19 +19,27 @@ module Make = (Form: Config) => {
   type state = {
     data: Form.state,
     status: FormStatus.t(Form.field, Form.message),
+    validators:
+      ref(
+        Map.t(
+          Form.field,
+          Validation.validator(Form.field, Form.state, Form.message),
+          FieldComparator.identity,
+        ),
+      ),
     results:
       Map.t(
         Form.field,
-        Validation.validationResult(Form.message),
-        FieldsComparator.identity,
+        Validation.result(Form.message),
+        FieldComparator.identity,
       ),
-    emittedFields: Set.t(Form.field, FieldsComparator.identity),
+    emittedFields: Set.t(Form.field, FieldComparator.identity),
     submittedOnce: bool,
   };
 
   type action =
-    | Change((Form.field, Form.value))
-    | Blur((Form.field, Form.value))
+    | Change(Form.field, Form.state)
+    | Blur(Form.field)
     | Submit
     | SetSubmittedStatus(option(Form.state))
     | SetSubmissionFailedStatus(
@@ -49,10 +52,10 @@ module Make = (Form: Config) => {
   type interface = {
     state: Form.state,
     status: FormStatus.t(Form.field, Form.message),
-    results: Form.field => option(Validation.validationResult(Form.message)),
+    result: Form.field => option(Validation.result(Form.message)),
     submitting: bool,
-    change: (Form.value, Form.field) => unit,
-    blur: (Form.value, Form.field) => unit,
+    change: (Form.field, Form.state) => unit,
+    blur: Form.field => unit,
     submit: unit => unit,
     dismissSubmissionResult: unit => unit,
   };
@@ -60,37 +63,58 @@ module Make = (Form: Config) => {
   let getInitialState = data => {
     data,
     status: FormStatus.Editing,
-    results: Map.make(~id=(module FieldsComparator)),
-    emittedFields: Set.make(~id=(module FieldsComparator)),
+    validators:
+      ref(
+        Form.validators->List.reduce(
+          Map.make(~id=(module FieldComparator)), (fields, validator) =>
+          fields->Map.set(validator.field, validator)
+        ),
+      ),
+    results: Map.make(~id=(module FieldComparator)),
+    emittedFields: Set.make(~id=(module FieldComparator)),
     submittedOnce: false,
   };
 
-  let validator = field =>
-    Form.validators->List.getBy(validator => validator.field === field);
-
-  let validateDependents = (~data, ~results, ~emittedFields, dependents) =>
-    dependents->List.reduce(
-      (results, emittedFields),
-      ((results, emittedFields), field) => {
-        let validator = field->validator;
-        let emitted = emittedFields->Set.has(field);
-        switch (validator, emitted) {
-        | (None, _)
-        | (_, false) => (results, emittedFields)
-        | (Some(validator), true) =>
-          let value = data->Form.get(field);
-          let result = data |> validator.validate(value);
-          (
-            switch (result) {
-            | Valid when value->Form.valueEmpty => results->Map.remove(field)
-            | Valid
-            | Invalid(_) => results->Map.set(field, result)
-            },
-            emittedFields->Set.add(field),
-          );
-        };
-      },
-    );
+  let validateDependents =
+      (
+        ~data: Form.state,
+        ~validators:
+           ref(
+             Map.t(
+               Form.field,
+               Validation.validator(Form.field, Form.state, Form.message),
+               FieldComparator.identity,
+             ),
+           ),
+        ~results:
+           Map.t(
+             Form.field,
+             Validation.result(Form.message),
+             FieldComparator.identity,
+           ),
+        ~emittedFields: Set.t(Form.field, FieldComparator.identity),
+        dependents: option(list(Form.field)),
+      ) =>
+    switch (dependents) {
+    | None => (results, emittedFields)
+    | Some(dependents) =>
+      dependents->List.reduce(
+        (results, emittedFields),
+        ((results, emittedFields), field) => {
+          let validator = (validators^)->Map.getExn(field);
+          let emitted = emittedFields->Set.has(field);
+          if (emitted) {
+            let result = data->(validator.validate);
+            (
+              results->Map.set(field, result),
+              emittedFields->Set.add(field),
+            );
+          } else {
+            (results, emittedFields);
+          };
+        },
+      )
+    };
 
   let component = React.reducerComponent("FormalityForm");
   let make =
@@ -112,9 +136,9 @@ module Make = (Form: Config) => {
     initialState: () => initialState->getInitialState,
     reducer: (action, state) =>
       switch (action) {
-      | Change((field, value)) =>
-        let data = state.data->Form.set((field, value));
-        switch (field->validator) {
+      | Change(field, data) =>
+        let validator = (state.validators^)->Map.get(field);
+        switch (validator) {
         | None => React.Update({...state, data})
         | Some(validator) =>
           let emitted = state.emittedFields->Set.has(field);
@@ -122,27 +146,19 @@ module Make = (Form: Config) => {
           | (_, true, _)
           | (_, _, true)
           | (Strategy.OnFirstChange, false, false) =>
-            let result = data |> validator.validate(value);
+            let result = data->(validator.validate);
             let (results, emittedFields) =
-              switch (validator.dependents) {
-              | None => (state.results, state.emittedFields)
-              | Some(dependents) =>
-                dependents->validateDependents(
+              validator.dependents
+              ->validateDependents(
                   ~data,
+                  ~validators=state.validators,
                   ~results=state.results,
                   ~emittedFields=state.emittedFields,
-                )
-              };
+                );
             React.Update({
               ...state,
               data,
-              results:
-                switch (result) {
-                | Valid when value->Form.valueEmpty =>
-                  results->Map.remove(field)
-                | Valid
-                | Invalid(_) => results->Map.set(field, result)
-                },
+              results: results->Map.set(field, result),
               emittedFields: emittedFields->Set.add(field),
             });
 
@@ -151,26 +167,22 @@ module Make = (Form: Config) => {
               false,
               false,
             ) =>
-            let result = data |> validator.validate(value);
+            let result = data->(validator.validate);
             let (results, emittedFields) =
-              switch (validator.dependents) {
-              | None => (state.results, state.emittedFields)
-              | Some(dependents) =>
-                dependents->validateDependents(
+              validator.dependents
+              ->validateDependents(
                   ~data,
+                  ~validators=state.validators,
                   ~results=state.results,
                   ~emittedFields=state.emittedFields,
-                )
-              };
+                );
             switch (result) {
-            | Valid =>
+            | Valid
+            | Optional =>
               React.Update({
                 ...state,
                 data,
-                results:
-                  value->Form.valueEmpty ?
-                    results->Map.remove(field) :
-                    results->Map.set(field, result),
+                results: results->Map.set(field, result),
                 emittedFields: emittedFields->Set.add(field),
               })
             | Invalid(_) =>
@@ -182,8 +194,8 @@ module Make = (Form: Config) => {
           };
         };
 
-      | Blur((field, value)) =>
-        let validator = field->validator;
+      | Blur(field) =>
+        let validator = (state.validators^)->Map.get(field);
         let emitted = state.emittedFields->Set.has(field);
         switch (validator, emitted) {
         | (None, _)
@@ -195,16 +207,10 @@ module Make = (Form: Config) => {
           | Strategy.OnSubmit => React.NoUpdate
           | Strategy.OnFirstBlur
           | Strategy.OnFirstSuccessOrFirstBlur =>
-            let result = state.data |> validator.validate(value);
+            let result = state.data->(validator.validate);
             React.Update({
               ...state,
-              results:
-                switch (result) {
-                | Valid when value->Form.valueEmpty =>
-                  state.results->Map.remove(field)
-                | Valid
-                | Invalid(_) => state.results->Map.set(field, result)
-                },
+              results: state.results->Map.set(field, result),
               emittedFields: state.emittedFields->Set.add(field),
             });
           }
@@ -215,25 +221,19 @@ module Make = (Form: Config) => {
         | FormStatus.Submitting => React.NoUpdate
         | _ =>
           let (valid, results) =
-            Form.validators->List.reduce(
-              (true, state.results),
-              ((valid, results), validator) => {
-                let value = state.data->Form.get(validator.field);
-                let result = state.data |> validator.validate(value);
-                let results =
-                  switch (result) {
-                  | Valid when value->Form.valueEmpty =>
-                    results->Map.remove(validator.field)
-                  | Valid
-                  | Invalid(_) => results->Map.set(validator.field, result)
+            (state.validators^)
+            ->Map.reduce(
+                (true, state.results),
+                ((valid, results), field, validator) => {
+                  let result = state.data->(validator.validate);
+                  let results = results->Map.set(field, result);
+                  switch (valid, result) {
+                  | (false, _)
+                  | (true, Invalid(_)) => (false, results)
+                  | (true, Valid | Optional) => (true, results)
                   };
-                switch (valid, result) {
-                | (false, _)
-                | (true, Invalid(_)) => (false, results)
-                | (true, Valid) => (true, results)
-                };
-              },
-            );
+                },
+              );
           if (valid) {
             React.UpdateWithSideEffects(
               {
@@ -292,11 +292,12 @@ module Make = (Form: Config) => {
 
       | Reset => React.Update(initialState->getInitialState)
       },
+
     render: ({state, send}) =>
       children({
         state: state.data,
         status: state.status,
-        results: field => state.results->Map.get(field),
+        result: field => state.results->Map.get(field),
         submitting:
           switch (state.status) {
           | Submitting => true
@@ -304,8 +305,8 @@ module Make = (Form: Config) => {
           | Submitted
           | SubmissionFailed(_, _) => false
           },
-        change: (value, field) => (field, value)->Change->send,
-        blur: (value, field) => (field, value)->Blur->send,
+        change: (field, state) => Change(field, state)->send,
+        blur: field => Blur(field)->send,
         submit: () => Submit->send,
         dismissSubmissionResult: () => DismissSubmissionResult->send,
       }),

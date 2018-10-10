@@ -1,37 +1,40 @@
 module Dom = Formality__PublicHelpers.Dom;
 module Strategy = Formality__Strategy;
 module FormStatus = Formality__FormStatus;
+
 module Make = Formality__Form.Make;
-module MakeWithAsyncValidationsOnChange = Formality__FormAsyncOnChange.Make;
-module MakeWithAsyncValidationsOnBlur = Formality__FormAsyncOnBlur.Make;
 
-type validationResult('message) =
-  Formality__Validation.validationResult('message) =
-    | Valid | Invalid('message);
+module Async: {
+  module Make = Formality__FormAsyncOnChange.Make;
+  module MakeOnBlur = Formality__FormAsyncOnBlur.Make;
+  let debounceInterval: int;
+};
 
-type validate('value, 'state, 'message) =
-  ('value, 'state) => validationResult('message);
+type result('message) =
+  Formality__Validation.result('message) =
+    | Valid | Invalid('message) | Optional;
 
-type validateAsync('value, 'message) =
-  'value => Js.Promise.t(validationResult('message));
+type validate('state, 'message) = 'state => result('message);
 
-type validator('field, 'value, 'state, 'message) =
-  Formality__Validation.validator('field, 'value, 'state, 'message) = {
+type validateAsync('state, 'message) =
+  'state => Js.Promise.t(result('message));
+
+type checkEquality('state) = ('state, 'state) => bool;
+
+type validator('field, 'state, 'message) =
+  Formality__Validation.validator('field, 'state, 'message) = {
     field: 'field,
     strategy: Formality__Strategy.t,
     dependents: option(list('field)),
-    validate: validate('value, 'state, 'message),
+    validate: validate('state, 'message),
   };
 
-type asyncValidator('field, 'value, 'state, 'message) =
-  Formality__Validation.asyncValidator('field, 'value, 'state, 'message) = {
+type asyncValidator('field, 'state, 'message) =
+  Formality__Validation.asyncValidator('field, 'state, 'message) = {
     field: 'field,
     strategy: Formality__Strategy.t,
     dependents: option(list('field)),
-    validate: validate('value, 'state, 'message),
-    validateAsync: option(validateAsync('value, 'message)),
+    validate: validate('state, 'message),
+    validateAsync:
+      option((validateAsync('state, 'message), checkEquality('state))),
   };
-
-let debounceInterval: int;
-
-let emptyString: string => bool;
