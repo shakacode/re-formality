@@ -1,5 +1,3 @@
-let emptyString = value => value == "";
-
 module Dom = {
   let preventDefault = (submit, event) => {
     if (!event->ReactEvent.Form.defaultPrevented) {

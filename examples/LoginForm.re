@@ -1,71 +1,71 @@
 module LoginForm = {
-  type value = string;
-  type message = string;
+  open Formality;
 
   type field =
     | Email
-    | Password;
+    | Password
+    | RememberMe;
 
   type state = {
     email: string,
     password: string,
+    rememberMe: bool,
   };
 
-  let get = (state, field) =>
-    switch (field) {
-    | Email => state.email
-    | Password => state.password
+  type message = string;
+
+  module EmailField = {
+    let update = (state, value) => {...state, email: value};
+
+    let validator = {
+      field: Email,
+      strategy: Strategy.OnFirstSuccessOrFirstBlur,
+      dependents: None,
+      validate: ({email}) => {
+        let emailRegex = [%bs.re {|/.*@.*\..+/|}];
+        switch (email) {
+        | "" => Invalid("Email is required")
+        | _ as value when !value->Js.Re.test(emailRegex) =>
+          Invalid("Email is invalid")
+        | _ => Valid
+        };
+      },
     };
+  };
 
-  let set = (state, (field, value)) =>
-    switch (field, value) {
-    | (Email, value) => {...state, email: value}
-    | (Password, value) => {...state, password: value}
-    };
+  module PasswordField = {
+    let update = (state, value) => {...state, password: value};
 
-  let valueEmpty = Formality.emptyString;
-
-  let validators =
-    Formality.[
-      {
-        field: Email,
-        strategy: Strategy.OnFirstSuccessOrFirstBlur,
-        dependents: None,
-        validate: (value, _state) => {
-          let emailRegex = [%bs.re {|/.*@.*\..+/|}];
-          switch (value) {
-          | "" => Invalid("Email is required")
-          | _ when !emailRegex->Js.Re.test(value, _) =>
-            Invalid("Email is invalid")
-          | _ => Valid
-          };
+    let validator = {
+      field: Password,
+      strategy: Strategy.OnFirstBlur,
+      dependents: None,
+      validate: ({password}) =>
+        switch (password) {
+        | "" => Invalid("Password is required")
+        | _ => Valid
         },
-      },
-      {
-        field: Password,
-        strategy: Strategy.OnFirstBlur,
-        dependents: None,
-        validate: (value, _state) =>
-          switch (value) {
-          | "" => Invalid("Password is required")
-          | _ => Valid
-          },
-      },
-    ];
+    };
+  };
+
+  module RememberMeField = {
+    let update = (state, value) => {...state, rememberMe: value};
+  };
+
+  let validators = [EmailField.validator, PasswordField.validator];
 };
 
 module LoginFormContainer = Formality.Make(LoginForm);
 
 let component = React.statelessComponent(__MODULE__);
-
 let make = _ => {
   ...component,
   render: _ =>
     <LoginFormContainer
-      initialState={email: "", password: ""}
+      initialState={email: "", password: "", rememberMe: false}
       onSubmit={
         (state, form) => {
-          Js.log2("Called with:", state);
+          Js.log2("Submitted with:", state);
           Js.Global.setTimeout(
             () => {
               form.notifyOnSuccess(None);
@@ -93,19 +93,20 @@ let make = _ => {
                      type_="text"
                      value={form.state.email}
                      disabled={form.submitting}
+                     onBlur={_ => form.blur(Email)}
                      onChange={
                        event =>
-                         event->ReactEvent.Form.target##value
-                         ->(form.change(Email))
-                     }
-                     onBlur={
-                       event =>
-                         event->ReactEvent.Focus.target##value
-                         ->(form.blur(Email))
+                         form.change(
+                           Email,
+                           LoginForm.EmailField.update(
+                             form.state,
+                             event->ReactEvent.Form.target##value,
+                           ),
+                         )
                      }
                    />
                    {
-                     switch (Email->(form.results)) {
+                     switch (Email->(form.result)) {
                      | Some(Invalid(message)) =>
                        <div className={Cn.make(["form-message", "failure"])}>
                          message->React.string
@@ -114,6 +115,7 @@ let make = _ => {
                        <div className={Cn.make(["form-message", "success"])}>
                          {j|✓|j}->React.string
                        </div>
+                     | Some(Optional)
                      | None => React.null
                      }
                    }
@@ -127,19 +129,20 @@ let make = _ => {
                      type_="text"
                      value={form.state.password}
                      disabled={form.submitting}
+                     onBlur={_ => form.blur(Password)}
                      onChange={
                        event =>
-                         event->ReactEvent.Form.target##value
-                         ->(form.change(Password))
-                     }
-                     onBlur={
-                       event =>
-                         event->ReactEvent.Focus.target##value
-                         ->(form.blur(Password))
+                         form.change(
+                           Password,
+                           LoginForm.PasswordField.update(
+                             form.state,
+                             event->ReactEvent.Form.target##value,
+                           ),
+                         )
                      }
                    />
                    {
-                     switch (Password->(form.results)) {
+                     switch (Password->(form.result)) {
                      | Some(Invalid(message)) =>
                        <div className={Cn.make(["form-message", "failure"])}>
                          message->React.string
@@ -148,9 +151,33 @@ let make = _ => {
                        <div className={Cn.make(["form-message", "success"])}>
                          {j|✓|j}->React.string
                        </div>
+                     | Some(Optional)
                      | None => React.null
                      }
                    }
+                 </div>
+                 <div className="form-row">
+                   <input
+                     id="login--remember"
+                     type_="checkbox"
+                     checked={form.state.rememberMe}
+                     disabled={form.submitting}
+                     className="push-lg"
+                     onBlur={_ => form.blur(RememberMe)}
+                     onChange={
+                       event =>
+                         form.change(
+                           RememberMe,
+                           LoginForm.RememberMeField.update(
+                             form.state,
+                             event->ReactEvent.Form.target##checked,
+                           ),
+                         )
+                     }
+                   />
+                   <label htmlFor="login--remember">
+                     "Remember me"->React.string
+                   </label>
                  </div>
                  <div className="form-row">
                    <button className="push-lg" disabled={form.submitting}>

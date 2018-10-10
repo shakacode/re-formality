@@ -43,8 +43,8 @@ Then add it to `bsconfig.json`:
 ```
 
 ## Examples
-* Signup form: [live](https://re-formality.now.sh/#signup) &middot; [src](./examples/SignupForm.re)
-* Login form: [live](https://re-formality.now.sh/#login) &middot; [src](./examples/LoginForm.re)
+* [Live](https://re-formality.now.sh)
+* [Sources](./examples)
 
 ## Concepts
 The main purpose of this library is to provide great form validation UX. To achieve this, `Formality` follows the following principle:
@@ -100,12 +100,12 @@ It takes 3 steps to implement the form:
 <summary>Spoiler</summary>
 
 ```reason
-module MyForm = {
+module LoginForm = {
+  open Formality;
+
   type field =
     | Email
     | Password;
-
-  type value = string;
 
   type state = {
     email: string,
@@ -114,60 +114,56 @@ module MyForm = {
 
   type message = string;
 
-  let get = (state, field) =>
-    switch (field) {
-    | Email => state.email
-    | Password => state.password
+  let strategy = Strategy.OnFirstSuccessOrFirstBlur;
+
+  module EmailField = {
+    let update = (state, value) => {...state, email: value};
+
+    let validator = {
+      field: Email,
+      strategy,
+      dependents: None,
+      validate: ({email}) =>
+        switch (email) {
+        | "" => Invalid("Uh oh error")
+        | _ => Valid
+        },
     };
+  };
 
-  let set = (state, (field, value)) =>
-    switch (field, value) {
-    | (Email, value) => {...state, email: value}
-    | (Password, value) => {...state, password: value}
+  module PasswordField = {
+    let update = (state, value) => {...state, password: value};
+
+    let validator = {
+      field: Password,
+      strategy,
+      dependents: None,
+      validate: ({password}) =>
+        switch (password) {
+        | "" => Invalid("Uh oh error")
+        | _ => Valid
+        },
     };
+  };
 
-  let valueEmpty = value => value === "";
-
-  let strategy = Formality.Strategy.OnFirstSuccessOrFirstBlur;
-
-  let validators =
-    Formality.[
-      {
-        field: Email,
-        strategy,
-        dependents: None,
-        validate: (value, _state) =>
-          switch (value) {
-          | "" => Invalid("Uh oh error")
-          | _ => Valid
-          },
-      },
-      {
-        field: Password,
-        strategy,
-        dependents: None,
-        validate: (value, _state) =>
-          switch (value) {
-          | "" => Invalid("Uh oh error")
-          | _ => Valid
-          },
-      },
-    ];
+  let validators = [
+    EmailField.validator,
+    PasswordField.validator,
+  ];
 };
 
-module FormContainer = Formality.Make(MyForm);
+module LoginFormContainer = Formality.Make(LoginForm);
 
-let component = React.statelessComponent("MyForm");
+let component = React.statelessComponent("LoginForm");
 
 let make = _ => {
   ...component,
   render: _ =>
-    <FormContainer
+    <LoginFormContainer
       initialState={email: "", password: ""}
       onSubmit={
-        (state, {notifyOnSuccess, notifyOnFailure, reset}) => {
+        (state, {notifyOnSuccess, notifyOnFailure, reset}) =>
           /* Submit form and either notifyOnSuccess / notifyOnFailure / reset */
-        }
       }>
       ...{
            form =>
@@ -177,44 +173,52 @@ let make = _ => {
                <input
                  value={form.state.email}
                  disabled={form.submitting}
+                 onBlur={_ => form.blur(Email)}
                  onChange={
                    event =>
-                     event->ReactEvent.Form.target##value->form.change(Email)
-                 }
-                 onBlur={
-                   event =>
-                     event->ReactEvent.Focus.target##value->form.blur(Email)
+                     form.change(
+                       Email,
+                       LoginForm.EmailField.update(
+                         form.state,
+                         event->ReactEvent.Form.target##value,
+                       ),
+                     )
                  }
                />
                {
-                 switch (Email->form.results) {
+                 switch (Email->form.result) {
                  | Some(Invalid(message)) =>
                    <div className={Cn.make(["form-message", "failure"])}>
                      message->React.string
                    </div>
                  | Some(Valid)
+                 | Some(Optional)
                  | None => React.null
                  }
                }
                <input
                  value={form.state.password}
                  disabled={form.submitting}
+                 onBlur={_ => form.blur(Password)}
                  onChange={
                    event =>
-                     event->ReactEvent.Form.target##value->form.change(Password)
-                 }
-                 onBlur={
-                   event =>
-                     event->ReactEvent.Focus.target##value->form.blur(Password)
+                     form.change(
+                       Password,
+                       LoginForm.PasswordField.update(
+                         form.state,
+                         event->ReactEvent.Form.target##value,
+                       ),
+                     )
                  }
                />
                {
-                 switch (Password->form.results) {
+                 switch (Password->form.result) {
                  | Some(Invalid(message)) =>
                    <div className={Cn.make(["form-message", "failure"])}>
                      message->React.string
                    </div>
                  | Some(Valid)
+                 | Some(Optional)
                  | None => React.null
                  }
                }
@@ -223,7 +227,7 @@ let make = _ => {
                </button>
              </form>
          }
-    </FormContainer>,
+    </LoginFormContainer>,
 };
 ```
 </details>
@@ -233,11 +237,14 @@ Form config is a module:
 
 ```reason
 module MyForm = {
-  /* ... */
+  type field;
+  type state;
+  type message;
+  let validators: list(validator);
 };
 ```
 
-To make things happen, you must provide few types, values & functions. Depending on whether you need async validations or not, your config will require (or not) additional data. But most of the things are common for all types of forms. Let's start with the simplest case without async validations—this is what's required for all types of forms—and then async differences will be outlined in [Async validations](#async-validations) section.
+To make things happen, you must provide few types and list of validators. Depending on whether you need async validations or not, your config will require (or not) additional data. But most of the things are common for all types of forms. Let's start with the simplest case without async validations—this is what's required for all types of forms—and then async differences will be outlined in [Async validations](#async-validations) section.
 
 #### `type field`
 A variant where tags are form fields.
@@ -246,24 +253,6 @@ A variant where tags are form fields.
 type field =
   | Email
   | Password;
-```
-
-#### `type value`
-The type of the `value`. Feel free to set it to whatever you need.
-
-The most common scenario is:
-
-```reason
-type value = string;
-```
-
-But if you want to store something else rather than only `string` you can define it as a variant like this:
-
-```reason
-type value =
-  | String(string)
-  | Int(int)
-  | Date(Js.Date.t);
 ```
 
 #### `type state`
@@ -291,58 +280,26 @@ If you build i18n'ized app then it's going to be something like this:
 type message = I18n.t;
 ```
 
-#### `let get: (state, field) => value`
-Getter of a field value from state.
-
-```reason
-let get = (state, field) =>
-  switch (field) {
-  | Email => state.email
-  | Password => state.password
-  };
-```
-
-#### `let set: (state, (field, value)) => state`
-Setter of a field value.
-
-```reason
-let set = (state, (field, value)) =>
-  switch (field, value) {
-  | (Email, value) => {...state, email: value}
-  | (Password, value) => {...state, password: value}
-  };
-```
-
-#### `let valueEmpty: value => bool`
-This function supposed to answers the question whether a provided `value` is _empty_ or not.
-
-```reason
-let valueEmpty = value => value === "";
-```
-
-This is required for the optional field case: `Formality` won't emit success if `value` in the optional field is empty. Since `value` type is abstraction defined in user-land, `Formality` can't figure it out on its own.
-
-For convenience, `Formality` exposes helper for the most common case:
-
-```reason
-let valueEmpty = Formality.emptyString;
-```
-
 #### `let validators: list(validator)`
 Field validators.
 
 ```reason
-let validators = Formality.[
-  {
+module EmailField = {
+  let validator = {
     field: Email,
     strategy: Strategy.OnFirstSuccessOrFirstBlur,
     dependents: None,
-    validate: (value, _state) =>
-      switch value {
+    validate: state =>
+      switch (state.email) {
       | "" => Invalid("Uh oh error")
       | _ => Valid
     },
-  },
+  };
+};
+
+let validators = [
+  EmailField.validator,
+  ...
 ];
 ```
 
@@ -350,29 +307,43 @@ let validators = Formality.[
 It's a record of 4 items:
 
 ```reason
-type validationResult('message) =
+type result('message) =
   | Valid
-  | Invalid('message);
+  | Invalid('message)
+  | Optional;
 
-type validator('field, 'value, 'state, 'message) = {
+type validator('field, 'state, 'message) = {
   field: 'field,
   strategy: Formality.Strategy.t,
   dependents: option(list('field)),
-  validate: ('value, 'state) => validationResult('message),
+  validate: 'state => result('message),
 };
 ```
 
 ###### `strategy`
 See [Strategies](#strategies).
+
 ###### `dependents`
 Optional list of fields that must be revalidated on a change in the current field. E.g. `PasswordConfirmation` must be revalidated on a change in `Password` field:
 
 ```reason
+field: Password,
 dependents: [PasswordConfirmation]->Some
 ```
 
 ###### `validate`
-A function that takes `value` and `state` and returns `validationResult`: either `Valid` or `Invalid('message)`.
+A function that takes `state` and returns `result`:
+
+```reason
+type result('message) =
+  | Valid
+  | Invalid('message)
+  | Optional;
+
+type validate('state, 'message) = 'state => result('message);
+```
+
+You want to return `Optional` when optional field receives no value (e.g. `value == ""`). `Valid` and `Optional` states are explicitly differentiated since there's no reason to show success icon in UI when no value is provided.
 
 ### Form container
 
@@ -384,18 +355,17 @@ module MyFormContainer = Formality.Make(MyForm);
 
 It creates renderable React component for general form.
 
-If you render async forms, use:
+If you render forms with async validations, use:
 
 ```reason
 /* Async validations on change (debounced) */
-module MyAsyncFormContainer = Formality.MakeWithAsyncValidationsOnChange(MyForm);
+module MyAsyncFormContainer = Formality.Async.Make(MyForm);
 
 /* Async validations on blur */
-module MyAsyncFormContainer = Formality.MakeWithAsyncValidationsOnBlur(MyForm);
+module MyAsyncFormContainer = Formality.Async.MakeOnBlur(MyForm);
 ```
 
 ### Rendering
-
 Form container accepts 3 props:
 
 ```reason
@@ -406,7 +376,7 @@ render: (_) =>
       /* Submit form and either notifyOnSuccess / notifyOnFailure / reset */
     })
   >
-    ...(form => /* UI */)
+  ...{form => /* UI */}
   </MyFormContainer>
 ```
 
@@ -414,7 +384,7 @@ render: (_) =>
 It's `state` record with initial values for each form field.
 
 #### `onSubmit`
-This handler will be triggered on form submission (only when all validators returned `Valid`).
+This handler will be triggered on form submission (only when all validators returned `Valid` or `Optional`).
 
 It accepts two arguments:
 1. `state`: current state of the form
@@ -448,12 +418,12 @@ Form container accepts children as a function.
 
 ```reason
 type form = {
-  state: state,
+  state: Form.state,
   status: FormStatus.t,
-  results: field => option(validationResult),
+  result: Form.field => option(result),
   submitting: bool,
-  change: (value, field) => unit,
-  blur: (value, field) => unit,
+  change: (Form.field, Form.state) => unit,
+  blur: Form.field => unit,
   submit: unit => unit,
   dismissSubmissionResult: unit => unit,
 };
@@ -478,37 +448,62 @@ module FormStatus = {
 You can use it to show a spinner while a form is `Submitting`, or success message on `Submitted`, or display server errors using data that you passed to `notifyOnFailure` callback (it's available in `SubmissionFailed` tag payload).
 
 ##### `form.submitting`
-This prop is passed for convenience (as you will need it to disable form inputs and button while a form is submitting). This is `true` when `form.status` is `Submitting`, `false` otherwise.
+This prop is passed for convenience (as you will need it to disable form inputs and button while a form is `Submitting`). Basically, this is `true` when `form.status` is `Submitting`, `false` otherwise.
 
-##### `form.results`
-Use this function to get validation results for the field.
+##### `form.result`
+Use this function to get validation result for a field.
 
 ```reason
-switch (MyForm.Email->form.results) {
+switch (Email->form.result) {
 | Some(Invalid(message)) =>
   <div className="failure">
     message->React.string
   </div>
-| Some(Valid)
+| Some(Valid | Optional)
 | None => React.null
 }
 ```
 
-##### `form.change` & `form.blur`
-These are handlers that must be triggered `onChange` and `onBlur`. Each accepts `field` and `value`.
+##### `form.change`
+
+```reason
+type change = (Form.field, Form.state) => unit;
+```
+
+This handler must be triggered `onChange`. It accepts `field` and the next form `state`.
+
+```reason
+module MyForm = {
+  module EmailField = {
+    let update = (state, value) => {...state, email: value};
+  };
+};
+
+<input
+  value={form.state.email}
+  disabled={form.submitting}
+  onBlur={_ => form.blur(Email)}
+  onChange={
+    event =>
+      form.change(
+        Email,
+        MyForm.EmailField.update(
+          form.state,
+          event->ReactEvent.Form.target##value,
+        ),
+      )
+  }
+/>
+```
+
+##### `form.blur`
+This handler must be triggered `onBlur`. It accepts only one `field` argument.
 
 ```reason
 <input
   value={form.state.email}
   disabled={form.submitting}
-  onChange={
-    event =>
-      event->ReactEvent.Form.target##value->form.change(Email)
-  }
-  onBlur={
-    event =>
-      event->ReactEvent.Focus.target##value->form.blur(Email)
-  }
+  onBlur={_ => form.blur(Email)}
 />
 ```
 
@@ -544,26 +539,45 @@ let debounceInterval = 1000;
 ```
 
 ##### `validator`
-In addition to `strategy`, `dependents` & `validate`, provide optional async validator. It takes `value` and returns `Js.Promise.t(validationResult)`:
+In addition to `field`, `strategy`, `dependents` & `validate`, provide optional async validator.
 
 ```reason
-type asyncValidator('field, 'value, 'state, 'message) = {
+type asyncValidator('field, 'state, 'message) = {
   field: 'field,
   strategy: Formality.Strategy.t,
   dependents: option(list('field)),
-  validate: ('value, 'state) => validationResult('message),
-  validateAsync: option('value => Js.Promise.t(validationResult('message))),
+  validate: 'state => result('message),
+  validateAsync: option(
+    (
+      'state => Js.Promise.t(result('message)),
+      ('state, 'state) => bool,
+    ),
+  ),
 };
 ```
 
-For example:
+`validateAsync` is a tuple that consists of 2 functions:
 
 ```reason
-validateAsync:
-  Some(
-    value =>
+(
+  /* 1. async validator */        'state => Js.Promise.t(result('message)),
+  /* 2. value equality checker */ ('state, 'state) => bool,
+)
+```
+
+1. Validator itself takes `state` and returns `Js.Promise.t(result)`.
+2. Value equality checker receives 2 arguments: form state when validation was invoked and form state when response was resolved. Why it's required: by the time when server responded with some result, local value might be already changed so before setting received result `Formality` checks if value of the field is the same that was validated. And if it's not it simply ignores this result.
+
+**Please, make sure you check equality of field values, not state instances!**
+
+Example:
+
+```reason
+validateAsync: Some(
+  (
+    state =>
       Js.Promise.(
-        value
+        state.email
         ->Api.validateEmail
         ->then_(
             valid =>
@@ -573,17 +587,19 @@ validateAsync:
             _,
           )
       ),
-  ),
+    (prevState, nextState) => prevState.email == nextState.email,
+  )
+),
 ```
 
-To create form container pass config to `Formality.MakeWithAsyncValidationsOnChange` functor:
+To create form container pass config to `Formality.Async.Make` functor:
 
 ```reason
-module MyAsyncFormContainer = Formality.MakeWithAsyncValidationsOnChange(MyForm);
+module MyAsyncFormContainer = Formality.Async.Make(MyForm);
 ```
 
 #### Async validations on blur
-If you still want to use on blur validations just add `validateAsync` props to `validators` and use `Formality.MakeWithAsyncValidationsOnBlur` to create form container.
+If you still want to use on blur validations just add `validateAsync` props to `validators` and use `Formality.Async.MakeOnBlur` to create form container.
 
 
 ### I18n

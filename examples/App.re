@@ -2,8 +2,7 @@
 
 type route =
   | Signup
-  | Login
-  | LoginFormWithRememberMe;
+  | Login;
 
 type state = {route};
 
@@ -14,7 +13,6 @@ let getInitialRoute = () =>
   switch (locationHash) {
   | "#signup" => Signup
   | "#login" => Login
-  | "#login-remember-me" => LoginFormWithRememberMe
   | _ => Signup
   };
 
@@ -33,7 +31,6 @@ let make = _ => {
         switch (url.hash) {
         | "signup" => Signup->UpdateRoute->send
         | "login" => Login->UpdateRoute->send
-        | "login-remember-me" => LoginFormWithRememberMe->UpdateRoute->send
         | _ => Signup->UpdateRoute->send
         }
       );
@@ -75,25 +72,11 @@ let make = _ => {
           onClick={_ => React.Router.push("#login")}>
           "Login"->React.string
         </button>
-        <button
-          className={
-            Cn.make([
-              "nav-link",
-              switch (state.route) {
-              | LoginFormWithRememberMe => "active"
-              | _ => ""
-              },
-            ])
-          }
-          onClick={_ => React.Router.push("#login-remember-me")}>
-          "Login With Remember Me"->React.string
-        </button>
       </div>
       {
         switch (state.route) {
         | Signup => <SignupForm />
         | Login => <LoginForm />
-        | LoginFormWithRememberMe => <LoginFormWithRememberMeCheckbox />
         }
       }
     </div>,

@@ -1,5 +1,3 @@
-let emptyString: string => bool;
-
 module Dom: {
   let preventDefault: (unit => 'a, ReactEvent.Form.t) => 'a;
 
