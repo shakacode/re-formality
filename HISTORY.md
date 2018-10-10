@@ -1,6 +1,6 @@
 # History
 
-## UNRELEASED
+## 1.0.0-beta.1
 ### Major
 There are a number of big changes in public API. Higher level changes are outlined below. Please, see updated documentation, inspect [`src/Formality.rei`](./src/Formality.rei) and follow compiler warnings to update your forms. Also, see updated [examples](./examples).
 
