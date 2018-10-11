@@ -26,10 +26,10 @@ module SignupForm = {
       validate: ({email}) => {
         let emailRegex = [%bs.re {|/.*@.*\..+/|}];
         switch (email) {
-        | "" => Invalid("Email is required")
+        | "" => Error("Email is required")
         | _ as value when !value->Js.Re.test(emailRegex) =>
-          Invalid("Email is invalid")
-        | _ => Valid
+          Error("Email is invalid")
+        | _ => Ok(Valid)
         };
       },
       validateAsync:
@@ -40,9 +40,11 @@ module SignupForm = {
               ->Api.validateEmail
               ->then_(
                   valid =>
-                    valid ?
-                      Valid->resolve :
-                      Invalid("Email is already taken")->resolve,
+                    Result.(
+                      valid ?
+                        Ok(Valid)->resolve :
+                        Error("Email is already taken")->resolve
+                    ),
                   _,
                 )
             ),
@@ -61,10 +63,10 @@ module SignupForm = {
       validate: ({password}) => {
         let minLength = 4;
         switch (password) {
-        | "" => Invalid("Password is required")
+        | "" => Error("Password is required")
         | _ when password->Js.String.length < minLength =>
-          Invalid({j| $(minLength)+ characters, please|j})
-        | _ => Valid
+          Error({j| $(minLength)+ characters, please|j})
+        | _ => Ok(Valid)
         };
       },
       validateAsync: None,
@@ -80,10 +82,10 @@ module SignupForm = {
       dependents: None,
       validate: ({password, passwordConfirmation}) =>
         switch (passwordConfirmation) {
-        | "" => Invalid("Confirmation is required")
+        | "" => Error("Confirmation is required")
         | _ when passwordConfirmation !== password =>
-          Invalid("Password doesn't match")
-        | _ => Valid
+          Error("Password doesn't match")
+        | _ => Ok(Valid)
         },
       validateAsync: None,
     };
@@ -152,15 +154,15 @@ let make = _ => {
                        <div className="form-message">
                          "Checking..."->React.string
                        </div>
-                     | (Some(Invalid(message)), false) =>
+                     | (Some(Error(message)), false) =>
                        <div className={Cn.make(["form-message", "failure"])}>
                          message->React.string
                        </div>
-                     | (Some(Valid), false) =>
+                     | (Some(Ok(Valid)), false) =>
                        <div className={Cn.make(["form-message", "success"])}>
                          {j|✓|j}->React.string
                        </div>
-                     | (Some(Optional) | None, false) => React.null
+                     | (Some(Ok(NoValue)) | None, false) => React.null
                      }
                    }
                  </div>
@@ -192,15 +194,15 @@ let make = _ => {
                    />
                    {
                      switch (Password->(form.result)) {
-                     | Some(Invalid(message)) =>
+                     | Some(Error(message)) =>
                        <div className={Cn.make(["form-message", "failure"])}>
                          message->React.string
                        </div>
-                     | Some(Valid) =>
+                     | Some(Ok(Valid)) =>
                        <div className={Cn.make(["form-message", "success"])}>
                          {j|✓|j}->React.string
                        </div>
-                     | Some(Optional)
+                     | Some(Ok(NoValue))
                      | None => React.null
                      }
                    }
@@ -230,15 +232,15 @@ let make = _ => {
                    />
                    {
                      switch (PasswordConfirmation->(form.result)) {
-                     | Some(Invalid(message)) =>
+                     | Some(Error(message)) =>
                        <div className={Cn.make(["form-message", "failure"])}>
                          message->React.string
                        </div>
-                     | Some(Valid) =>
+                     | Some(Ok(Valid)) =>
                        <div className={Cn.make(["form-message", "success"])}>
                          {j|✓|j}->React.string
                        </div>
-                     | Some(Optional)
+                     | Some(Ok(NoValue))
                      | None => React.null
                      }
                    }

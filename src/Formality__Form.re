@@ -177,15 +177,14 @@ module Make = (Form: Form) => {
                   ~emittedFields=state.emittedFields,
                 );
             switch (result) {
-            | Valid
-            | Optional =>
+            | Ok(Valid | NoValue) =>
               React.Update({
                 ...state,
                 data,
                 results: results->Map.set(field, result),
                 emittedFields: emittedFields->Set.add(field),
               })
-            | Invalid(_) =>
+            | Error(_) =>
               React.Update({...state, data, results, emittedFields})
             };
 
@@ -229,8 +228,8 @@ module Make = (Form: Form) => {
                   let results = results->Map.set(field, result);
                   switch (valid, result) {
                   | (false, _)
-                  | (true, Invalid(_)) => (false, results)
-                  | (true, Valid | Optional) => (true, results)
+                  | (true, Error(_)) => (false, results)
+                  | (true, Ok(Valid | NoValue)) => (true, results)
                   };
                 },
               );

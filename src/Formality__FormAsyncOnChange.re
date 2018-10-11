@@ -227,7 +227,7 @@ module Make = (Form: Form) => {
               })
             | Some((validateAsync, _)) =>
               switch (result) {
-              | Valid =>
+              | Ok(Valid) =>
                 React.UpdateWithSideEffects(
                   {
                     ...state,
@@ -247,8 +247,8 @@ module Make = (Form: Form) => {
                   ),
                 )
 
-              | Optional
-              | Invalid(_) =>
+              | Ok(NoValue)
+              | Error(_) =>
                 React.Update({
                   ...state,
                   data,
@@ -276,21 +276,20 @@ module Make = (Form: Form) => {
             switch (validator.validateAsync) {
             | None =>
               switch (result) {
-              | Valid
-              | Optional =>
+              | Ok(Valid | NoValue) =>
                 React.Update({
                   ...state,
                   data,
                   results: results->Map.set(field, result),
                   emittedFields: emittedFields->Set.add(field),
                 })
-              | Invalid(_) =>
+              | Error(_) =>
                 React.Update({...state, data, results, emittedFields})
               }
 
             | Some((validateAsync, _)) =>
               switch (result) {
-              | Valid =>
+              | Ok(Valid) =>
                 React.UpdateWithSideEffects(
                   {
                     ...state,
@@ -309,7 +308,7 @@ module Make = (Form: Form) => {
                       ->send
                   ),
                 )
-              | Optional =>
+              | Ok(NoValue) =>
                 React.Update({
                   ...state,
                   data,
@@ -317,7 +316,7 @@ module Make = (Form: Form) => {
                   validatingFields: state.validatingFields->Set.remove(field),
                   emittedFields: emittedFields->Set.add(field),
                 })
-              | Invalid(_) =>
+              | Error(_) =>
                 React.Update({...state, data, results, emittedFields})
               }
             };
@@ -350,7 +349,7 @@ module Make = (Form: Form) => {
               })
             | Some((validateAsync, _)) =>
               switch (result) {
-              | Valid =>
+              | Ok(Valid) =>
                 React.UpdateWithSideEffects(
                   {
                     ...state,
@@ -368,8 +367,8 @@ module Make = (Form: Form) => {
                       ->send
                   ),
                 )
-              | Optional
-              | Invalid(_) =>
+              | Ok(NoValue)
+              | Error(_) =>
                 React.Update({
                   ...state,
                   results: state.results->Map.set(field, result),
@@ -429,9 +428,8 @@ module Make = (Form: Form) => {
                 ((valid, results), field, validator) => {
                   let currentResultIsInvalid =
                     switch (results->Map.get(field)) {
-                    | Some(Invalid(_)) => true
-                    | Some(Valid)
-                    | Some(Optional)
+                    | Some(Error(_)) => true
+                    | Some(Ok(Valid | NoValue))
                     | None => false
                     };
                   let result = state.data->(validator.validate);
@@ -441,13 +439,13 @@ module Make = (Form: Form) => {
                       result,
                       validator.validateAsync,
                     ) {
-                    | (true, Valid, Some(_)) => results
+                    | (true, Ok(Valid), Some(_)) => results
                     | (_, _, _) => results->Map.set(field, result)
                     };
                   switch (valid, results->Map.get(field)) {
                   | (false, _)
-                  | (true, Some(Invalid(_))) => (false, results)
-                  | (true, Some(Valid | Optional))
+                  | (true, Some(Error(_))) => (false, results)
+                  | (true, Some(Ok(Valid | NoValue)))
                   | (_, None) => (true, results)
                   };
                 },

@@ -24,10 +24,10 @@ module LoginForm = {
       validate: ({email}) => {
         let emailRegex = [%bs.re {|/.*@.*\..+/|}];
         switch (email) {
-        | "" => Invalid("Email is required")
+        | "" => Error("Email is required")
         | _ as value when !value->Js.Re.test(emailRegex) =>
-          Invalid("Email is invalid")
-        | _ => Valid
+          Error("Email is invalid")
+        | _ => Ok(Valid)
         };
       },
     };
@@ -42,8 +42,8 @@ module LoginForm = {
       dependents: None,
       validate: ({password}) =>
         switch (password) {
-        | "" => Invalid("Password is required")
-        | _ => Valid
+        | "" => Error("Password is required")
+        | _ => Ok(Valid)
         },
     };
   };
@@ -107,15 +107,15 @@ let make = _ => {
                    />
                    {
                      switch (Email->(form.result)) {
-                     | Some(Invalid(message)) =>
+                     | Some(Error(message)) =>
                        <div className={Cn.make(["form-message", "failure"])}>
                          message->React.string
                        </div>
-                     | Some(Valid) =>
+                     | Some(Ok(Valid)) =>
                        <div className={Cn.make(["form-message", "success"])}>
                          {j|✓|j}->React.string
                        </div>
-                     | Some(Optional)
+                     | Some(Ok(NoValue))
                      | None => React.null
                      }
                    }
@@ -143,15 +143,15 @@ let make = _ => {
                    />
                    {
                      switch (Password->(form.result)) {
-                     | Some(Invalid(message)) =>
+                     | Some(Error(message)) =>
                        <div className={Cn.make(["form-message", "failure"])}>
                          message->React.string
                        </div>
-                     | Some(Valid) =>
+                     | Some(Ok(Valid)) =>
                        <div className={Cn.make(["form-message", "success"])}>
                          {j|✓|j}->React.string
                        </div>
-                     | Some(Optional)
+                     | Some(Ok(NoValue))
                      | None => React.null
                      }
                    }

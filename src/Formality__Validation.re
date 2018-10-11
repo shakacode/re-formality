@@ -1,7 +1,8 @@
-type result('message) =
+type ok =
   | Valid
-  | Invalid('message)
-  | Optional;
+  | NoValue;
+
+type result('message) = Result.t(ok, 'message);
 
 type validate('state, 'message) = 'state => result('message);
 
