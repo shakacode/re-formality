@@ -49,16 +49,18 @@ Then add it to `bsconfig.json`:
 ## Concepts
 The main purpose of this library is to provide great form validation UX. To achieve this, `Formality` follows the following principle:
 
-**Validation feedback should be provided as soon as possible but not too soon.**
+<p align="center">
+<strong>Validation feedback should be provided as soon as possible but not too soon.</strong>
+</p>
 
 The hardest part is to figure out the right moment when first validation results should be emitted in UI.
 
-Let's break down the case with credit card field. A user opens a form and focuses on the field. When the first character is typed, the field is in an invalid state but it's not really polite to show an error at this point: we should let user a chance to finish what he's doing. While the user is typing, we wait. If after some character, validator reported valid result, it's a proper moment to indicate success in UI (e.g. show credit card type). But if the user left the field in an invalid state (e.g. moved to another field) we have all rights to emit an error. After the first result is emitted, we update validation state in UI on every change.
+Let's break down a case with credit card field. A user opens a form and focuses on a field. When the first character is typed, the field is in an invalid state but it's not really polite to show an error at this point: we should let user a chance to finish what he's doing. While the user is typing, we wait. If after some character, validator reported valid result, it's a proper moment to indicate success in UI (e.g. show credit card type). But if the user left the field in an invalid state (e.g. moved to another field) we have all rights to emit an error. After the first result is emitted, we update validation state in UI on every change.
 
 Sadly, form fields are different and credit card scenario is not universal. This is where strategies kick in.
 
 ### Strategies
-We can't have a single scenario for all the cases but we can spot the most common ones, implement the logic of each and apply proper scenarios to specific form fields. To understand the behavior of each strategy, add the following prefix to its name: _"Start providing feedback in UI on..."_
+We can't have a single scenario for all the cases but we can spot the most common ones, describe a logic of each and apply proper scenarios to specific form fields. To understand a behavior of each strategy, add the following prefix to its name: _"Start providing feedback in UI on..."_
 
 ```reason
 module Strategy = {
@@ -88,7 +90,7 @@ Results are emitted only after the first submission attempt. After this, results
 
 
 ## Usage
-It takes 3 steps to implement the form:
+It takes 3 steps to implement a form:
 
 1. Define form config.
 2. Create form container.
@@ -114,19 +116,17 @@ module LoginForm = {
 
   type message = string;
 
-  let strategy = Strategy.OnFirstSuccessOrFirstBlur;
-
   module EmailField = {
     let update = (state, value) => {...state, email: value};
 
     let validator = {
       field: Email,
-      strategy,
+      strategy: Strategy.OnFirstSuccessOrFirstBlur,
       dependents: None,
-      validate: ({email}) =>
-        switch (email) {
-        | "" => Invalid("Uh oh error")
-        | _ => Valid
+      validate: state =>
+        switch (state.email) {
+        | "" => Error("Uh oh error")
+        | _ => Ok(Valid)
         },
     };
   };
@@ -136,12 +136,12 @@ module LoginForm = {
 
     let validator = {
       field: Password,
-      strategy,
+      strategy: Strategy.OnFirstBlur,
       dependents: None,
-      validate: ({password}) =>
-        switch (password) {
-        | "" => Invalid("Uh oh error")
-        | _ => Valid
+      validate: state =>
+        switch (state.password) {
+        | "" => Error("Uh oh error")
+        | _ => Ok(Valid)
         },
     };
   };
@@ -187,12 +187,11 @@ let make = _ => {
                />
                {
                  switch (Email->form.result) {
-                 | Some(Invalid(message)) =>
+                 | Some(Error(message)) =>
                    <div className={Cn.make(["form-message", "failure"])}>
                      message->React.string
                    </div>
-                 | Some(Valid)
-                 | Some(Optional)
+                 | Some(Ok(Valid | NoValue))
                  | None => React.null
                  }
                }
@@ -213,12 +212,11 @@ let make = _ => {
                />
                {
                  switch (Password->form.result) {
-                 | Some(Invalid(message)) =>
+                 | Some(Error(message)) =>
                    <div className={Cn.make(["form-message", "failure"])}>
                      message->React.string
                    </div>
-                 | Some(Valid)
-                 | Some(Optional)
+                 | Some(Ok(Valid | NoValue))
                  | None => React.null
                  }
                }
@@ -266,7 +264,7 @@ type state = {
 ```
 
 #### `type message`
-The type of the error messages that will be rendered in UI. Feel free to set it to whatever you need.
+The type of error messages that will be rendered in UI. Feel free to set it to whatever you need.
 
 The most common scenario is:
 
@@ -291,8 +289,8 @@ module EmailField = {
     dependents: None,
     validate: state =>
       switch (state.email) {
-      | "" => Invalid("Uh oh error")
-      | _ => Valid
+      | "" => Error("Uh oh error")
+      | _ => Ok(Valid)
     },
   };
 };
@@ -307,16 +305,11 @@ let validators = [
 It's a record of 4 items:
 
 ```reason
-type result('message) =
-  | Valid
-  | Invalid('message)
-  | Optional;
-
 type validator('field, 'state, 'message) = {
   field: 'field,
   strategy: Formality.Strategy.t,
   dependents: option(list('field)),
-  validate: 'state => result('message),
+  validate: 'state => Result.t(ok, 'message),
 };
 ```
 
@@ -332,18 +325,17 @@ dependents: [PasswordConfirmation]->Some
 ```
 
 ###### `validate`
-A function that takes `state` and returns `result`:
+A function that takes `state` and returns Belt's `Result.t`:
 
 ```reason
-type result('message) =
+type ok =
   | Valid
-  | Invalid('message)
-  | Optional;
+  | NoValue;
 
-type validate('state, 'message) = 'state => result('message);
+type validate('state, 'message) = 'state => Result.t(ok, 'message);
 ```
 
-You want to return `Optional` when optional field receives no value (e.g. `value == ""`). `Valid` and `Optional` states are explicitly differentiated since there's no reason to show success icon in UI when no value is provided.
+Most of the time you need `Ok(Valid)` or `Error('message)`. You want to return `Ok(NoValue)` when optional field receives no value (e.g. `value == ""`). `Valid` and `NoValue` are explicitly differentiated since there's no reason to show success message/icon in UI when no value is provided.
 
 ### Form container
 
@@ -384,10 +376,10 @@ render: (_) =>
 It's `state` record with initial values for each form field.
 
 #### `onSubmit`
-This handler will be triggered on form submission (only when all validators returned `Valid` or `Optional`).
+This handler will be triggered on form submission (only when all validators returned `Ok(_)`).
 
 It accepts two arguments:
-1. `state`: current state of the form
+1. `state`: current state of a form
 2. `submissionCallbacks`: record with 3 callbacks
 
 ```reason
@@ -409,7 +401,7 @@ Trigger this callback when server responded with an error. It accepts 2 argument
 You can access this data in render via `form.status` (see below).
 
 ##### `reset`
-Simply reset the form container state.
+Simply reset a form container state.
 
 #### `form => UI`
 Form container accepts children as a function.
@@ -455,11 +447,11 @@ Use this function to get validation result for a field.
 
 ```reason
 switch (Email->form.result) {
-| Some(Invalid(message)) =>
+| Some(Error(message)) =>
   <div className="failure">
     message->React.string
   </div>
-| Some(Valid | Optional)
+| Some(Ok(Valid | NoValue))
 | None => React.null
 }
 ```
@@ -508,21 +500,21 @@ This handler must be triggered `onBlur`. It accepts only one `field` argument.
 ```
 
 ##### `form.submit`
-Use it as `onSubmit` handler of the `<form />` element:
+Use it as `onSubmit` handler of a `<form />` element:
 
 ```reason
 <form onSubmit={form.submit->Formality.Dom.preventDefault} />
 ```
 
 ##### `form.dismissSubmissionResult`
-Use it when you want to let user dismissing alerts with errors from server or success message without resetting the form. Under the hood, it changes `FormStatus.Submitted` & `FormStatus.SubmissionFailed` statuses back to `FormStatus.Editing`.
+Use it when you want to let user dismissing alerts with errors from server or success message without resetting a form. Under the hood, it changes `FormStatus.Submitted` & `FormStatus.SubmissionFailed` statuses back to `FormStatus.Editing`.
 
 ### Async validations
 Some validations can't be performed locally, e.g. on signup, you want to validate if user's email is available or it's already taken.
 
-There are 2 common ways to provide async feedback: send a request to a server on every change or only on blur event. The first way is better in terms of UX but creates a significant load, so your client might become slow or the server might feel bad. The blur way doesn't have this problem (at least not that much) but UX is definitely not the best b/c user have to blur away from the field to receive the feedback.
+There are 2 common ways to provide async feedback: send a request to a server on every change or only on blur event. The first way is better in terms of UX but creates a significant load, so your client might become slow or a server might feel bad. The blur way doesn't have this problem (at least not that much) but UX is definitely not the best b/c user have to blur away from a field to receive a feedback.
 
-What can we do about it to have the best of both worlds? The answer is to debounce async validations on change. What does it mean and how does it work: when a user types something in in the form field, no external requests are triggered. Instead, it's put on hold. While user types, we wait. Once he stopped and there was no activity in the certain period—async request is triggered.
+What can we do about it to have the best of both worlds? An answer is to debounce async validations on change. What does it mean and how does it work: when a user types something in in a form field, no external requests are triggered. Instead, it's put on hold. While user types, we wait. Once he stopped and there was no activity in the certain period—async request is triggered.
 
 #### Debounced async validations on change
 To implement debounced async validations you need to make some additions to common form config.
@@ -546,10 +538,10 @@ type asyncValidator('field, 'state, 'message) = {
   field: 'field,
   strategy: Formality.Strategy.t,
   dependents: option(list('field)),
-  validate: 'state => result('message),
+  validate: 'state => Result.t(ok, 'message),
   validateAsync: option(
     (
-      'state => Js.Promise.t(result('message)),
+      'state => Js.Promise.t(Result.t(ok, 'message)),
       ('state, 'state) => bool,
     ),
   ),
@@ -560,12 +552,15 @@ type asyncValidator('field, 'state, 'message) = {
 
 ```reason
 (
-  /* 1. async validator */        'state => Js.Promise.t(result('message)),
-  /* 2. value equality checker */ ('state, 'state) => bool,
+  /* 1. async validator */
+  'state => Js.Promise.t(Result.t(ok, 'message)),
+
+  /* 2. value equality checker */
+  ('state, 'state) => bool,
 )
 ```
 
-1. Validator itself takes `state` and returns `Js.Promise.t(result)`.
+1. Validator itself takes `state` and returns `Js.Promise.t(Result.t)`.
 2. Value equality checker receives 2 arguments: form state when validation was invoked and form state when response was resolved. Why it's required: by the time when server responded with some result, local value might be already changed so before setting received result `Formality` checks if value of the field is the same that was validated. And if it's not it simply ignores this result.
 
 **Please, make sure you check equality of field values, not state instances!**
@@ -582,8 +577,8 @@ validateAsync: Some(
         ->then_(
             valid =>
               valid ?
-                Valid->resolve :
-                Invalid("Email is already taken")->resolve,
+                Ok(Valid)->resolve :
+                Error("Email is already taken")->resolve,
             _,
           )
       ),

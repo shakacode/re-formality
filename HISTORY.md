@@ -1,5 +1,8 @@
 # History
 
+## 1.0.0-beta.2
+* **[ BREAKING ]** Validation `result` type is `Belt.Result.t(ok, message)`. Where `type ok = | Valid | NoValue`. `NoValue` tag should be used when optional field's value is empty.
+
 ## 1.0.0-beta.1
 ### Major
 There are a number of big changes in public API. Higher level changes are outlined below. Please, see updated documentation, inspect [`src/Formality.rei`](./src/Formality.rei) and follow compiler warnings to update your forms. Also, see updated [examples](./examples).
@@ -8,7 +11,7 @@ There are a number of big changes in public API. Higher level changes are outlin
 * **[ BREAKING ]** `value` type is removed from config. It 100% decouples forms from particular value type.
 * **[ BREAKING ]** Validation `result` type received new constructor: `Optional`. It should be used when optional field's value is empty. You can safely remove confusing `valueEmpty` function from configs. Make sure that all validators of optional fields are updated.
 * **[ BREAKING ]** Validators are simply `list(validators)` now (instead of `Map`) and due to `value` removal each validator receives single argument: `state`.
-* Switch to `Belt` (internal change).
+* Switch to `Belt`.
 
 ### Deprecations
 * `Formality.Dom.toValue*` & `Formality.Dom.toChecked*` helpers are deprecated in favor of common `ReasonReact` getters.

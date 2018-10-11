@@ -10,9 +10,9 @@ module Async: {
   let debounceInterval: int;
 };
 
-type result('message) =
-  Formality__Validation.result('message) =
-    | Valid | Invalid('message) | Optional;
+type ok = Formality__Validation.ok = | Valid | NoValue;
+
+type result('message) = Formality__Validation.result('message);
 
 type validate('state, 'message) = 'state => result('message);
 
