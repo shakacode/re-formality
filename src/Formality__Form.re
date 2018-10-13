@@ -1,3 +1,5 @@
+module React = ReasonReact;
+
 module Validation = Formality__Validation;
 module Strategy = Formality__Strategy;
 module FormStatus = Formality__FormStatus;
