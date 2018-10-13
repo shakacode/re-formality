@@ -1,5 +1,8 @@
 # History
 
+## 1.0.0-beta.3
+* Un-expose `React` module. I might accidentally broke some apps which have internal `React.re` module. Sorry!
+
 ## 1.0.0-beta.2
 * **[ BREAKING ]** Validation `result` type is `Belt.Result.t(ok, message)`. Where `type ok = | Valid | NoValue`. `NoValue` tag should be used when optional field's value is empty.
 
