@@ -77,7 +77,8 @@ let make = _ => {
         }
       }>
       ...{
-           form =>
+           form => {
+             Js.log(form.isDirty());
              <form
                className="form"
                onSubmit={form.submit->Formality.Dom.preventDefault}>
@@ -107,15 +108,16 @@ let make = _ => {
                    />
                    {
                      switch (Email->(form.result)) {
-                     | Some(Error(message)) =>
+                     | Some(Dirty(Error(message))) =>
                        <div className={Cn.make(["form-message", "failure"])}>
                          message->React.string
                        </div>
-                     | Some(Ok(Valid)) =>
+                     | Some(Dirty(Ok(Valid))) =>
                        <div className={Cn.make(["form-message", "success"])}>
                          {j|✓|j}->React.string
                        </div>
-                     | Some(Ok(NoValue))
+                     | Some(Pristine)
+                     | Some(Dirty(Ok(NoValue)))
                      | None => React.null
                      }
                    }
@@ -143,15 +145,16 @@ let make = _ => {
                    />
                    {
                      switch (Password->(form.result)) {
-                     | Some(Error(message)) =>
+                     | Some(Dirty(Error(message))) =>
                        <div className={Cn.make(["form-message", "failure"])}>
                          message->React.string
                        </div>
-                     | Some(Ok(Valid)) =>
+                     | Some(Dirty(Ok(Valid))) =>
                        <div className={Cn.make(["form-message", "success"])}>
                          {j|✓|j}->React.string
                        </div>
-                     | Some(Ok(NoValue))
+                     | Some(Pristine)
+                     | Some(Dirty(Ok(NoValue)))
                      | None => React.null
                      }
                    }
@@ -197,7 +200,8 @@ let make = _ => {
                    }
                  </div>
                </div>
-             </form>
+             </form>;
+           }
          }
     </LoginFormContainer>,
 };

@@ -32,10 +32,9 @@ module Make = (Form: Form) => {
     results:
       Map.t(
         Form.field,
-        Validation.result(Form.message),
+        Validation.status(Form.message),
         FieldComparator.identity,
       ),
-    emittedFields: Set.t(Form.field, FieldComparator.identity),
     submittedOnce: bool,
   };
 
@@ -54,28 +53,35 @@ module Make = (Form: Form) => {
   type interface = {
     state: Form.state,
     status: FormStatus.t(Form.field, Form.message),
-    result: Form.field => option(Validation.result(Form.message)),
+    result: Form.field => option(Validation.status(Form.message)),
     submitting: bool,
     change: (Form.field, Form.state) => unit,
     blur: Form.field => unit,
     submit: unit => unit,
     dismissSubmissionResult: unit => unit,
     isValid: unit => bool,
+    isDirty: unit => bool,
   };
 
   let getInitialState = data => {
-    data,
-    status: FormStatus.Editing,
-    validators:
-      ref(
-        Form.validators->List.reduce(
-          Map.make(~id=(module FieldComparator)), (fields, validator) =>
-          fields->Map.set(validator.field, validator)
-        ),
-      ),
-    results: Map.make(~id=(module FieldComparator)),
-    emittedFields: Set.make(~id=(module FieldComparator)),
-    submittedOnce: false,
+    let validators =
+      Form.validators->List.reduce(
+        Map.make(~id=(module FieldComparator)), (fields, validator) =>
+        fields->Map.set(validator.field, validator)
+      );
+    let results =
+      Form.validators->List.reduce(
+        Map.make(~id=(module FieldComparator)), (fields, validator) =>
+        fields->(Map.set(validator.field, Validation.Pristine))
+      );
+
+    {
+      data,
+      status: FormStatus.Editing,
+      validators: ref(validators),
+      results,
+      submittedOnce: false,
+    };
   };
 
   let validateDependents =
@@ -92,28 +98,34 @@ module Make = (Form: Form) => {
         ~results:
            Map.t(
              Form.field,
-             Validation.result(Form.message),
+             Validation.status(Form.message),
              FieldComparator.identity,
            ),
-        ~emittedFields: Set.t(Form.field, FieldComparator.identity),
         dependents: option(list(Form.field)),
       ) =>
     switch (dependents) {
-    | None => (results, emittedFields)
+    | None => results
     | Some(dependents) =>
       dependents->List.reduce(
-        (results, emittedFields),
-        ((results, emittedFields), field) => {
+        results,
+        (results, field) => {
           let validator = (validators^)->Map.getExn(field);
-          let emitted = emittedFields->Set.has(field);
+          let emitted =
+            results
+            ->(Map.get(field))
+            ->(
+                Option.map(
+                  fun
+                  | Dirty(_) => true
+                  | Pristine => false,
+                )
+              )
+            ->(Option.getWithDefault(false));
           if (emitted) {
             let result = data->(validator.validate);
-            (
-              results->Map.set(field, result),
-              emittedFields->Set.add(field),
-            );
+            results->Map.set(field, Dirty(result));
           } else {
-            (results, emittedFields);
+            results;
           };
         },
       )
@@ -144,65 +156,51 @@ module Make = (Form: Form) => {
         switch (validator) {
         | None => React.Update({...state, data})
         | Some(validator) =>
-          let emitted = state.emittedFields->Set.has(field);
-          switch (validator.strategy, emitted, state.submittedOnce) {
-          | (_, true, _)
-          | (_, _, true)
-          | (Strategy.OnFirstChange, false, false) =>
+          switch (validator.strategy, state.submittedOnce) {
+          | (_, true)
+          | (Strategy.OnFirstChange, false) =>
             let result = data->(validator.validate);
-            let (results, emittedFields) =
+            let results =
               validator.dependents
               ->validateDependents(
                   ~data,
                   ~validators=state.validators,
                   ~results=state.results,
-                  ~emittedFields=state.emittedFields,
                 );
             React.Update({
               ...state,
               data,
-              results: results->Map.set(field, result),
-              emittedFields: emittedFields->Set.add(field),
+              results: results->Map.set(field, Dirty(result)),
             });
 
           | (
               Strategy.OnFirstSuccess | Strategy.OnFirstSuccessOrFirstBlur,
               false,
-              false,
             ) =>
             let result = data->(validator.validate);
-            let (results, emittedFields) =
+            let results =
               validator.dependents
               ->validateDependents(
                   ~data,
                   ~validators=state.validators,
                   ~results=state.results,
-                  ~emittedFields=state.emittedFields,
                 );
-            switch (result) {
-            | Ok(Valid | NoValue) =>
-              React.Update({
-                ...state,
-                data,
-                results: results->Map.set(field, result),
-                emittedFields: emittedFields->Set.add(field),
-              })
-            | Error(_) =>
-              React.Update({...state, data, results, emittedFields})
-            };
+            React.Update({
+              ...state,
+              data,
+              results: results->Map.set(field, Dirty(result)),
+            });
 
-          | (Strategy.OnFirstBlur | Strategy.OnSubmit, false, false) =>
+          | (Strategy.OnFirstBlur | Strategy.OnSubmit, false) =>
             React.Update({...state, data})
-          };
+          }
         };
 
       | Blur(field) =>
         let validator = (state.validators^)->Map.get(field);
-        let emitted = state.emittedFields->Set.has(field);
-        switch (validator, emitted) {
-        | (None, _)
-        | (Some(_), true) => React.NoUpdate
-        | (Some(validator), false) =>
+        switch (validator) {
+        | None => React.NoUpdate
+        | Some(validator) =>
           switch (validator.strategy) {
           | Strategy.OnFirstChange
           | Strategy.OnFirstSuccess
@@ -212,8 +210,7 @@ module Make = (Form: Form) => {
             let result = state.data->(validator.validate);
             React.Update({
               ...state,
-              results: state.results->Map.set(field, result),
-              emittedFields: state.emittedFields->Set.add(field),
+              results: state.results->Map.set(field, Dirty(result)),
             });
           }
         };
@@ -228,7 +225,7 @@ module Make = (Form: Form) => {
                 (true, state.results),
                 ((valid, results), field, validator) => {
                   let result = state.data->(validator.validate);
-                  let results = results->Map.set(field, result);
+                  let results = results->Map.set(field, Dirty(result));
                   switch (valid, result) {
                   | (false, _)
                   | (true, Error(_)) => (false, results)
@@ -291,7 +288,6 @@ module Make = (Form: Form) => {
         | FormStatus.SubmissionFailed(_, _) =>
           React.Update({...state, status: FormStatus.Editing})
         }
-
       | Reset => React.Update(initialState->getInitialState)
       },
 
@@ -317,6 +313,16 @@ module Make = (Form: Form) => {
               state.data->(validator.validate)->Belt.Result.isError
             )
           != true,
+        isDirty: () =>
+          state.results
+          ->(
+              Map.some((_key, value) =>
+                switch (value) {
+                | Pristine => false
+                | Dirty(_) => true
+                }
+              )
+            ),
       }),
   };
 };

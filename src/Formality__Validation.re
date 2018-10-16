@@ -4,6 +4,10 @@ type ok =
 
 type result('message) = Result.t(ok, 'message);
 
+type status('message) =
+  | Pristine
+  | Dirty(result('message));
+
 type validate('state, 'message) = 'state => result('message);
 
 type validateAsync('state, 'message) =
