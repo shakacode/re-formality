@@ -60,6 +60,7 @@ module Make = (Form: Form) => {
     blur: Form.field => unit,
     submit: unit => unit,
     dismissSubmissionResult: unit => unit,
+    isValid: unit => bool,
   };
 
   let getInitialState = data => {
@@ -310,6 +311,14 @@ module Make = (Form: Form) => {
         blur: field => Blur(field)->send,
         submit: () => Submit->send,
         dismissSubmissionResult: () => DismissSubmissionResult->send,
+        isValid: () =>
+          (state.validators^)
+          ->Map.map(validator =>
+              state.data->(validator.validate)->Belt.Result.isError
+            )
+          ->Map.toList
+          ->List.some(((_, isError)) => isError)
+          != true,
       }),
   };
 };

@@ -180,7 +180,9 @@ let make = _ => {
                    </label>
                  </div>
                  <div className="form-row">
-                   <button className="push-lg" disabled={form.submitting}>
+                   <button
+                     className="push-lg"
+                     disabled={form.submitting || !form.isValid()}>
                      (form.submitting ? "Submitting..." : "Submit")
                      ->React.string
                    </button>
