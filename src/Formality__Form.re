@@ -313,11 +313,9 @@ module Make = (Form: Form) => {
         dismissSubmissionResult: () => DismissSubmissionResult->send,
         isValid: () =>
           (state.validators^)
-          ->Map.map(validator =>
+          ->Map.some((_key, validator) =>
               state.data->(validator.validate)->Belt.Result.isError
             )
-          ->Map.toList
-          ->List.some(((_, isError)) => isError)
           != true,
       }),
   };
