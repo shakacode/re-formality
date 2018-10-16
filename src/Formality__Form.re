@@ -53,7 +53,7 @@ module Make = (Form: Form) => {
   type interface = {
     state: Form.state,
     status: FormStatus.t(Form.field, Form.message),
-    result: Form.field => option(Validation.status(Form.message)),
+    result: Form.field => option(Validation.result(Form.message)),
     submitting: bool,
     change: (Form.field, Form.state) => unit,
     blur: Form.field => unit,
@@ -295,7 +295,12 @@ module Make = (Form: Form) => {
       children({
         state: state.data,
         status: state.status,
-        result: field => state.results->Map.get(field),
+        result: field =>
+          switch (state.results->Map.get(field)) {
+          | None
+          | Some(Validation.Pristine) => None
+          | Some(Validation.Dirty(result)) => Some(result)
+          },
         submitting:
           switch (state.status) {
           | Submitting => true

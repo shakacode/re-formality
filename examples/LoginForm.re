@@ -108,16 +108,15 @@ let make = _ => {
                    />
                    {
                      switch (Email->(form.result)) {
-                     | Some(Dirty(Error(message))) =>
+                     | Some(Error(message)) =>
                        <div className={Cn.make(["form-message", "failure"])}>
                          message->React.string
                        </div>
-                     | Some(Dirty(Ok(Valid))) =>
+                     | Some(Ok(Valid)) =>
                        <div className={Cn.make(["form-message", "success"])}>
                          {j|✓|j}->React.string
                        </div>
-                     | Some(Pristine)
-                     | Some(Dirty(Ok(NoValue)))
+                     | Some(Ok(NoValue))
                      | None => React.null
                      }
                    }
@@ -145,16 +144,15 @@ let make = _ => {
                    />
                    {
                      switch (Password->(form.result)) {
-                     | Some(Dirty(Error(message))) =>
+                     | Some(Error(message)) =>
                        <div className={Cn.make(["form-message", "failure"])}>
                          message->React.string
                        </div>
-                     | Some(Dirty(Ok(Valid))) =>
+                     | Some(Ok(Valid)) =>
                        <div className={Cn.make(["form-message", "success"])}>
                          {j|✓|j}->React.string
                        </div>
-                     | Some(Pristine)
-                     | Some(Dirty(Ok(NoValue)))
+                     | Some(Ok(NoValue))
                      | None => React.null
                      }
                    }
