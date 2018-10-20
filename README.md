@@ -27,11 +27,13 @@ Reasonable form validation tool for [`reason-react`](https://reasonml.github.io/
 
 ## Installation
 
+You're looking at `1.0.0-beta` README.
+
 ```shell
 # yarn
-yarn add re-formality
+yarn add re-formality@next
 # or npm
-npm install --save re-formality
+npm install --save re-formality@next
 ```
 
 Then add it to `bsconfig.json`:
