@@ -4,12 +4,25 @@ type ok =
 
 type result('message) = Result.t(ok, 'message);
 
+type visibility =
+  | Shown
+  | Hidden;
+
+type status('message) =
+  | Pristine
+  | Dirty(result('message), visibility);
+
+type asyncStatus('message) =
+  | Pristine
+  | Dirty(result('message), visibility)
+  | Validating;
+
 type validate('state, 'message) = 'state => result('message);
 
 type validateAsync('state, 'message) =
   'state => Js.Promise.t(result('message));
 
-type checkEquality('state) = ('state, 'state) => bool;
+type equalityChecker('state) = ('state, 'state) => bool;
 
 type validator('field, 'state, 'message) = {
   field: 'field,
@@ -24,7 +37,7 @@ type asyncValidator('field, 'state, 'message) = {
   dependents: option(list('field)),
   validate: validate('state, 'message),
   validateAsync:
-    option((validateAsync('state, 'message), checkEquality('state))),
+    option((validateAsync('state, 'message), equalityChecker('state))),
 };
 
 type submissionCallbacks('field, 'state, 'message) = {
