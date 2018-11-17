@@ -4,37 +4,56 @@ module FormStatus = Formality__FormStatus;
 
 module Make = Formality__Form.Make;
 
+type ok = Formality__Validation.Result.ok = | Valid | NoValue;
+
+type result('message) = Belt.Result.t(ok, 'message);
+
+type status('message) =
+  Formality__Validation.Sync.status('message) =
+    | Pristine
+    | Dirty(
+        Formality__Validation.Result.result('message),
+        Formality__Validation.Visibility.t,
+      );
+
+type validate('state, 'message) =
+  'state => Formality__Validation.Result.result('message);
+
+type validator('field, 'state, 'message) =
+  Formality__Validation.Sync.validator('field, 'state, 'message) = {
+    field: 'field,
+    strategy: Formality__Strategy.t,
+    dependents: option(list('field)),
+    validate: validate('state, 'message),
+  };
+
 module Async: {
   module Make = Formality__FormAsyncOnChange.Make;
   module MakeOnBlur = Formality__FormAsyncOnBlur.Make;
+
   let debounceInterval: int;
+
+  type status('message) =
+    Formality__Validation.Async.status('message) =
+      | Pristine
+      | Dirty(
+          Formality__Validation.Result.result('message),
+          Formality__Validation.Visibility.t,
+        )
+      | Validating;
+
+  type validate('state, 'message) =
+    'state => Js.Promise.t(Formality__Validation.Result.result('message));
+
+  type equalityChecker('state) = ('state, 'state) => bool;
+
+  type validator('field, 'state, 'message) =
+    Formality__Validation.Async.validator('field, 'state, 'message) = {
+      field: 'field,
+      strategy: Formality__Strategy.t,
+      dependents: option(list('field)),
+      validate: Formality__Validation.Sync.validate('state, 'message),
+      validateAsync:
+        option((validate('state, 'message), equalityChecker('state))),
+    };
 };
-
-type ok = Formality__Validation.ok = | Valid | NoValue;
-
-type result('message) = Formality__Validation.result('message);
-
-type validate('state, 'message) = 'state => result('message);
-
-type validateAsync('state, 'message) =
-  'state => Js.Promise.t(result('message));
-
-type checkEquality('state) = ('state, 'state) => bool;
-
-type validator('field, 'state, 'message) =
-  Formality__Validation.validator('field, 'state, 'message) = {
-    field: 'field,
-    strategy: Formality__Strategy.t,
-    dependents: option(list('field)),
-    validate: validate('state, 'message),
-  };
-
-type asyncValidator('field, 'state, 'message) =
-  Formality__Validation.asyncValidator('field, 'state, 'message) = {
-    field: 'field,
-    strategy: Formality__Strategy.t,
-    dependents: option(list('field)),
-    validate: validate('state, 'message),
-    validateAsync:
-      option((validateAsync('state, 'message), checkEquality('state))),
-  };

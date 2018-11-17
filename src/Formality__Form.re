@@ -49,7 +49,8 @@ module Make = (Form: Form) => {
   type interface = {
     state: Form.state,
     status: FormStatus.t(Form.field, Form.message),
-    result: Form.field => option(Validation.result(Form.message)),
+    result: Form.field => option(Validation.Result.result(Form.message)),
+    dirty: unit => bool,
     submitting: bool,
     change: (Form.field, Form.state) => unit,
     blur: Form.field => unit,
@@ -60,7 +61,11 @@ module Make = (Form: Form) => {
   let getInitialState = input => {
     input,
     status: FormStatus.Editing,
-    fields: Map.make(~id=(module FieldId)),
+    fields:
+      Form.validators->List.reduce(
+        Map.make(~id=(module FieldId)), (fields, validator) =>
+        fields->Map.set(validator.field, Validation.Pristine)
+      ),
     validators:
       ref(
         Form.validators->List.reduce(
@@ -291,6 +296,14 @@ module Make = (Form: Form) => {
           | Some(Dirty(_, Hidden)) => None
           | Some(Dirty(result, Shown)) => Some(result)
           },
+        dirty: () =>
+          state.fields
+          ->Map.some((_, status) =>
+              switch (status) {
+              | Dirty(_) => true
+              | Pristine => false
+              }
+            ),
         submitting:
           switch (state.status) {
           | Submitting => true

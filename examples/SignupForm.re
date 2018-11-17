@@ -19,76 +19,79 @@ module SignupForm = {
   module EmailField = {
     let update = (state, value) => {...state, email: value};
 
-    let validator = {
-      field: Email,
-      strategy: Strategy.OnFirstSuccessOrFirstBlur,
-      dependents: None,
-      validate: ({email}) => {
-        let emailRegex = [%bs.re {|/.*@.*\..+/|}];
-        switch (email) {
-        | "" => Error("Email is required")
-        | _ as value when !value->Js.Re.test(emailRegex) =>
-          Error("Email is invalid")
-        | _ => Ok(Valid)
-        };
-      },
-      validateAsync:
-        Some((
-          state =>
-            Js.Promise.(
-              state.email
-              ->Api.validateEmail
-              ->then_(
-                  valid =>
-                    Result.(
-                      valid ?
-                        Ok(Valid)->resolve :
-                        Error("Email is already taken")->resolve
-                    ),
-                  _,
-                )
-            ),
-          (prev, next) => prev.email == next.email,
-        )),
-    };
+    let validator =
+      Async.{
+        field: Email,
+        strategy: OnFirstSuccessOrFirstBlur,
+        dependents: None,
+        validate: ({email}) => {
+          let emailRegex = [%bs.re {|/.*@.*\..+/|}];
+          switch (email) {
+          | "" => Error("Email is required")
+          | _ as value when !value->Js.Re.test(emailRegex) =>
+            Error("Email is invalid")
+          | _ => Ok(Valid)
+          };
+        },
+        validateAsync:
+          Some((
+            state =>
+              Js.Promise.(
+                state.email
+                ->Api.validateEmail
+                ->then_(
+                    valid =>
+                      Result.(
+                        valid ?
+                          Ok(Valid)->resolve :
+                          Error("Email is already taken")->resolve
+                      ),
+                    _,
+                  )
+              ),
+            (prev, next) => prev.email == next.email,
+          )),
+      };
   };
 
   module PasswordField = {
     let update = (state, value) => {...state, password: value};
 
-    let validator = {
-      field: Password,
-      strategy: Strategy.OnFirstSuccessOrFirstBlur,
-      dependents: [PasswordConfirmation]->Some,
-      validate: ({password}) => {
-        let minLength = 4;
-        switch (password) {
-        | "" => Error("Password is required")
-        | _ when password->Js.String.length < minLength =>
-          Error({j| $(minLength)+ characters, please|j})
-        | _ => Ok(Valid)
-        };
-      },
-      validateAsync: None,
-    };
+    let validator =
+      Async.{
+        field: Password,
+        strategy: OnFirstSuccessOrFirstBlur,
+        dependents: [PasswordConfirmation]->Some,
+        validate: ({password}) => {
+          let minLength = 4;
+          switch (password) {
+          | "" => Error("Password is required")
+          | _ when password->Js.String.length < minLength =>
+            Error({j| $(minLength)+ characters, please|j})
+          | _ => Ok(Valid)
+          };
+        },
+        validateAsync: None,
+      };
   };
 
   module PasswordConfirmationField = {
     let update = (state, value) => {...state, passwordConfirmation: value};
 
-    let validator = {
-      field: PasswordConfirmation,
-      strategy: Strategy.OnFirstSuccessOrFirstBlur,
-      dependents: None,
-      validate: ({password, passwordConfirmation}) =>
-        switch (passwordConfirmation) {
-        | "" => Error("Confirmation is required")
-        | _ when passwordConfirmation !== password =>
-          Error("Password doesn't match")
-        | _ => Ok(Valid)
-        },
-      validateAsync: None,
-    };
+    let validator =
+      Async.{
+        field: PasswordConfirmation,
+        strategy: Strategy.OnFirstSuccessOrFirstBlur,
+        dependents: None,
+        validate: ({password, passwordConfirmation}) =>
+          switch (passwordConfirmation) {
+          | "" => Error("Confirmation is required")
+          | _ when passwordConfirmation !== password =>
+            Error("Password doesn't match")
+          | _ => Ok(Valid)
+          },
+        validateAsync: None,
+      };
   };
 
   let validators = [

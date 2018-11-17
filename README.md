@@ -415,6 +415,7 @@ type form = {
   state: Form.state,
   status: FormStatus.t,
   result: Form.field => option(result),
+  dirty: unit => bool,
   submitting: bool,
   change: (Form.field, Form.state) => unit,
   blur: Form.field => unit,
@@ -457,6 +458,9 @@ switch (Email->form.result) {
 | None => React.null
 }
 ```
+
+##### `form.dirty`
+Will return `true` if any form field was touched, `false` otherwise.
 
 ##### `form.change`
 

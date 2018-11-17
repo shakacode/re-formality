@@ -8,7 +8,7 @@ module type Form = {
   type field;
   type state;
   type message;
-  let validators: list(Validation.asyncValidator(field, state, message));
+  let validators: list(Validation.Async.validator(field, state, message));
 };
 
 module Make = (Form: Form) => {
@@ -24,14 +24,14 @@ module Make = (Form: Form) => {
     fields:
       Map.t(
         Form.field,
-        Validation.asyncStatus(Form.message),
+        Validation.Async.status(Form.message),
         FieldId.identity,
       ),
     validators:
       ref(
         Map.t(
           Form.field,
-          Validation.asyncValidator(Form.field, Form.state, Form.message),
+          Validation.Async.validator(Form.field, Form.state, Form.message),
           FieldId.identity,
         ),
       ),
@@ -44,12 +44,12 @@ module Make = (Form: Form) => {
     | TriggerAsyncValidation(
         Form.field,
         Form.state,
-        Validation.validateAsync(Form.state, Form.message),
+        Validation.Async.validate(Form.state, Form.message),
       )
     | ApplyAsyncResult(
         Form.field,
         Form.state,
-        Validation.result(Form.message),
+        Validation.Result.result(Form.message),
       )
     | Submit
     | SetSubmittedStatus(option(Form.state))
@@ -63,7 +63,8 @@ module Make = (Form: Form) => {
   type interface = {
     state: Form.state,
     status: FormStatus.t(Form.field, Form.message),
-    result: Form.field => option(Validation.result(Form.message)),
+    result: Form.field => option(Validation.Result.result(Form.message)),
+    dirty: unit => bool,
     validating: Form.field => bool,
     submitting: bool,
     change: (Form.field, Form.state) => unit,
@@ -75,7 +76,11 @@ module Make = (Form: Form) => {
   let getInitialState = input => {
     input,
     status: FormStatus.Editing,
-    fields: Map.make(~id=(module FieldId)),
+    fields:
+      Form.validators->List.reduce(
+        Map.make(~id=(module FieldId)), (fields, validator) =>
+        fields->Map.set(validator.field, Validation.Async.Pristine)
+      ),
     validators:
       ref(
         Form.validators->List.reduce(
@@ -417,6 +422,15 @@ module Make = (Form: Form) => {
           | Some(Dirty(_, Hidden)) => None
           | Some(Dirty(result, Shown)) => Some(result)
           },
+        dirty: () =>
+          state.fields
+          ->Map.some((_, status) =>
+              switch (status) {
+              | Dirty(_)
+              | Validating => true
+              | Pristine => false
+              }
+            ),
         validating: field =>
           switch (state.fields->Map.get(field)) {
           | Some(Validating) => true
