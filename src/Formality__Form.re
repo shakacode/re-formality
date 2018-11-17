@@ -51,6 +51,7 @@ module Make = (Form: Form) => {
     status: FormStatus.t(Form.field, Form.message),
     result: Form.field => option(Validation.Result.result(Form.message)),
     dirty: unit => bool,
+    valid: unit => bool,
     submitting: bool,
     change: (Form.field, Form.state) => unit,
     blur: Form.field => unit,
@@ -302,6 +303,24 @@ module Make = (Form: Form) => {
               switch (status) {
               | Dirty(_) => true
               | Pristine => false
+              }
+            ),
+        valid: () =>
+          state.fields
+          ->Map.every((field, status) =>
+              switch (status) {
+              | Dirty(Ok(_), _) => true
+              | Dirty(Error(_), _) => false
+              | Pristine =>
+                (state.validators^)
+                ->Map.get(field)
+                ->Option.map(validator =>
+                    switch (state.input->(validator.validate)) {
+                    | Ok(_) => true
+                    | Error(_) => false
+                    }
+                  )
+                ->Option.getWithDefault(true)
               }
             ),
         submitting:

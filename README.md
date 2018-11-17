@@ -416,6 +416,7 @@ type form = {
   status: FormStatus.t,
   result: Form.field => option(result),
   dirty: unit => bool,
+  valid: unit => bool, /* not available in async forms */
   submitting: bool,
   change: (Form.field, Form.state) => unit,
   blur: Form.field => unit,
@@ -460,7 +461,10 @@ switch (Email->form.result) {
 ```
 
 ##### `form.dirty`
-Will return `true` if any form field was touched, `false` otherwise.
+This function will return `true` if any form field was touched, `false` otherwise.
+
+##### `form.valid`
+This function will return `true` if all form field are valid, `false` otherwise. Not available in forms with async validations.
 
 ##### `form.change`
 
