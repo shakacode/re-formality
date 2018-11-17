@@ -1,5 +1,14 @@
 # History
 
+## 1.0.0-beta.4
+* Add `form.dirty()` function which returns `true` if any form field was touched, `false` otherwise.
+* Add `form.valid()` function which returns `true` if all form fields are valid, `false` otherwise. Not available for forms w/ async validations.
+* Namespace async types. You might need to local open `Async` module for async validators in form config. E.g.
+
+```reason
+let validator = Async.{ field: Email, ... };
+```
+
 ## 1.0.0-beta.3
 * Un-expose `React` module. I might accidentally broke some apps which have internal `React.re` module. Sorry!
 

@@ -41,10 +41,10 @@
     "reason-react": "^0.5.0"
   },
   "devDependencies": {
-    "bs-platform": "4.0.6",
+    "bs-platform": "4.0.7",
     "bsb-js": "1.1.7",
-    "parcel-bundler": "1.9.7",
-    "re-classnames": "2.1.0",
+    "parcel-bundler": "1.10.3",
+    "re-classnames": "3.0.0",
     "reason-react": "0.5.3"
   },
   "dependencies": {
