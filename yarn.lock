@@ -4034,10 +4034,10 @@ rc@^1.2.7:
     minimist "^1.2.0"
     strip-json-comments "~2.0.1"
 
-re-classnames@2.1.0:
-  version "2.1.0"
-  resolved "https://registry.yarnpkg.com/re-classnames/-/re-classnames-2.1.0.tgz#7c15f1de50e2192713d26c4f179b22af75cf8843"
-  integrity sha512-DNYM9pYM05Eyxn+ShvHwvrt4FVA2fZ83BelVkvav2mw1HQcRRMIY1v9uEWuOhkogq38SJthw6yU3YIl9m59OEw==
+re-classnames@3.0.0:
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/re-classnames/-/re-classnames-3.0.0.tgz#34ae947bfbd57eadd29f855256336d628a242d1e"
+  integrity sha512-gErGogzPy9LuJBYx9pNtWXjvFPrSnjk3R8d+TNa1PHpMoPcJKBITaCvVi9wLFtYTBiFW5KaHEvZhKx61DSW40A==
 
 re-debouncer@0.0.1:
   version "0.0.1"
