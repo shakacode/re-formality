@@ -27,13 +27,11 @@ Reasonable form validation tool for [`reason-react`](https://reasonml.github.io/
 
 ## Installation
 
-You're looking at `1.0.0-beta` README.
-
 ```shell
 # yarn
-yarn add re-formality@next
+yarn add re-formality
 # or npm
-npm install --save re-formality@next
+npm install --save re-formality
 ```
 
 Then add it to `bsconfig.json`:
@@ -57,7 +55,7 @@ The main purpose of this library is to provide great form validation UX. To achi
 
 The hardest part is to figure out the right moment when first validation results should be emitted in UI.
 
-Let's break down a case with credit card field. A user opens a form and focuses on a field. When the first character is typed, the field is in an invalid state but it's not really polite to show an error at this point: we should let user a chance to finish what he's doing. While the user is typing, we wait. If after some character, validator reported valid result, it's a proper moment to indicate success in UI (e.g. show credit card type). But if the user left the field in an invalid state (e.g. moved to another field) we have all rights to emit an error. After the first result is emitted, we update validation state in UI on every change.
+Let's break down a case with credit card field. A user opens a form and focuses on a field. When the first character is typed, the field is in an invalid state but it's not polite to show an error immediately: we should let user a chance to finish what he's doing. While the user is typing and field is in invalid state, we don't provide any feedback in UI. If after some character validator reported valid result, it's a proper moment to indicate a success (e.g. show credit card type). But if the user left the field in an invalid state (e.g. moved to another field) we have all rights to emit an error. After the first result is emitted, we update validation state in UI on every change.
 
 Sadly, form fields are different and credit card scenario is not universal. This is where strategies kick in.
 
@@ -524,7 +522,7 @@ Some validations can't be performed locally, e.g. on signup, you want to validat
 
 There are 2 common ways to provide async feedback: send a request to a server on every change or only on blur event. The first way is better in terms of UX but creates a significant load, so your client might become slow or a server might feel bad. The blur way doesn't have this problem (at least not that much) but UX is definitely not the best b/c user have to blur away from a field to receive a feedback.
 
-What can we do about it to have the best of both worlds? An answer is to debounce async validations on change. What does it mean and how does it work: when a user types something in in a form field, no external requests are triggered. Instead, it's put on hold. While user types, we wait. Once he stopped and there was no activity in the certain period—async request is triggered.
+What can we do about it to have the best of both worlds? An answer is to debounce async validations on change. What does it mean and how does it work: when a user types something in in a form field, no external requests are triggered. Instead, it's put on hold. While the user is typing, we're waiting. Once he stopped and there was no activity in the certain period of time—async request is triggered.
 
 #### Debounced async validations on change
 To implement debounced async validations you need to make some additions to common form config.
@@ -606,6 +604,39 @@ module MyAsyncFormContainer = Formality.Async.Make(MyForm);
 #### Async validations on blur
 If you still want to use on blur validations just add `validateAsync` props to `validators` and use `Formality.Async.MakeOnBlur` to create form container.
 
+#### Note on defining async validators
+When you define async validator you need to local open `Async` module like this:
+
+```reason
+module SignupForm = {
+  open Formality;
+
+  ...
+
+  module EmailField = {
+    let validator = Async.{ field: Email, ... };
+  };
+};
+```
+
+You will probably get `Warning 45` from compiler. You can address it either by:
+1. Disabling this warning in `bsconfig.json`.
+
+```json
+"warnings": {
+  "number": "-45"
+}
+```
+
+2. Or change local open to this:
+
+```reason
+let validator = {
+  Async.field: Email,
+  strategy: OnFirstSuccessOrFirstBlur,
+  ...
+};
+```
 
 ### I18n
 If you build i18n'ized app then set `message` type in form config to your `I18n.t` type. E.g.:
