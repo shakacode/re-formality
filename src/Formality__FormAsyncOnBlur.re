@@ -71,6 +71,7 @@ module Make = (Form: Form) => {
     blur: Form.field => unit,
     submit: unit => unit,
     dismissSubmissionResult: unit => unit,
+    reset: unit => unit,
   };
 
   let getInitialState = input => {
@@ -449,6 +450,7 @@ module Make = (Form: Form) => {
         blur: field => Blur(field)->send,
         submit: () => Submit->send,
         dismissSubmissionResult: () => DismissSubmissionResult->send,
+        reset: () => Reset->send,
       }),
   };
 };
