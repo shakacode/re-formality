@@ -419,6 +419,7 @@ type form = {
   change: (Form.field, Form.state) => unit,
   blur: Form.field => unit,
   submit: unit => unit,
+  reset: unit => unit,
   dismissSubmissionResult: unit => unit,
 };
 ```
@@ -513,6 +514,9 @@ Use it as `onSubmit` handler of a `<form />` element:
 ```reason
 <form onSubmit={form.submit->Formality.Dom.preventDefault} />
 ```
+
+##### `form.reset`
+Resets form state.
 
 ##### `form.dismissSubmissionResult`
 Use it when you want to let user dismissing alerts with errors from server or success message without resetting a form. Under the hood, it changes `FormStatus.Submitted` & `FormStatus.SubmissionFailed` statuses back to `FormStatus.Editing`.

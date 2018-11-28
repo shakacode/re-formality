@@ -1,5 +1,11 @@
 # History
 
+## 1.1.0
+Add `form.reset()` function which resets the form to its initial state.
+
+## 1.0.0
+No changes.
+
 ## 1.0.0-beta.4
 * Add `form.dirty()` function which returns `true` if any form field was touched, `false` otherwise.
 * Add `form.valid()` function which returns `true` if all form fields are valid, `false` otherwise. Not available for forms w/ async validations.
