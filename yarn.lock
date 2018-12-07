@@ -4039,10 +4039,10 @@ re-classnames@3.0.0:
   resolved "https://registry.yarnpkg.com/re-classnames/-/re-classnames-3.0.0.tgz#34ae947bfbd57eadd29f855256336d628a242d1e"
   integrity sha512-gErGogzPy9LuJBYx9pNtWXjvFPrSnjk3R8d+TNa1PHpMoPcJKBITaCvVi9wLFtYTBiFW5KaHEvZhKx61DSW40A==
 
-re-debouncer@0.0.1:
-  version "0.0.1"
-  resolved "https://registry.yarnpkg.com/re-debouncer/-/re-debouncer-0.0.1.tgz#c735474bb379a07e4108e2f5164f6e0632864e50"
-  integrity sha512-9NbFVN88+ja3U20htmcTZQ3HWab1lKa29/Og27L6itzb6hHVSj1g/5JBoOBgyBkQ4MHcR9e8HooIXI3pJ4LMJA==
+re-debouncer@1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/re-debouncer/-/re-debouncer-1.0.0.tgz#74beb26756898b92a59e3fff51d1bedd4fc0ad5c"
+  integrity sha512-yVWs7VOdNVXUGAzqzQswL/VXfwsE4UbZ8CNA7uRWydNKjINIvyDdbm047w3nAJH63ysvVywwKmXz0lY7M9tOuQ==
 
 "react-dom@>=15.0.0 || >=16.0.0":
   version "16.5.2"

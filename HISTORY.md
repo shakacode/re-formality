@@ -1,5 +1,8 @@
 # History
 
+## 1.1.1
+* (Chore) Update `re-debouncer`.
+
 ## 1.1.0
 Add `form.reset()` function which resets the form to its initial state.
 
