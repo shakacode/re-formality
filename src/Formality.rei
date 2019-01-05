@@ -1,36 +1,59 @@
-module MakeValidators = Formality__Validation.MakeValidators;
 module Dom = Formality__PublicHelpers.Dom;
 module Strategy = Formality__Strategy;
 module FormStatus = Formality__FormStatus;
+
 module Make = Formality__Form.Make;
-module MakeWithAsyncValidationsOnChange = Formality__FormAsyncOnChange.Make;
-module MakeWithAsyncValidationsOnBlur = Formality__FormAsyncOnBlur.Make;
 
-type validationResult('message) =
-  Formality__Validation.validationResult('message) =
-    | Valid | Invalid('message);
+type ok = Formality__Validation.Result.ok = | Valid | NoValue;
 
-type validate('value, 'state, 'message) =
-  ('value, 'state) => validationResult('message);
+type result('message) = Belt.Result.t(ok, 'message);
 
-type validateAsync('value, 'message) =
-  'value => Js.Promise.t(validationResult('message));
+type status('message) =
+  Formality__Validation.Sync.status('message) =
+    | Pristine
+    | Dirty(
+        Formality__Validation.Result.result('message),
+        Formality__Validation.Visibility.t,
+      );
 
-type validator('field, 'value, 'state, 'message) =
-  Formality__Validation.validator('field, 'value, 'state, 'message) = {
+type validate('state, 'message) =
+  'state => Formality__Validation.Result.result('message);
+
+type validator('field, 'state, 'message) =
+  Formality__Validation.Sync.validator('field, 'state, 'message) = {
+    field: 'field,
     strategy: Formality__Strategy.t,
     dependents: option(list('field)),
-    validate: validate('value, 'state, 'message),
+    validate: validate('state, 'message),
   };
 
-type asyncValidator('field, 'value, 'state, 'message) =
-  Formality__Validation.asyncValidator('field, 'value, 'state, 'message) = {
-    strategy: Formality__Strategy.t,
-    dependents: option(list('field)),
-    validate: validate('value, 'state, 'message),
-    validateAsync: option(validateAsync('value, 'message)),
-  };
+module Async: {
+  module Make = Formality__FormAsyncOnChange.Make;
+  module MakeOnBlur = Formality__FormAsyncOnBlur.Make;
 
-let debounceInterval: int;
+  let debounceInterval: int;
 
-let emptyString: string => bool;
+  type status('message) =
+    Formality__Validation.Async.status('message) =
+      | Pristine
+      | Dirty(
+          Formality__Validation.Result.result('message),
+          Formality__Validation.Visibility.t,
+        )
+      | Validating;
+
+  type validate('state, 'message) =
+    'state => Js.Promise.t(Formality__Validation.Result.result('message));
+
+  type equalityChecker('state) = ('state, 'state) => bool;
+
+  type validator('field, 'state, 'message) =
+    Formality__Validation.Async.validator('field, 'state, 'message) = {
+      field: 'field,
+      strategy: Formality__Strategy.t,
+      dependents: option(list('field)),
+      validate: Formality__Validation.Sync.validate('state, 'message),
+      validateAsync:
+        option((validate('state, 'message), equalityChecker('state))),
+    };
+};

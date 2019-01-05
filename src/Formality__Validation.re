@@ -1,24 +1,53 @@
-type validationResult('message) =
-  | Valid
-  | Invalid('message);
+module Result = {
+  type ok =
+    | Valid
+    | NoValue;
 
-type validate('value, 'state, 'message) =
-  ('value, 'state) => validationResult('message);
-
-type validateAsync('value, 'message) =
-  'value => Js.Promise.t(validationResult('message));
-
-type validator('field, 'value, 'state, 'message) = {
-  strategy: Formality__Strategy.t,
-  dependents: option(list('field)),
-  validate: validate('value, 'state, 'message),
+  type result('message) = Belt.Result.t(ok, 'message);
 };
 
-type asyncValidator('field, 'value, 'state, 'message) = {
-  strategy: Formality__Strategy.t,
-  dependents: option(list('field)),
-  validate: validate('value, 'state, 'message),
-  validateAsync: option(validateAsync('value, 'message)),
+module Visibility = {
+  type t =
+    | Shown
+    | Hidden;
+};
+
+module Sync = {
+  type status('message) =
+    | Pristine
+    | Dirty(Result.result('message), Visibility.t);
+
+  type validate('state, 'message) = 'state => Result.result('message);
+
+  type validator('field, 'state, 'message) = {
+    field: 'field,
+    strategy: Formality__Strategy.t,
+    dependents: option(list('field)),
+    validate: validate('state, 'message),
+  };
+};
+
+include Sync;
+
+module Async = {
+  type status('message) =
+    | Pristine
+    | Dirty(Result.result('message), Visibility.t)
+    | Validating;
+
+  type validate('state, 'message) =
+    'state => Js.Promise.t(Result.result('message));
+
+  type equalityChecker('state) = ('state, 'state) => bool;
+
+  type validator('field, 'state, 'message) = {
+    field: 'field,
+    strategy: Formality__Strategy.t,
+    dependents: option(list('field)),
+    validate: Sync.validate('state, 'message),
+    validateAsync:
+      option((validate('state, 'message), equalityChecker('state))),
+  };
 };
 
 type submissionCallbacks('field, 'state, 'message) = {
@@ -26,17 +55,3 @@ type submissionCallbacks('field, 'state, 'message) = {
   notifyOnFailure: (list(('field, 'message)), option('message)) => unit,
   reset: unit => unit,
 };
-
-module type ValidatorsConfig = {type t;};
-
-module MakeValidators = (Config: ValidatorsConfig) =>
-  Map.Make({
-    type t = Config.t;
-    let compare = Pervasives.compare;
-  });
-
-let ifResult = (~valid, ~invalid, result) =>
-  switch (result) {
-  | Valid => result |> valid
-  | Invalid(_) => result |> invalid
-  };

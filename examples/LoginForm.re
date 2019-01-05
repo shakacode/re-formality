@@ -1,188 +1,196 @@
 module LoginForm = {
-  type value = string;
-  type message = string;
+  open Formality;
 
   type field =
     | Email
-    | Password;
+    | Password
+    | RememberMe;
 
   type state = {
     email: string,
     password: string,
+    rememberMe: bool,
   };
 
-  let get = (field, state) =>
-    switch (field) {
-    | Email => state.email
-    | Password => state.password
+  type message = string;
+
+  module EmailField = {
+    let update = (state, value) => {...state, email: value};
+
+    let validator = {
+      field: Email,
+      strategy: Strategy.OnFirstSuccessOrFirstBlur,
+      dependents: None,
+      validate: ({email}) => {
+        let emailRegex = [%bs.re {|/.*@.*\..+/|}];
+        switch (email) {
+        | "" => Error("Email is required")
+        | _ as value when !value->Js.Re.test(emailRegex) =>
+          Error("Email is invalid")
+        | _ => Ok(Valid)
+        };
+      },
     };
+  };
 
-  let update = ((field, value), state) =>
-    switch (field, value) {
-    | (Email, value) => {...state, email: value}
-    | (Password, value) => {...state, password: value}
+  module PasswordField = {
+    let update = (state, value) => {...state, password: value};
+
+    let validator = {
+      field: Password,
+      strategy: Strategy.OnFirstBlur,
+      dependents: None,
+      validate: ({password}) =>
+        switch (password) {
+        | "" => Error("Password is required")
+        | _ => Ok(Valid)
+        },
     };
+  };
 
-  let valueEmpty = Formality.emptyString;
+  module RememberMeField = {
+    let update = (state, value) => {...state, rememberMe: value};
+  };
 
-  module Validators =
-    Formality.MakeValidators({
-      type t = field;
-    });
-
-  type validators =
-    Validators.t(Formality.validator(field, value, state, message));
-
-  let validators =
-    Formality.(
-      Validators.empty
-      |> Validators.add(
-           Email,
-           {
-             strategy: Strategy.OnFirstSuccessOrFirstBlur,
-             dependents: None,
-             validate: (value, _) => {
-               let emailRegex = [%bs.re {|/.*@.*\..+/|}];
-               switch (value) {
-               | "" => Invalid("Email is required")
-               | _ when !(emailRegex |> Js.Re.test(value)) =>
-                 Invalid("Email is invalid")
-               | _ => Valid
-               };
-             },
-           },
-         )
-      |> Validators.add(
-           Password,
-           {
-             strategy: Strategy.OnFirstBlur,
-             dependents: None,
-             validate: (value, _) =>
-               switch (value) {
-               | "" => Invalid("Password is required")
-               | _ => Valid
-               },
-           },
-         )
-    );
+  let validators = [EmailField.validator, PasswordField.validator];
 };
 
 module LoginFormContainer = Formality.Make(LoginForm);
 
-let component = ReasonReact.statelessComponent(__MODULE__);
-
+let component = React.statelessComponent(__MODULE__);
 let make = _ => {
   ...component,
   render: _ =>
     <LoginFormContainer
-      initialState={email: "", password: ""}
+      initialState={email: "", password: "", rememberMe: false}
       onSubmit={
         (state, form) => {
-          Js.log2("Called with:", state);
+          Js.log2("Submitted with:", state);
           Js.Global.setTimeout(
             () => {
               form.notifyOnSuccess(None);
-              Js.Global.setTimeout(form.reset, 3000) |> ignore;
+              form.reset->Js.Global.setTimeout(3000)->ignore;
             },
             500,
           )
-          |> ignore;
+          ->ignore;
         }
       }>
       ...{
            form =>
              <form
                className="form"
-               onSubmit={form.submit |> Formality.Dom.preventDefault}>
+               onSubmit={form.submit->Formality.Dom.preventDefault}>
                <div className="form-messages-area form-messages-area-lg" />
                <div className="form-content">
-                 <h2 className="push-lg"> {"Login" |> ReasonReact.string} </h2>
+                 <h2 className="push-lg"> "Login"->React.string </h2>
                  <div className="form-row">
                    <label htmlFor="login--email" className="label-lg">
-                     {"Email" |> ReasonReact.string}
+                     "Email"->React.string
                    </label>
                    <input
                      id="login--email"
                      type_="text"
                      value={form.state.email}
                      disabled={form.submitting}
+                     onBlur={_ => form.blur(Email)}
                      onChange={
                        event =>
-                         event
-                         |> Formality.Dom.toValueOnChange
-                         |> form.change(LoginForm.Email)
-                     }
-                     onBlur={
-                       event =>
-                         event
-                         |> Formality.Dom.toValueOnBlur
-                         |> form.blur(LoginForm.Email)
+                         form.change(
+                           Email,
+                           LoginForm.EmailField.update(
+                             form.state,
+                             event->ReactEvent.Form.target##value,
+                           ),
+                         )
                      }
                    />
                    {
-                     switch (LoginForm.Email |> form.results) {
-                     | Some(Invalid(message)) =>
+                     switch (Email->(form.result)) {
+                     | Some(Error(message)) =>
                        <div className={Cn.make(["form-message", "failure"])}>
-                         {message |> ReasonReact.string}
+                         message->React.string
                        </div>
-                     | Some(Valid) =>
+                     | Some(Ok(Valid)) =>
                        <div className={Cn.make(["form-message", "success"])}>
-                         {{j|✓|j} |> ReasonReact.string}
+                         {j|✓|j}->React.string
                        </div>
-                     | None => ReasonReact.null
+                     | Some(Ok(NoValue))
+                     | None => React.null
                      }
                    }
                  </div>
                  <div className="form-row">
                    <label htmlFor="login--password" className="label-lg">
-                     {"Password" |> ReasonReact.string}
+                     "Password"->React.string
                    </label>
                    <input
                      id="login--password"
                      type_="text"
                      value={form.state.password}
                      disabled={form.submitting}
+                     onBlur={_ => form.blur(Password)}
                      onChange={
                        event =>
-                         event
-                         |> Formality.Dom.toValueOnChange
-                         |> form.change(LoginForm.Password)
-                     }
-                     onBlur={
-                       event =>
-                         event
-                         |> Formality.Dom.toValueOnBlur
-                         |> form.blur(LoginForm.Password)
+                         form.change(
+                           Password,
+                           LoginForm.PasswordField.update(
+                             form.state,
+                             event->ReactEvent.Form.target##value,
+                           ),
+                         )
                      }
                    />
                    {
-                     switch (LoginForm.Password |> form.results) {
-                     | Some(Invalid(message)) =>
+                     switch (Password->(form.result)) {
+                     | Some(Error(message)) =>
                        <div className={Cn.make(["form-message", "failure"])}>
-                         {message |> ReasonReact.string}
+                         message->React.string
                        </div>
-                     | Some(Valid) =>
+                     | Some(Ok(Valid)) =>
                        <div className={Cn.make(["form-message", "success"])}>
-                         {{j|✓|j} |> ReasonReact.string}
+                         {j|✓|j}->React.string
                        </div>
-                     | None => ReasonReact.null
+                     | Some(Ok(NoValue))
+                     | None => React.null
                      }
                    }
                  </div>
                  <div className="form-row">
-                   <button className="push-lg" disabled={form.submitting}>
-                     {
-                       (form.submitting ? "Submitting..." : "Submit")
-                       |> ReasonReact.string
+                   <input
+                     id="login--remember"
+                     type_="checkbox"
+                     checked={form.state.rememberMe}
+                     disabled={form.submitting}
+                     className="push-lg"
+                     onBlur={_ => form.blur(RememberMe)}
+                     onChange={
+                       event =>
+                         form.change(
+                           RememberMe,
+                           LoginForm.RememberMeField.update(
+                             form.state,
+                             event->ReactEvent.Form.target##checked,
+                           ),
+                         )
                      }
+                   />
+                   <label htmlFor="login--remember">
+                     "Remember me"->React.string
+                   </label>
+                 </div>
+                 <div className="form-row">
+                   <button className="push-lg" disabled={form.submitting}>
+                     (form.submitting ? "Submitting..." : "Submit")
+                     ->React.string
                    </button>
                    {
                      switch (form.status) {
-                     | Formality.FormStatus.Submitted =>
+                     | Submitted =>
                        <div className={Cn.make(["form-status", "success"])}>
-                         {{j|✓ Logged In|j} |> ReasonReact.string}
+                         {j|✓ Logged In|j}->React.string
                        </div>
-                     | _ => ReasonReact.null
+                     | _ => React.null
                      }
                    }
                  </div>

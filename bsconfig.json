@@ -5,19 +5,25 @@
     {
       "dir": "examples",
       "type" : "dev",
-      "subdirs": true,
-    },
+      "subdirs": true
+    }
   ],
-  "bs-dependencies": ["reason-react"],
+  "bs-dependencies": [
+    "reason-react",
+    "re-debouncer"
+  ],
   "bs-dev-dependencies": ["re-classnames"],
   "reason": {
-    "react-jsx": 2,
+    "react-jsx": 2
   },
   "refmt": 3,
-  "bsc-flags": ["-bs-super-errors"],
+  "bsc-flags": ["-open Belt"],
   "package-specs": {
     "module": "commonjs",
-    "in-source": true,
+    "in-source": true
   },
   "suffix": ".bs.js",
+  "warnings": {
+    "number": "-45"
+  }
 }
