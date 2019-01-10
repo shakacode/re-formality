@@ -8,7 +8,6 @@ module type Form = {
   type field;
   type state;
   type message;
-  let validators: list(Validation.validator(field, state, message));
 };
 
 module Make = (Form: Form) => {
@@ -69,18 +68,18 @@ module Make = (Form: Form) => {
     reset: unit => unit,
   };
 
-  let getInitialState = input => {
+  let getInitialState = (input, validators: list(validator)) => {
     input,
     initialInput: input,
     status: FormStatus.Editing,
     fields:
-      Form.validators->List.reduce(
+      validators->List.reduce(
         Map.make(~id=(module FieldId)), (fields, validator) =>
         fields->Map.set(validator.field, Validation.Pristine)
       ),
     validators:
       ref(
-        Form.validators->List.reduce(
+        validators->List.reduce(
           Map.make(~id=(module FieldId)), (fields, validator) =>
           fields->Map.set(validator.field, validator)
         ),
@@ -93,6 +92,7 @@ module Make = (Form: Form) => {
       (
         ~enableReinitialize=false,
         ~initialState: Form.state,
+        ~validators: list(validator),
         ~onSubmit:
            (
              Form.state,
@@ -106,7 +106,7 @@ module Make = (Form: Form) => {
         children,
       ) => {
     ...component,
-    initialState: () => initialState->getInitialState,
+    initialState: () => getInitialState(initialState, validators),
     didUpdate: ({newSelf, oldSelf}) =>
       if (enableReinitialize && initialState != oldSelf.state.initialInput) {
         newSelf.send(Reset);
@@ -337,7 +337,7 @@ module Make = (Form: Form) => {
           React.Update({...state, status: FormStatus.Editing})
         }
 
-      | Reset => React.Update(initialState->getInitialState)
+      | Reset => React.Update(getInitialState(initialState, validators))
       },
 
     render: ({state, send}) =>
