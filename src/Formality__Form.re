@@ -37,9 +37,13 @@ module Make = (Form: Form) => {
 
   type retainedProps = {initialState: Form.state};
 
+  type validator = Validation.validator(Form.field, Form.state, Form.message);
+
   type action =
     | Change(Form.field, Form.state)
     | Blur(Form.field)
+    | AddValidator(validator)
+    | RemoveValidator(Form.field)
     | Submit
     | SetSubmittedStatus(option(Form.state))
     | SetSubmissionFailedStatus(
@@ -58,6 +62,8 @@ module Make = (Form: Form) => {
     submitting: bool,
     change: (Form.field, Form.state) => unit,
     blur: Form.field => unit,
+    addValidator: validator => unit,
+    removeValidator: Form.field => unit,
     submit: unit => unit,
     dismissSubmissionResult: unit => unit,
     reset: unit => unit,
@@ -217,6 +223,28 @@ module Make = (Form: Form) => {
           };
         };
 
+      | AddValidator(validator) =>
+        let existingValidator = (state.validators^)->Map.get(validator.field);
+        switch (existingValidator) {
+        | Some(_) => React.NoUpdate
+        | None =>
+          state.validators :=
+            (state.validators^)->Map.set(validator.field, validator);
+          React.Update({
+            ...state,
+            fields:
+              state.fields->Map.set(validator.field, Validation.Pristine),
+          });
+        };
+
+      | RemoveValidator(field) =>
+        let validator = (state.validators^)->Map.get(field);
+        switch (validator) {
+        | Some(_) =>
+          React.Update({...state, fields: state.fields->Map.remove(field)})
+        | None => React.NoUpdate
+        };
+
       | Submit =>
         switch (state.status) {
         | Submitting => React.NoUpdate
@@ -342,6 +370,8 @@ module Make = (Form: Form) => {
           },
         change: (field, state) => Change(field, state)->send,
         blur: field => Blur(field)->send,
+        addValidator: validator => AddValidator(validator)->send,
+        removeValidator: field => RemoveValidator(field)->send,
         submit: () => Submit->send,
         dismissSubmissionResult: () => DismissSubmissionResult->send,
         reset: () => Reset->send,
