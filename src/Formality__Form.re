@@ -233,43 +233,45 @@ module Make = (Form: Form) => {
 
       | AddValidators([]) => ReasonReact.NoUpdate
       | AddValidators(validators) =>
-        let fields =
-          List.reduce(
-            validators,
-            state.fields,
-            (fields, validator) => {
-              let existingValidator =
-                (state.validators^)->Map.get(validator.field);
+        React.Update({
+          ...state,
+          fields:
+            List.reduce(
+              validators,
+              state.fields,
+              (fields, validator) => {
+                let existingValidator =
+                  (state.validators^)->Map.get(validator.field);
 
-              switch (existingValidator) {
-              | Some(_) => fields
-              | None =>
-                state.validators :=
-                  (state.validators^)->Map.set(validator.field, validator);
+                switch (existingValidator) {
+                | Some(_) => fields
+                | None =>
+                  state.validators :=
+                    (state.validators^)->Map.set(validator.field, validator);
 
-                fields->Map.set(validator.field, Validation.Pristine);
-              };
-            },
-          );
-
-        React.Update({...state, fields});
+                  fields->Map.set(validator.field, Validation.Pristine);
+                };
+              },
+            ),
+        })
 
       | RemoveValidators([]) => ReasonReact.NoUpdate
       | RemoveValidators(fields) =>
-        let fields =
-          List.reduce(
-            fields,
-            state.fields,
-            (fields, field) => {
-              let validator = (state.validators^)->Map.get(field);
-              switch (validator) {
-              | Some(_) => fields->Map.remove(field)
-              | None => fields
-              };
-            },
-          );
-
-        React.Update({...state, fields});
+        React.Update({
+          ...state,
+          fields:
+            List.reduce(
+              fields,
+              state.fields,
+              (fields, field) => {
+                let validator = (state.validators^)->Map.get(field);
+                switch (validator) {
+                | Some(_) => fields->Map.remove(field)
+                | None => fields
+                };
+              },
+            ),
+        })
 
       | Submit =>
         switch (state.status) {
