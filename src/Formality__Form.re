@@ -39,7 +39,7 @@ module Make = (Form: Form) => {
   type validator = Validation.validator(Form.field, Form.state, Form.message);
 
   type action =
-    | Change(Form.field, Form.state)
+    | Change(Form.field, Form.state => Form.state)
     | Blur(Form.field)
     | AddValidators(list(validator))
     | RemoveValidators(list(Form.field))
@@ -59,7 +59,14 @@ module Make = (Form: Form) => {
     dirty: unit => bool,
     valid: unit => bool,
     submitting: bool,
-    change: (Form.field, Form.state) => unit,
+    change:
+      (
+        ~validatorsToAdd: list(validator)=?,
+        ~validatorsToRemove: list(Form.field)=?,
+        ~field: Form.field,
+        Form.state => Form.state
+      ) =>
+      unit,
     blur: Form.field => unit,
     addValidators: list(validator) => unit,
     removeValidators: list(Form.field) => unit,
@@ -113,7 +120,8 @@ module Make = (Form: Form) => {
       },
     reducer: (action, state) =>
       switch (action) {
-      | Change(field, input) =>
+      | Change(field, updater) =>
+        let input = updater(state.input);
         let validator = (state.validators^)->Map.get(field);
         switch (validator) {
         | None =>
@@ -223,6 +231,7 @@ module Make = (Form: Form) => {
           };
         };
 
+      | AddValidators([]) => ReasonReact.NoUpdate
       | AddValidators(validators) =>
         let fields =
           List.reduce(
@@ -245,6 +254,7 @@ module Make = (Form: Form) => {
 
         React.Update({...state, fields});
 
+      | RemoveValidators([]) => ReasonReact.NoUpdate
       | RemoveValidators(fields) =>
         let fields =
           List.reduce(
@@ -384,7 +394,12 @@ module Make = (Form: Form) => {
           | Submitted
           | SubmissionFailed(_, _) => false
           },
-        change: (field, state) => Change(field, state)->send,
+        change:
+          (~validatorsToAdd=[], ~validatorsToRemove=[], ~field, updater) => {
+          AddValidators(validatorsToAdd)->send;
+          RemoveValidators(validatorsToRemove)->send;
+          Change(field, updater)->send;
+        },
         blur: field => Blur(field)->send,
         addValidators: validators => AddValidators(validators)->send,
         removeValidators: fields => RemoveValidators(fields)->send,
