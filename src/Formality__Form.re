@@ -98,6 +98,7 @@ module Make = (Form: Form) => {
   let make =
       (
         ~enableReinitialize=false,
+        ~getSubmitTrigger: option((unit => unit) => unit)=?,
         ~initialState: Form.state,
         ~validators: list(validator),
         ~onSubmit:
@@ -117,6 +118,11 @@ module Make = (Form: Form) => {
     didUpdate: ({newSelf, oldSelf}) =>
       if (enableReinitialize && initialState != oldSelf.state.initialInput) {
         newSelf.send(Reset);
+      },
+    didMount: self =>
+      switch (getSubmitTrigger) {
+      | Some(getSubmitTrigger) => getSubmitTrigger(() => self.send(Submit))
+      | _ => ()
       },
     reducer: (action, state) =>
       switch (action) {
