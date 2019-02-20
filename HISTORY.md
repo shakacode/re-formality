@@ -1,5 +1,8 @@
 # History
 
+## 1.2.0
+* Add `dismissSubmissionResult` to `submissionCallbacks` record.
+
 ## 1.1.1
 * (Chore) Update `re-debouncer`.
 
