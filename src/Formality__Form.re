@@ -264,7 +264,12 @@ module Make = (Form: Form) => {
       | SetSubmittedStatus(data) =>
         switch (data) {
         | Some(data) =>
-          React.Update({...state, input: data, status: FormStatus.Submitted})
+          React.Update({
+            ...state,
+            input: data,
+            status: FormStatus.Submitted,
+            fields: state.fields->Map.map(_ => Validation.Pristine),
+          });
         | None => React.Update({...state, status: FormStatus.Submitted})
         }
 
