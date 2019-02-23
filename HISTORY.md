@@ -1,5 +1,9 @@
 # History
 
+## 2.0.0-beta.3
+* Keep submission error on a screen (if any) while re-submitting.
+* Add `dismissSubmissionError`.
+
 ## 2.0.0-beta.2
 * Add `mapSubmissionError`.
 
