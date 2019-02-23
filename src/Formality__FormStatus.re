@@ -1,5 +1,5 @@
-type t('field, 'message) =
+type t('submissionError) =
   | Editing
   | Submitting
   | Submitted
-  | SubmissionFailed(list(('field, 'message)), option('message));
+  | SubmissionFailed('submissionError);

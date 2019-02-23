@@ -8,6 +8,7 @@ module type Form = {
   type field;
   type state;
   type message;
+  type submissionError;
   let validators: list(Validation.validator(field, state, message));
 };
 
@@ -20,7 +21,7 @@ module Make = (Form: Form) => {
 
   type state = {
     input: Form.state,
-    status: FormStatus.t(Form.field, Form.message),
+    status: FormStatus.t(Form.submissionError),
     fields:
       Map.t(Form.field, Validation.status(Form.message), FieldId.identity),
     validators:
@@ -39,16 +40,13 @@ module Make = (Form: Form) => {
     | Blur(Form.field)
     | Submit
     | SetSubmittedStatus(option(Form.state))
-    | SetSubmissionFailedStatus(
-        list((Form.field, Form.message)),
-        option(Form.message),
-      )
+    | SetSubmissionFailedStatus(Form.submissionError)
     | DismissSubmissionResult
     | Reset;
 
   type interface = {
     state: Form.state,
-    status: FormStatus.t(Form.field, Form.message),
+    status: FormStatus.t(Form.submissionError),
     result: Form.field => option(Validation.Result.result(Form.message)),
     dirty: unit => bool,
     valid: unit => bool,
@@ -85,11 +83,7 @@ module Make = (Form: Form) => {
         ~onSubmit:
            (
              Form.state,
-             Validation.submissionCallbacks(
-               Form.field,
-               Form.state,
-               Form.message,
-             )
+             Validation.submissionCallbacks(Form.state, Form.submissionError)
            ) =>
            unit,
         children,
@@ -240,12 +234,8 @@ module Make = (Form: Form) => {
                 state.input
                 ->onSubmit({
                     notifyOnSuccess: data => data->SetSubmittedStatus->send,
-                    notifyOnFailure: (fieldLevelErrors, serverMessage) =>
-                      SetSubmissionFailedStatus(
-                        fieldLevelErrors,
-                        serverMessage,
-                      )
-                      ->send,
+                    notifyOnFailure: error =>
+                      SetSubmissionFailedStatus(error)->send,
                     reset: () => Reset->send,
                     dismissSubmissionResult: () =>
                       DismissSubmissionResult->send,
@@ -268,19 +258,15 @@ module Make = (Form: Form) => {
         | None => React.Update({...state, status: FormStatus.Submitted})
         }
 
-      | SetSubmissionFailedStatus(fieldLevelErrors, serverMessage) =>
-        React.Update({
-          ...state,
-          status:
-            FormStatus.SubmissionFailed(fieldLevelErrors, serverMessage),
-        })
+      | SetSubmissionFailedStatus(error) =>
+        React.Update({...state, status: FormStatus.SubmissionFailed(error)})
 
       | DismissSubmissionResult =>
         switch (state.status) {
         | Editing
         | Submitting => React.NoUpdate
         | Submitted
-        | SubmissionFailed(_, _) =>
+        | SubmissionFailed(_) =>
           React.Update({...state, status: FormStatus.Editing})
         }
 
@@ -329,7 +315,7 @@ module Make = (Form: Form) => {
           | Submitting => true
           | Editing
           | Submitted
-          | SubmissionFailed(_, _) => false
+          | SubmissionFailed(_) => false
           },
         change: (field, state) => Change(field, state)->send,
         blur: field => Blur(field)->send,
