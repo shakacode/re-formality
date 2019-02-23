@@ -206,7 +206,7 @@ module Make = (Form: Form) => {
 
       | Submit =>
         switch (state.status) {
-        | Submitting => React.NoUpdate
+        | Submitting(_) => React.NoUpdate
         | Editing
         | Submitted
         | SubmissionFailed(_) =>
@@ -229,13 +229,21 @@ module Make = (Form: Form) => {
               {
                 ...state,
                 fields,
-                status: FormStatus.Submitting,
+                status:
+                  FormStatus.Submitting(
+                    switch (state.status) {
+                    | SubmissionFailed(error) => Some(error)
+                    | Editing
+                    | Submitted
+                    | Submitting(_) => None
+                    },
+                  ),
                 submittedOnce: true,
               },
               ({state, send}) =>
                 state.input
                 ->onSubmit({
-                    notifyOnSuccess: data => data->SetSubmittedStatus->send,
+                    notifyOnSuccess: state => SetSubmittedStatus(state)->send,
                     notifyOnFailure: error =>
                       SetSubmissionFailedStatus(error)->send,
                     reset: () => Reset->send,
@@ -265,17 +273,19 @@ module Make = (Form: Form) => {
 
       | MapSubmissionError(map) =>
         switch (state.status) {
+        | Submitting(Some(error)) =>
+          React.Update({...state, status: Submitting(Some(error->map))})
         | SubmissionFailed(error) =>
           React.Update({...state, status: SubmissionFailed(error->map)})
         | Editing
-        | Submitting
+        | Submitting(None)
         | Submitted => React.NoUpdate
         }
 
       | DismissSubmissionResult =>
         switch (state.status) {
         | Editing
-        | Submitting => React.NoUpdate
+        | Submitting(_) => React.NoUpdate
         | Submitted
         | SubmissionFailed(_) =>
           React.Update({...state, status: FormStatus.Editing})
@@ -323,7 +333,7 @@ module Make = (Form: Form) => {
             ),
         submitting:
           switch (state.status) {
-          | Submitting => true
+          | Submitting(_) => true
           | Editing
           | Submitted
           | SubmissionFailed(_) => false

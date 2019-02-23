@@ -1,5 +1,5 @@
 type t('submissionError) =
   | Editing
-  | Submitting
+  | Submitting(option('submissionError))
   | Submitted
   | SubmissionFailed('submissionError);
