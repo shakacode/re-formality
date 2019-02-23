@@ -56,6 +56,7 @@ module Make = (Form: Form) => {
     | SetSubmittedStatus(option(Form.state))
     | SetSubmissionFailedStatus(Form.submissionError)
     | MapSubmissionError(Form.submissionError => Form.submissionError)
+    | DismissSubmissionError
     | DismissSubmissionResult
     | Reset;
 
@@ -70,6 +71,7 @@ module Make = (Form: Form) => {
     blur: Form.field => unit,
     submit: unit => unit,
     mapSubmissionError: (Form.submissionError => Form.submissionError) => unit,
+    dismissSubmissionError: unit => unit,
     dismissSubmissionResult: unit => unit,
     reset: unit => unit,
   };
@@ -402,6 +404,15 @@ module Make = (Form: Form) => {
         | Submitted => React.NoUpdate
         }
 
+      | DismissSubmissionError =>
+        switch (state.status) {
+        | Editing
+        | Submitting(_)
+        | Submitted => React.NoUpdate
+        | SubmissionFailed(_) =>
+          React.Update({...state, status: FormStatus.Editing})
+        }
+
       | DismissSubmissionResult =>
         switch (state.status) {
         | Editing
@@ -453,6 +464,7 @@ module Make = (Form: Form) => {
         blur: field => Blur(field)->send,
         submit: () => Submit->send,
         mapSubmissionError: map => MapSubmissionError(map)->send,
+        dismissSubmissionError: () => DismissSubmissionError->send,
         dismissSubmissionResult: () => DismissSubmissionResult->send,
         reset: () => Reset->send,
       }),
