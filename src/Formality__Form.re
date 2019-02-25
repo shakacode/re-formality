@@ -269,8 +269,13 @@ module Make = (Form: Form) => {
             input: data,
             status: FormStatus.Submitted,
             fields: state.fields->Map.map(_ => Validation.Pristine),
-          });
-        | None => React.Update({...state, status: FormStatus.Submitted})
+          })
+        | None =>
+          React.Update({
+            ...state,
+            status: FormStatus.Submitted,
+            fields: state.fields->Map.map(_ => Validation.Pristine),
+          })
         }
 
       | SetSubmissionFailedStatus(fieldLevelErrors, serverMessage) =>
