@@ -416,6 +416,7 @@ type submissionCallbacks('field, 'state, 'message) = {
   notifyOnSuccess: option('state) => unit,
   notifyOnFailure: (list(('field, 'message)), option('message)) => unit,
   reset: unit => unit,
+  dismissSubmissionResult: unit => unit,
 };
 ```
 
@@ -434,7 +435,11 @@ You can access this data in render via `form.status` (see below).
 
 ##### `reset`
 
-Simply reset a form container state.
+Simply, resets a form container state.
+
+##### `form.dismissSubmissionResult`
+
+Use it when you want to let user dismissing alerts with errors from server or success message without resetting a form.
 
 #### `form => UI`
 
