@@ -260,11 +260,9 @@ module Make = (Form: Form) => {
             | (Ok(Valid), Some((validateAsync, _))) =>
               React.UpdateWithSideEffects(
                 {...state, fields: state.fields->Map.set(field, Validating)},
-                (
-                  ({send}) =>
-                    TriggerAsyncValidation(field, state.input, validateAsync)
-                    ->send
-                ),
+                ({send}) =>
+                  TriggerAsyncValidation(field, state.input, validateAsync)
+                  ->send,
               )
             | (Ok(NoValue) | Error(_), Some((_, _))) =>
               React.Update({
@@ -277,21 +275,19 @@ module Make = (Form: Form) => {
 
       | TriggerAsyncValidation(field, input, validateAsync) =>
         React.SideEffects(
-          (
-            ({send}) =>
-              Js.Promise.(
-                input
-                ->validateAsync
-                ->then_(
-                    result => {
-                      ApplyAsyncResult(field, input, result)->send;
-                      resolve();
-                    },
-                    _,
-                  )
-                ->ignore
-              )
-          ),
+          ({send}) =>
+            Js.Promise.(
+              input
+              ->validateAsync
+              ->then_(
+                  result => {
+                    ApplyAsyncResult(field, input, result)->send;
+                    resolve();
+                  },
+                  _,
+                )
+              ->ignore
+            ),
         )
 
       | ApplyAsyncResult(field, input, result) =>
@@ -369,20 +365,20 @@ module Make = (Form: Form) => {
                 status: FormStatus.Submitting,
                 submittedOnce: true,
               },
-              (
-                ({state, send}) =>
-                  state.input
-                  ->onSubmit({
-                      notifyOnSuccess: data => data->SetSubmittedStatus->send,
-                      notifyOnFailure: (fieldLevelErrors, serverMessage) =>
-                        SetSubmissionFailedStatus(
-                          fieldLevelErrors,
-                          serverMessage,
-                        )
-                        ->send,
-                      reset: () => Reset->send,
-                    })
-              ),
+              ({state, send}) =>
+                state.input
+                ->onSubmit({
+                    notifyOnSuccess: data => data->SetSubmittedStatus->send,
+                    notifyOnFailure: (fieldLevelErrors, serverMessage) =>
+                      SetSubmissionFailedStatus(
+                        fieldLevelErrors,
+                        serverMessage,
+                      )
+                      ->send,
+                    reset: () => Reset->send,
+                    dismissSubmissionResult: () =>
+                      DismissSubmissionResult->send,
+                  }),
             );
           } else {
             React.Update({

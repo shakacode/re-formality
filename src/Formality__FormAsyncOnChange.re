@@ -219,15 +219,9 @@ module Make = (Form: Form) => {
                   input,
                   fields: fields->Map.set(field, Validating),
                 },
-                (
-                  ({send}) =>
-                    InvokeDebouncedAsyncValidation(
-                      field,
-                      input,
-                      validateAsync,
-                    )
-                    ->send
-                ),
+                ({send}) =>
+                  InvokeDebouncedAsyncValidation(field, input, validateAsync)
+                  ->send,
               )
             | (Ok(NoValue) | Error(_), Some(_)) =>
               React.Update({
@@ -259,15 +253,9 @@ module Make = (Form: Form) => {
                   input,
                   fields: fields->Map.set(field, Validating),
                 },
-                (
-                  ({send}) =>
-                    InvokeDebouncedAsyncValidation(
-                      field,
-                      input,
-                      validateAsync,
-                    )
-                    ->send
-                ),
+                ({send}) =>
+                  InvokeDebouncedAsyncValidation(field, input, validateAsync)
+                  ->send,
               )
             | (Ok(NoValue), Some(_)) =>
               React.Update({
@@ -325,15 +313,13 @@ module Make = (Form: Form) => {
             | (Ok(Valid), Some((validateAsync, _))) =>
               React.UpdateWithSideEffects(
                 {...state, fields: state.fields->Map.set(field, Validating)},
-                (
-                  ({send}) =>
-                    InvokeDebouncedAsyncValidation(
-                      field,
-                      state.input,
-                      validateAsync,
-                    )
-                    ->send
-                ),
+                ({send}) =>
+                  InvokeDebouncedAsyncValidation(
+                    field,
+                    state.input,
+                    validateAsync,
+                  )
+                  ->send,
               )
             | (Ok(NoValue) | Error(_), Some(_)) =>
               React.Update({
@@ -345,25 +331,23 @@ module Make = (Form: Form) => {
         };
 
       | InvokeDebouncedAsyncValidation(field, input, validateAsync) =>
-        React.SideEffects((self => (field, input, self)->validateAsync))
+        React.SideEffects(self => (field, input, self)->validateAsync)
 
       | TriggerAsyncValidation(field, input, validateAsync) =>
         React.SideEffects(
-          (
-            ({send}) =>
-              Js.Promise.(
-                input
-                ->validateAsync
-                ->then_(
-                    result => {
-                      ApplyAsyncResult(field, input, result)->send;
-                      resolve();
-                    },
-                    _,
-                  )
-                ->ignore
-              )
-          ),
+          ({send}) =>
+            Js.Promise.(
+              input
+              ->validateAsync
+              ->then_(
+                  result => {
+                    ApplyAsyncResult(field, input, result)->send;
+                    resolve();
+                  },
+                  _,
+                )
+              ->ignore
+            ),
         )
 
       | ApplyAsyncResult(field, input, result) =>
@@ -441,20 +425,20 @@ module Make = (Form: Form) => {
                 status: FormStatus.Submitting,
                 submittedOnce: true,
               },
-              (
-                ({state, send}) =>
-                  state.input
-                  ->onSubmit({
-                      notifyOnSuccess: data => data->SetSubmittedStatus->send,
-                      notifyOnFailure: (fieldLevelErrors, serverMessage) =>
-                        SetSubmissionFailedStatus(
-                          fieldLevelErrors,
-                          serverMessage,
-                        )
-                        ->send,
-                      reset: () => Reset->send,
-                    })
-              ),
+              ({state, send}) =>
+                state.input
+                ->onSubmit({
+                    notifyOnSuccess: data => data->SetSubmittedStatus->send,
+                    notifyOnFailure: (fieldLevelErrors, serverMessage) =>
+                      SetSubmissionFailedStatus(
+                        fieldLevelErrors,
+                        serverMessage,
+                      )
+                      ->send,
+                    reset: () => Reset->send,
+                    dismissSubmissionResult: () =>
+                      DismissSubmissionResult->send,
+                  }),
             );
           } else {
             React.Update({

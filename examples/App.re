@@ -47,37 +47,31 @@ let make = _ => {
       </div>
       <div className="nav">
         <button
-          className={
-            Cn.make([
-              "nav-link",
-              switch (state.route) {
-              | Signup => "active"
-              | _ => ""
-              },
-            ])
-          }
+          className={Cn.make([
+            "nav-link",
+            switch (state.route) {
+            | Signup => "active"
+            | _ => ""
+            },
+          ])}
           onClick={_ => React.Router.push("#signup")}>
           "Signup"->React.string
         </button>
         <button
-          className={
-            Cn.make([
-              "nav-link",
-              switch (state.route) {
-              | Login => "active"
-              | _ => ""
-              },
-            ])
-          }
+          className={Cn.make([
+            "nav-link",
+            switch (state.route) {
+            | Login => "active"
+            | _ => ""
+            },
+          ])}
           onClick={_ => React.Router.push("#login")}>
           "Login"->React.string
         </button>
       </div>
-      {
-        switch (state.route) {
-        | Signup => <SignupForm />
-        | Login => <LoginForm />
-        }
-      }
+      {switch (state.route) {
+       | Signup => <SignupForm />
+       | Login => <LoginForm />
+       }}
     </div>,
 };

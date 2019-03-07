@@ -54,4 +54,5 @@ type submissionCallbacks('field, 'state, 'message) = {
   notifyOnSuccess: option('state) => unit,
   notifyOnFailure: (list(('field, 'message)), option('message)) => unit,
   reset: unit => unit,
+  dismissSubmissionResult: unit => unit,
 };

@@ -245,20 +245,20 @@ module Make = (Form: Form) => {
                 status: FormStatus.Submitting,
                 submittedOnce: true,
               },
-              (
-                ({state, send}) =>
-                  state.input
-                  ->onSubmit({
-                      notifyOnSuccess: data => data->SetSubmittedStatus->send,
-                      notifyOnFailure: (fieldLevelErrors, serverMessage) =>
-                        SetSubmissionFailedStatus(
-                          fieldLevelErrors,
-                          serverMessage,
-                        )
-                        ->send,
-                      reset: () => Reset->send,
-                    })
-              ),
+              ({state, send}) =>
+                state.input
+                ->onSubmit({
+                    notifyOnSuccess: data => data->SetSubmittedStatus->send,
+                    notifyOnFailure: (fieldLevelErrors, serverMessage) =>
+                      SetSubmissionFailedStatus(
+                        fieldLevelErrors,
+                        serverMessage,
+                      )
+                      ->send,
+                    reset: () => Reset->send,
+                    dismissSubmissionResult: () =>
+                      DismissSubmissionResult->send,
+                  }),
             );
           } else {
             React.Update({
