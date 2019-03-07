@@ -96,7 +96,7 @@ module Make = (Form: Form) => {
     let validatorsToRemove =
       Map.toList(state.validators^)
       ->List.reduce([], (acc, (key, validator)) =>
-          if (List.some(nextFields, field => field == key)) {
+          if (List.every(nextFields, field => field != key)) {
             [validator, ...acc];
           } else {
             acc;
