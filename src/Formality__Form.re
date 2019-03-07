@@ -25,7 +25,7 @@ module Make = (Form: Form) => {
     status: FormStatus.t(Form.field, Form.message),
     fields:
       Map.t(Form.field, Validation.status(Form.message), FieldId.identity),
-    validators: ref(Map.t(Form.field, validator, FieldId.identity)),
+    validators: Map.t(Form.field, validator, FieldId.identity),
     submittedOnce: bool,
   };
 
@@ -77,24 +77,23 @@ module Make = (Form: Form) => {
         fields->Map.set(validator.field, Validation.Pristine)
       ),
     validators:
-      ref(
-        validators->List.reduce(
-          Map.make(~id=(module FieldId)), (fields, validator) =>
-          fields->Map.set(validator.field, validator)
-        ),
+      validators->List.reduce(
+        Map.make(~id=(module FieldId)), (fields, validator) =>
+        fields->Map.set(validator.field, validator)
       ),
+
     submittedOnce: false,
   };
 
   let getNextFieldsAndValidators = (~state, nextValidators: list(validator)) => {
     let validatorsToAdd =
       List.keep(nextValidators, validator =>
-        !Map.has(state.validators^, validator.field)
+        !Map.has(state.validators, validator.field)
       );
 
     let nextFields = List.map(nextValidators, validator => validator.field);
     let validatorsToRemove =
-      Map.toList(state.validators^)
+      Map.toList(state.validators)
       ->List.reduce([], (acc, (key, validator)) =>
           if (List.every(nextFields, field => field != key)) {
             [validator, ...acc];
@@ -105,7 +104,7 @@ module Make = (Form: Form) => {
 
     List.reduce(
       validatorsToRemove,
-      (state.fields, state.validators^),
+      (state.fields, state.validators),
       ((fields, validators), validator) => {
         let fields = Map.remove(fields, validator.field);
         let validators = Map.remove(validators, validator.field);
@@ -162,7 +161,7 @@ module Make = (Form: Form) => {
 
         let (fields, validators) =
           validators->Option.mapWithDefault(
-            (state.fields, state.validators^), validators =>
+            (state.fields, state.validators), validators =>
             validators(input)->getNextFieldsAndValidators(~state)
           );
 
@@ -171,6 +170,7 @@ module Make = (Form: Form) => {
         | None =>
           React.Update({
             ...state,
+            validators,
             input,
             fields: fields->Map.set(field, Dirty(Ok(Valid), Hidden)),
           })
@@ -205,6 +205,7 @@ module Make = (Form: Form) => {
           | (OnFirstChange, _, false) =>
             React.Update({
               ...state,
+              validators,
               input,
               fields: fields->Map.set(field, Dirty(result, Shown)),
             })
@@ -212,6 +213,7 @@ module Make = (Form: Form) => {
             React.Update({
               ...state,
               input,
+              validators,
               fields:
                 switch (result) {
                 | Ok(Valid | NoValue) =>
@@ -222,6 +224,7 @@ module Make = (Form: Form) => {
           | (OnFirstBlur | OnSubmit, _, false) =>
             React.Update({
               ...state,
+              validators,
               input,
               fields: fields->Map.set(field, Dirty(result, Hidden)),
             })
@@ -230,7 +233,7 @@ module Make = (Form: Form) => {
 
       | Blur(field) =>
         let status = state.fields->Map.get(field);
-        let validator = (state.validators^)->Map.get(field);
+        let validator = state.validators->Map.get(field);
         switch (status, validator) {
         | (Some(Dirty(_, Shown)), Some(_) | None)
         | (Some(Dirty(_, Hidden)), None) => React.NoUpdate
@@ -282,7 +285,7 @@ module Make = (Form: Form) => {
         | Submitted
         | SubmissionFailed(_) =>
           let (valid, fields) =
-            (state.validators^)
+            state.validators
             ->Map.reduce(
                 (true, state.fields),
                 ((valid, fields), field, validator) => {
@@ -381,7 +384,7 @@ module Make = (Form: Form) => {
               | Dirty(Ok(_), _) => true
               | Dirty(Error(_), _) => false
               | Pristine =>
-                (state.validators^)
+                state.validators
                 ->Map.get(field)
                 ->Option.map(validator =>
                     switch (state.input->(validator.validate)) {
