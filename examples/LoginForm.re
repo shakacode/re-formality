@@ -62,7 +62,7 @@ let make = _ => {
   ...component,
   render: _ =>
     <LoginFormContainer
-      validators=LoginForm.validators
+      initialValidators=LoginForm.validators
       initialState={email: "", password: "", rememberMe: false}
       onSubmit={(state, form) => {
         Js.log2("Submitted with:", state);
