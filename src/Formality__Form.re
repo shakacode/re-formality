@@ -8,7 +8,6 @@ module type Form = {
   type field;
   type state;
   type message;
-  let validators: list(Validation.validator(field, state, message));
 };
 
 module Make = (Form: Form) => {
@@ -18,27 +17,26 @@ module Make = (Form: Form) => {
       let cmp = Pervasives.compare;
     });
 
+  type validator = Validation.validator(Form.field, Form.state, Form.message);
+
   type state = {
     input: Form.state,
     initialInput: Form.state,
     status: FormStatus.t(Form.field, Form.message),
     fields:
       Map.t(Form.field, Validation.status(Form.message), FieldId.identity),
-    validators:
-      ref(
-        Map.t(
-          Form.field,
-          Validation.validator(Form.field, Form.state, Form.message),
-          FieldId.identity,
-        ),
-      ),
+    validators: Map.t(Form.field, validator, FieldId.identity),
     submittedOnce: bool,
   };
 
   type retainedProps = {initialState: Form.state};
 
   type action =
-    | Change(Form.field, Form.state)
+    | Change(
+        Form.field,
+        Form.state => Form.state,
+        option(Form.state => list(validator)),
+      )
     | Blur(Form.field)
     | Submit
     | SetSubmittedStatus(option(Form.state))
@@ -56,37 +54,83 @@ module Make = (Form: Form) => {
     dirty: unit => bool,
     valid: unit => bool,
     submitting: bool,
-    change: (Form.field, Form.state) => unit,
+    change:
+      (
+        ~validators: Form.state => list(validator)=?,
+        ~field: Form.field,
+        Form.state => Form.state
+      ) =>
+      unit,
     blur: Form.field => unit,
     submit: unit => unit,
     dismissSubmissionResult: unit => unit,
     reset: unit => unit,
   };
 
-  let getInitialState = input => {
+  let getInitialState = (input, validators: list(validator)) => {
     input,
     initialInput: input,
     status: FormStatus.Editing,
     fields:
-      Form.validators->List.reduce(
+      validators->List.reduce(
         Map.make(~id=(module FieldId)), (fields, validator) =>
         fields->Map.set(validator.field, Validation.Pristine)
       ),
     validators:
-      ref(
-        Form.validators->List.reduce(
-          Map.make(~id=(module FieldId)), (fields, validator) =>
-          fields->Map.set(validator.field, validator)
-        ),
+      validators->List.reduce(
+        Map.make(~id=(module FieldId)), (fields, validator) =>
+        fields->Map.set(validator.field, validator)
       ),
+
     submittedOnce: false,
+  };
+
+  let getNextFieldsAndValidators = (~state, nextValidators: list(validator)) => {
+    let validatorsToAdd =
+      List.keep(nextValidators, validator =>
+        !Map.has(state.validators, validator.field)
+      );
+
+    let nextFields = List.map(nextValidators, validator => validator.field);
+    let validatorsToRemove =
+      Map.toList(state.validators)
+      ->List.reduce([], (acc, (key, validator)) =>
+          if (List.every(nextFields, field => field != key)) {
+            [validator, ...acc];
+          } else {
+            acc;
+          }
+        );
+
+    List.reduce(
+      validatorsToRemove,
+      (state.fields, state.validators),
+      ((fields, validators), validator) => {
+        let fields = Map.remove(fields, validator.field);
+        let validators = Map.remove(validators, validator.field);
+
+        (fields, validators);
+      },
+    )
+    ->List.reduce(
+        validatorsToAdd,
+        _,
+        ((fields, validators), validator) => {
+          let fields = Map.set(fields, validator.field, Validation.Pristine);
+          let validators = Map.set(validators, validator.field, validator);
+
+          (fields, validators);
+        },
+      );
   };
 
   let component = React.reducerComponent("Formality.Form");
   let make =
       (
         ~enableReinitialize=false,
+        ~getSubmitTrigger: option((unit => unit) => unit)=?,
         ~initialState: Form.state,
+        ~initialValidators: list(validator),
         ~onSubmit:
            (
              Form.state,
@@ -100,31 +144,45 @@ module Make = (Form: Form) => {
         children,
       ) => {
     ...component,
-    initialState: () => initialState->getInitialState,
+    initialState: () => getInitialState(initialState, initialValidators),
     didUpdate: ({newSelf, oldSelf}) =>
       if (enableReinitialize && initialState != oldSelf.state.initialInput) {
         newSelf.send(Reset);
       },
+    didMount: self =>
+      switch (getSubmitTrigger) {
+      | Some(getSubmitTrigger) => getSubmitTrigger(() => self.send(Submit))
+      | _ => ()
+      },
     reducer: (action, state) =>
       switch (action) {
-      | Change(field, input) =>
-        let validator = (state.validators^)->Map.get(field);
+      | Change(field, updater, validators) =>
+        let input = updater(state.input);
+
+        let (fields, validators) =
+          validators->Option.mapWithDefault(
+            (state.fields, state.validators), validators =>
+            validators(input)->getNextFieldsAndValidators(~state)
+          );
+
+        let validator = validators->Map.get(field);
         switch (validator) {
         | None =>
           React.Update({
             ...state,
+            validators,
             input,
-            fields: state.fields->Map.set(field, Dirty(Ok(Valid), Hidden)),
+            fields: fields->Map.set(field, Dirty(Ok(Valid), Hidden)),
           })
         | Some(validator) =>
-          let status = state.fields->Map.get(field);
+          let status = fields->Map.get(field);
           let result = input->(validator.validate);
           let fields =
             switch (validator.dependents) {
-            | None => state.fields
+            | None => fields
             | Some(dependents) =>
               dependents->List.reduce(
-                state.fields,
+                fields,
                 (fields, field) => {
                   let status = fields->Map.get(field);
                   switch (status) {
@@ -132,7 +190,7 @@ module Make = (Form: Form) => {
                   | Some(Pristine)
                   | Some(Dirty(_, Hidden)) => fields
                   | Some(Dirty(_, Shown)) =>
-                    let validator = (state.validators^)->Map.getExn(field);
+                    let validator = validators->Map.getExn(field);
                     fields->Map.set(
                       field,
                       Dirty(input->(validator.validate), Shown),
@@ -147,6 +205,7 @@ module Make = (Form: Form) => {
           | (OnFirstChange, _, false) =>
             React.Update({
               ...state,
+              validators,
               input,
               fields: fields->Map.set(field, Dirty(result, Shown)),
             })
@@ -154,6 +213,7 @@ module Make = (Form: Form) => {
             React.Update({
               ...state,
               input,
+              validators,
               fields:
                 switch (result) {
                 | Ok(Valid | NoValue) =>
@@ -164,6 +224,7 @@ module Make = (Form: Form) => {
           | (OnFirstBlur | OnSubmit, _, false) =>
             React.Update({
               ...state,
+              validators,
               input,
               fields: fields->Map.set(field, Dirty(result, Hidden)),
             })
@@ -172,7 +233,7 @@ module Make = (Form: Form) => {
 
       | Blur(field) =>
         let status = state.fields->Map.get(field);
-        let validator = (state.validators^)->Map.get(field);
+        let validator = state.validators->Map.get(field);
         switch (status, validator) {
         | (Some(Dirty(_, Shown)), Some(_) | None)
         | (Some(Dirty(_, Hidden)), None) => React.NoUpdate
@@ -224,7 +285,7 @@ module Make = (Form: Form) => {
         | Submitted
         | SubmissionFailed(_) =>
           let (valid, fields) =
-            (state.validators^)
+            state.validators
             ->Map.reduce(
                 (true, state.fields),
                 ((valid, fields), field, validator) => {
@@ -293,7 +354,8 @@ module Make = (Form: Form) => {
           React.Update({...state, status: FormStatus.Editing})
         }
 
-      | Reset => React.Update(initialState->getInitialState)
+      | Reset =>
+        React.Update(getInitialState(initialState, initialValidators))
       },
 
     render: ({state, send}) =>
@@ -322,7 +384,7 @@ module Make = (Form: Form) => {
               | Dirty(Ok(_), _) => true
               | Dirty(Error(_), _) => false
               | Pristine =>
-                (state.validators^)
+                state.validators
                 ->Map.get(field)
                 ->Option.map(validator =>
                     switch (state.input->(validator.validate)) {
@@ -340,7 +402,9 @@ module Make = (Form: Form) => {
           | Submitted
           | SubmissionFailed(_, _) => false
           },
-        change: (field, state) => Change(field, state)->send,
+        change: (~validators=?, ~field, updater) => {
+          Change(field, updater, validators)->send;
+        },
         blur: field => Blur(field)->send,
         submit: () => Submit->send,
         dismissSubmissionResult: () => DismissSubmissionResult->send,

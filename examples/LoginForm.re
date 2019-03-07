@@ -15,7 +15,7 @@ module LoginForm = {
   type message = string;
 
   module EmailField = {
-    let update = (state, value) => {...state, email: value};
+    let update = (value, state) => {...state, email: value};
 
     let validator = {
       field: Email,
@@ -34,7 +34,7 @@ module LoginForm = {
   };
 
   module PasswordField = {
-    let update = (state, value) => {...state, password: value};
+    let update = (value, state) => {...state, password: value};
 
     let validator = {
       field: Password,
@@ -49,7 +49,7 @@ module LoginForm = {
   };
 
   module RememberMeField = {
-    let update = (state, value) => {...state, rememberMe: value};
+    let update = (value, state) => {...state, rememberMe: value};
   };
 
   let validators = [EmailField.validator, PasswordField.validator];
@@ -62,6 +62,7 @@ let make = _ => {
   ...component,
   render: _ =>
     <LoginFormContainer
+      initialValidators=LoginForm.validators
       initialState={email: "", password: "", rememberMe: false}
       onSubmit={(state, form) => {
         Js.log2("Submitted with:", state);
@@ -93,9 +94,8 @@ let make = _ => {
                 onBlur={_ => form.blur(Email)}
                 onChange={event =>
                   form.change(
-                    Email,
+                    ~field=Email,
                     LoginForm.EmailField.update(
-                      form.state,
                       event->ReactEvent.Form.target##value,
                     ),
                   )
@@ -126,9 +126,8 @@ let make = _ => {
                 onBlur={_ => form.blur(Password)}
                 onChange={event =>
                   form.change(
-                    Password,
+                    ~field=Password,
                     LoginForm.PasswordField.update(
-                      form.state,
                       event->ReactEvent.Form.target##value,
                     ),
                   )
@@ -157,9 +156,8 @@ let make = _ => {
                 onBlur={_ => form.blur(RememberMe)}
                 onChange={event =>
                   form.change(
-                    RememberMe,
+                    ~field=RememberMe,
                     LoginForm.RememberMeField.update(
-                      form.state,
                       event->ReactEvent.Form.target##checked,
                     ),
                   )
