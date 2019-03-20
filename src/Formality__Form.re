@@ -45,7 +45,8 @@ module Make = (Form: Form) => {
         option(Form.message),
       )
     | DismissSubmissionResult
-    | Reset;
+    | Reset
+    | ValidateFields(Form.field => bool, option(unit => unit));
 
   type interface = {
     state: Form.state,
@@ -65,6 +66,7 @@ module Make = (Form: Form) => {
     submit: unit => unit,
     dismissSubmissionResult: unit => unit,
     reset: unit => unit,
+    validateFields: (~onValid: unit => unit=?, Form.field => bool) => unit,
   };
 
   let getInitialState = (input, validators: list(validator)) => {
@@ -123,6 +125,22 @@ module Make = (Form: Form) => {
         },
       );
   };
+
+  let validateFields = (state, fieldPredicate) =>
+    state.validators
+    ->Map.reduce((true, state.fields), ((valid, fields), field, validator) =>
+        if (fieldPredicate(field)) {
+          let result = state.input->(validator.validate);
+          let fields = fields->Map.set(field, Dirty(result, Shown));
+          switch (valid, result) {
+          | (false, _)
+          | (true, Error(_)) => (false, fields)
+          | (true, Ok(Valid | NoValue)) => (true, fields)
+          };
+        } else {
+          (valid, fields);
+        }
+      );
 
   let component = React.reducerComponent("Formality.Form");
   let make =
@@ -278,26 +296,25 @@ module Make = (Form: Form) => {
           };
         };
 
+      | ValidateFields(fieldPredicate, onValid) =>
+        let (valid, fields) = state->validateFields(fieldPredicate);
+
+        // Probably not the best solution but we have to provide feedback if validated fields are valid
+        switch (onValid) {
+        | Some(onValid) when valid => onValid()
+        | _ => ()
+        };
+
+        ReasonReact.Update({...state, fields});
+
       | Submit =>
         switch (state.status) {
         | Submitting => React.NoUpdate
         | Editing
         | Submitted
         | SubmissionFailed(_) =>
-          let (valid, fields) =
-            state.validators
-            ->Map.reduce(
-                (true, state.fields),
-                ((valid, fields), field, validator) => {
-                  let result = state.input->(validator.validate);
-                  let fields = fields->Map.set(field, Dirty(result, Shown));
-                  switch (valid, result) {
-                  | (false, _)
-                  | (true, Error(_)) => (false, fields)
-                  | (true, Ok(Valid | NoValue)) => (true, fields)
-                  };
-                },
-              );
+          let (valid, fields) = state->validateFields(_ => true);
+
           if (valid) {
             React.UpdateWithSideEffects(
               {
@@ -409,6 +426,8 @@ module Make = (Form: Form) => {
         submit: () => Submit->send,
         dismissSubmissionResult: () => DismissSubmissionResult->send,
         reset: () => Reset->send,
+        validateFields: (~onValid=?, fieldPredicate) =>
+          ValidateFields(fieldPredicate, onValid)->send,
       }),
   };
 };
