@@ -13,6 +13,7 @@ module SignupForm = {
   };
 
   type message = string;
+  type submissionError = unit;
 
   let debounceInterval = Formality.Async.debounceInterval;
 

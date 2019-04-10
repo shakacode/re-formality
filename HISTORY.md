@@ -1,5 +1,15 @@
 # History
 
+## 2.0.0-beta.3
+* Keep submission error on a screen (if any) while re-submitting.
+* Add `dismissSubmissionError`.
+
+## 2.0.0-beta.2
+* Add `mapSubmissionError`.
+
+## 2.0.0-beta.1
+* Generalize payload of `FormStatus.SubmissionFailed` constructor ([#49](https://github.com/alexfedoseev/re-formality/pull/49)).
+
 ## 1.2.0
 * Add `dismissSubmissionResult` to `submissionCallbacks` record.
 * (Chore) Update `bs-platform`.

@@ -50,9 +50,9 @@ module Async = {
   };
 };
 
-type submissionCallbacks('field, 'state, 'message) = {
+type submissionCallbacks('state, 'submissionError) = {
   notifyOnSuccess: option('state) => unit,
-  notifyOnFailure: (list(('field, 'message)), option('message)) => unit,
+  notifyOnFailure: 'submissionError => unit,
   reset: unit => unit,
   dismissSubmissionResult: unit => unit,
 };
