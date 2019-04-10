@@ -13,6 +13,7 @@ module LoginForm = {
   };
 
   type message = string;
+  type submissionError = unit;
 
   module EmailField = {
     let update = (state, value) => {...state, email: value};

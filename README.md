@@ -115,6 +115,7 @@ module LoginForm = {
   };
 
   type message = string;
+  type submissionError = unit;
 
   module EmailField = {
     let update = (state, value) => {...state, email: value};
@@ -162,8 +163,8 @@ let make = _ => {
     <LoginFormContainer
       initialState={email: "", password: ""}
       onSubmit={
-        (state, {notifyOnSuccess, notifyOnFailure, reset}) =>
-          /* Submit form and either notifyOnSuccess / notifyOnFailure / reset */
+        (state, {notifyOnSuccess, notifyOnFailure, dismissSubmissionResult, reset}) =>
+          /* Submit form and use callbacks to update form container */
       }>
       ...{
            form =>
@@ -238,6 +239,7 @@ module MyForm = {
   type field;
   type state;
   type message;
+  type submissionError;
   let validators: list(validator);
 };
 ```
@@ -277,6 +279,18 @@ If you build i18n'ized app then it's going to be something like this:
 ```reason
 type message = I18n.t;
 ```
+
+#### `type submissionError`
+When you submit a form submission might fail, for various reasons. It might be a bad password on login attempt (expected error) or server crash (unexpected error), anything. This kind of error is specific to a form and its type describes what might go wrong on form submission.
+
+```reason
+type submissionError =
+  | UserNotFound
+  | BadPassword
+  | UnexpectedServerError;
+```
+
+Later on, on failed form submission, you will be able to pass this error to form container and provide appropriate feedback to users in UI.
 
 #### `let validators: list(validator)`
 Field validators.
@@ -364,8 +378,8 @@ Form container accepts 3 props:
 render: (_) =>
   <MyFormContainer
     initialState={email: "", password: ""}
-    onSubmit=((state, {notifyOnSuccess, notifyOnFailure, reset}) => {
-      /* Submit form and either notifyOnSuccess / notifyOnFailure / reset */
+    onSubmit=((state, {notifyOnSuccess, notifyOnFailure, dismissSubmissionResult, reset}) => {
+      /* Submit form and use callbacks to update form container */
     })
   >
   ...{form => /* UI */}
@@ -380,12 +394,12 @@ This handler will be triggered on form submission (only when all validators retu
 
 It accepts two arguments:
 1. `state`: current state of a form
-2. `submissionCallbacks`: record with 3 callbacks
+2. `submissionCallbacks`: record with 4 callbacks
 
 ```reason
-type submissionCallbacks('field, 'state, 'message) = {
+type submissionCallbacks('state, 'submissionError) = {
   notifyOnSuccess: option('state) => unit,
-  notifyOnFailure: (list(('field, 'message)), option('message)) => unit,
+  notifyOnFailure: 'submissionError => unit,
   reset: unit => unit,
   dismissSubmissionResult: unit => unit,
 };
@@ -395,17 +409,15 @@ type submissionCallbacks('field, 'state, 'message) = {
 Trigger this callback when server responded with success. It accepts optional state argument: if it's provided, this state will be set as a next form state.
 
 ##### `notifyOnFailure`
-Trigger this callback when server responded with an error. It accepts 2 arguments:
-1. list of field-level errors
-2. optional `message`: some information not directly related to any particular field
+Trigger this callback when server responded with an error. It accepts 1 argument of type `MyForm.submissionError` (defined in form config).
 
-You can access this data in render via `form.status` (see below).
+You can access this data in render via `form.status` (see [`form.status`](#form-status)).
 
 ##### `reset`
 Simply, resets a form container state.
 
 ##### `form.dismissSubmissionResult`
-Use it when you want to let user dismissing alerts with errors from server or success message without resetting a form.
+Use it when you want to dismiss alerts with errors from server or success message without resetting a form. See [`form.status`](#form-status) for more details.
 
 #### `form => UI`
 Form container accepts children as a function.
@@ -436,11 +448,11 @@ Form status is a variant:
 
 ```reason
 module FormStatus = {
-  type t('field, 'message) =
+  type t('error) =
     | Editing
     | Submitting
     | Submitted
-    | SubmissionFailed(list(('field, 'message)), option('message));
+    | SubmissionFailed('error);
 };
 ```
 
