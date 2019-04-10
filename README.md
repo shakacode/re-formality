@@ -436,6 +436,8 @@ type form = {
   blur: Form.field => unit,
   submit: unit => unit,
   reset: unit => unit,
+  mapSubmissionError: ('submissionError => 'submissionError) => unit,
+  dismissSubmissionError: unit => unit,
   dismissSubmissionResult: unit => unit,
 };
 ```
@@ -536,6 +538,12 @@ Resets form state.
 
 ##### `form.dismissSubmissionResult`
 Use it when you want to let user dismissing alerts with errors from server or success message without resetting a form. Under the hood, it changes `FormStatus.Submitted` & `FormStatus.SubmissionFailed` statuses back to `FormStatus.Editing`.
+
+##### `form.mapSubmissionError`
+Maps over submission error. Useful for animating errors.
+
+##### `form.dismissSubmissionError`
+Dismissing submission error only.
 
 ### Async validations
 Some validations can't be performed locally, e.g. on signup, you want to validate if user's email is available or it's already taken.
