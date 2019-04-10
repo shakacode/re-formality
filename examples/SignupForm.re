@@ -29,7 +29,7 @@ module SignupForm = {
           let emailRegex = [%bs.re {|/.*@.*\..+/|}];
           switch (email) {
           | "" => Error("Email is required")
-          | _ as value when !value->Js.Re.test(emailRegex) =>
+          | _ as value when !emailRegex->Js.Re.test_(value) =>
             Error("Email is invalid")
           | _ => Ok(Valid)
           };
@@ -43,9 +43,9 @@ module SignupForm = {
                 ->then_(
                     valid =>
                       Result.(
-                        valid ?
-                          Ok(Valid)->resolve :
-                          Error("Email is already taken")->resolve
+                        valid
+                          ? Ok(Valid)->resolve
+                          : Error("Email is already taken")->resolve
                       ),
                     _,
                   )

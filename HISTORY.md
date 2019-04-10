@@ -1,7 +1,8 @@
 # History
 
 ## 2.0.0
-* Generalize payload of `FormStatus.SubmissionFailed` constructor ([#49](https://github.com/alexfedoseev/re-formality/pull/49)).
+* **[ BREAKING ]** `bs-platform` updated to `5.0.0`.
+* **[ BREAKING ]** Generalize payload of `FormStatus.SubmissionFailed` constructor ([#49](https://github.com/alexfedoseev/re-formality/pull/49)).
 * Add `dismissSubmissionError`.
 * Add `mapSubmissionError`.
 * Keep submission error on a screen (if any) while re-submitting.
