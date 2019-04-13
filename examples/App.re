@@ -78,7 +78,7 @@ let make = () => {
       </button>
     </div>
     {switch (state.route) {
-     | Signup => React.null
+     | Signup => <SignupForm />
      | Login => <LoginForm />
      }}
   </div>;

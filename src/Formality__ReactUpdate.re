@@ -2,9 +2,10 @@ type update('action, 'state) =
   | NoUpdate
   | Update('state)
   | UpdateWithSideEffects('state, self('state, 'action) => unit)
+and dispatch('action) = 'action => unit
 and self('state, 'action) = {
   state: 'state,
-  dispatch: 'action => unit,
+  dispatch: dispatch('action),
 }
 and fullState('state, 'action) = {
   state: 'state,
