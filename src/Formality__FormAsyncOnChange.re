@@ -127,8 +127,7 @@ module Make = (Form: Form) => {
     submittedOnce: false,
   };
 
-  [@react.component]
-  let make =
+  let useForm =
       (
         ~initialState: Form.state,
         ~onSubmit:
@@ -137,7 +136,6 @@ module Make = (Form: Form) => {
              Validation.submissionCallbacks(Form.state, Form.submissionError)
            ) =>
            unit,
-        ~children: interface => React.element,
       ) => {
     let memoizedInitialState =
       React.useMemo1(() => initialState->getInitialState, [|initialState|]);
@@ -463,7 +461,7 @@ module Make = (Form: Form) => {
         }
       );
 
-    children({
+    {
       state: state.input,
       status: state.status,
       result: field =>
@@ -504,6 +502,6 @@ module Make = (Form: Form) => {
       dismissSubmissionError: () => DismissSubmissionError->dispatch,
       dismissSubmissionResult: () => DismissSubmissionResult->dispatch,
       reset: () => Reset->dispatch,
-    });
+    };
   };
 };
