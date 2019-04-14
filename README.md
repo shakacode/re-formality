@@ -18,7 +18,7 @@ Reasonable form validation tool for [`reason-react`](https://reasonml.github.io/
   - [Strategies](#strategies)
 - [Usage](#usage)
   - [Form config](#form-config)
-  - [Form container](#form-container)
+  - [Form hook](#form-hook)
   - [Rendering](#rendering)
   - [Async validations](#async-validations)
   - [I18n](#i18n)
@@ -93,8 +93,8 @@ Results are emitted only after the first submission attempt. After this, results
 It takes 3 steps to implement a form:
 
 1. Define form config.
-2. Create form container.
-3. Render form container and form UI.
+2. Create form hook.
+3. Render form hook and form UI.
 
 > Code > 1000 words. Quick example for you:
 
@@ -170,7 +170,7 @@ let make = () => {
       },
     );
 
-  <form className="form" onSubmit={form.submit->Formality.Dom.preventDefault}>
+  <form onSubmit={form.submit->Formality.Dom.preventDefault}>
     <input
       value={form.state.email}
       disabled={form.submitting}
@@ -344,7 +344,6 @@ type validate('state, 'message) = 'state => Result.t(ok, 'message);
 Most of the time you need `Ok(Valid)` or `Error('message)`. You want to return `Ok(NoValue)` when optional field receives no value (e.g. `value == ""`). `Valid` and `NoValue` are explicitly differentiated since there's no reason to show success message/icon in UI when no value is provided.
 
 ### Form hook
-
 To create form hook simply do the following:
 
 ```reason
@@ -618,14 +617,14 @@ validateAsync: Some(
 ),
 ```
 
-To create form container pass config to `Formality.Async.Make` functor:
+To create form hook pass config to `Formality.Async.Make` functor:
 
 ```reason
-module MyAsyncFormContainer = Formality.Async.Make(MyForm);
+module MyAsyncFormHook = Formality.Async.Make(MyForm);
 ```
 
 #### Async validations on blur
-If you still want to use on blur validations just add `validateAsync` props to `validators` and use `Formality.Async.MakeOnBlur` to create form container.
+If you still want to use on blur validations just add `validateAsync` props to `validators` and use `Formality.Async.MakeOnBlur` to create form hook.
 
 #### Note on defining async validators
 When you define async validator you need to local open `Async` module like this:
