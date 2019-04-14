@@ -1,5 +1,8 @@
 # History
 
+## 3.0.0-beta.1
+* **[ BREAKING ]** React hooks support (`reason-react@0.7.0`).
+
 ## 2.0.0
 * **[ BREAKING ]** `bs-platform` updated to `5.0.0`.
 * **[ BREAKING ]** Generalize payload of `FormStatus.SubmissionFailed` constructor ([#49](https://github.com/alexfedoseev/re-formality/pull/49)).
