@@ -157,14 +157,9 @@ module LoginFormHook = Formality.Make(LoginForm);
 
 [@react.component]
 let make = () => {
-  let initialState = React.useMemo1(
-    () => LoginForm.{email: "", password: ""},
-    [||],
-  );
-
   let form =
     LoginFormHook.useForm(
-      ~initialState,
+      ~initialState=LoginForm.{email: "", password: ""},
       ~onSubmit=(state, form) => {
         // Submit form and use callbacks to update form container
       },
@@ -366,14 +361,9 @@ module MyAsyncFormHook = Formality.Async.MakeOnBlur(MyForm);
 Form hook accepts 2 arguments and returns record with everything you need to render your UI:
 
 ```reason
-let initialState = React.useMemo1(
-  () => {email: "", password: ""},
-  [||],
-);
-
 let form =
   MyFormHook.useForm(
-    ~initialState,
+    ~initialState={email: "", password: ""},
     ~onSubmit=(state, form) => {
       // Submit form and use callbacks to update form container
     },
