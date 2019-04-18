@@ -1,5 +1,8 @@
 # History
 
+## 3.0.0-beta.2
+* Add `FormalityCompat` to support `JSX@2`.
+
 ## 3.0.0-beta.1
 * **[ BREAKING ]** React hooks support (`reason-react@0.7.0`).
 
