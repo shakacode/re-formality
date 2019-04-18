@@ -104,14 +104,11 @@ module SignupForm = {
 
 module SignupFormHook = Formality.Async.Make(SignupForm);
 
+let initialState =
+  SignupForm.{email: "", password: "", passwordConfirmation: ""};
+
 [@react.component]
 let make = () => {
-  let initialState =
-    React.useMemo1(
-      () => SignupForm.{email: "", password: "", passwordConfirmation: ""},
-      [||],
-    );
-
   let form =
     SignupFormHook.useForm(
       ~initialState,

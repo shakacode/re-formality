@@ -1,50 +1,19 @@
-type route =
-  | Signup
-  | Login;
+module Route = {
+  type t =
+    | Signup
+    | Login;
 
-type state = {route};
-
-type action =
-  | UpdateRoute(route);
+  let fromUrl = (url: ReasonReactRouter.url) =>
+    switch (url.hash) {
+    | "signup" => Signup
+    | "login" => Login
+    | _ => Signup
+    };
+};
 
 [@react.component]
 let make = () => {
-  let initialRoute =
-    React.useMemo1(
-      () => {
-        let url = ReasonReactRouter.dangerouslyGetInitialUrl();
-        switch (url.hash) {
-        | "signup" => Signup
-        | "login" => Login
-        | _ => Signup
-        };
-      },
-      [||],
-    );
-
-  let (state, dispatch) =
-    React.useReducer(
-      (_, action) =>
-        switch (action) {
-        | UpdateRoute(nextRoute) => {route: nextRoute}
-        },
-      {route: initialRoute},
-    );
-
-  React.useEffect1(
-    () => {
-      let watcherID =
-        ReasonReactRouter.watchUrl(url =>
-          switch (url.hash) {
-          | "signup" => Signup->UpdateRoute->dispatch
-          | "login" => Login->UpdateRoute->dispatch
-          | _ => Signup->UpdateRoute->dispatch
-          }
-        );
-      Some(() => watcherID->ReasonReactRouter.unwatchUrl);
-    },
-    [||],
-  );
+  let route = ReasonReactRouter.useUrl()->Route.fromUrl;
 
   <div className="container">
     <div className="header">
@@ -57,7 +26,7 @@ let make = () => {
       <button
         className={Cn.make([
           "nav-link",
-          switch (state.route) {
+          switch (route) {
           | Signup => "active"
           | _ => ""
           },
@@ -68,7 +37,7 @@ let make = () => {
       <button
         className={Cn.make([
           "nav-link",
-          switch (state.route) {
+          switch (route) {
           | Login => "active"
           | _ => ""
           },
@@ -77,7 +46,7 @@ let make = () => {
         "Login"->React.string
       </button>
     </div>
-    {switch (state.route) {
+    {switch (route) {
      | Signup => <SignupForm />
      | Login => <LoginForm />
      }}

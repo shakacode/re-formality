@@ -58,14 +58,10 @@ module LoginForm = {
 
 module LoginFormHook = Formality.Make(LoginForm);
 
+let initialState = LoginForm.{email: "", password: "", rememberMe: false};
+
 [@react.component]
 let make = () => {
-  let initialState =
-    React.useMemo1(
-      () => LoginForm.{email: "", password: "", rememberMe: false},
-      [||],
-    );
-
   let form =
     LoginFormHook.useForm(
       ~initialState,
