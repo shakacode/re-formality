@@ -43,7 +43,8 @@ Then add it to `bsconfig.json`:
 ```
 
 ## Examples
-* [Live](https://re-formality.now.sh)
+* [Live demo](https://re-formality.now.sh)
+* [Live @ minima.app](https://minima.app)
 * [Sources](./examples)
 
 ## Concepts
