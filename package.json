@@ -1,6 +1,6 @@
 {
   "name": "re-formality",
-  "version": "2.0.0",
+  "version": "3.0.0-beta.2",
   "description": "Reasonable form validation tool for reason-react",
   "main": "src/Formality.re",
   "author": "Alex Fedoseev <alex.fedoseev@gmail.com>",
@@ -37,15 +37,15 @@
     "url": "https://github.com/alexfedoseev/re-formality.git"
   },
   "peerDependencies": {
-    "bs-platform": "^5.0.0",
-    "reason-react": "^0.6.0"
+    "bs-platform": "^5.0.2",
+    "reason-react": "^0.6.0 || ^0.7.0"
   },
   "devDependencies": {
-    "bs-platform": "5.0.0",
+    "bs-platform": "5.0.2",
     "bsb-js": "1.1.7",
     "parcel-bundler": "1.12.3",
     "re-classnames": "4.0.0",
-    "reason-react": "0.6.0"
+    "reason-react": "0.7.0"
   },
   "dependencies": {
     "re-debouncer": "2.0.0"

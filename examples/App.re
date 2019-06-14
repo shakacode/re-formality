@@ -1,77 +1,54 @@
-[@bs.val] external locationHash: string = "window.location.hash";
+module Route = {
+  type t =
+    | Signup
+    | Login;
 
-type route =
-  | Signup
-  | Login;
+  let fromUrl = (url: ReasonReactRouter.url) =>
+    switch (url.hash) {
+    | "signup" => Signup
+    | "login" => Login
+    | _ => Signup
+    };
+};
 
-type state = {route};
+[@react.component]
+let make = () => {
+  let route = ReasonReactRouter.useUrl()->Route.fromUrl;
 
-type action =
-  | UpdateRoute(route);
-
-let getInitialRoute = () =>
-  switch (locationHash) {
-  | "#signup" => Signup
-  | "#login" => Login
-  | _ => Signup
-  };
-
-let component = React.reducerComponent(__MODULE__);
-
-let make = _ => {
-  ...component,
-  initialState: () => {route: getInitialRoute()},
-  reducer: (action, _) =>
-    switch (action) {
-    | UpdateRoute(route) => React.Update({route: route})
-    },
-  didMount: ({send, onUnmount}) => {
-    let watcherID =
-      React.Router.watchUrl(url =>
-        switch (url.hash) {
-        | "signup" => Signup->UpdateRoute->send
-        | "login" => Login->UpdateRoute->send
-        | _ => Signup->UpdateRoute->send
-        }
-      );
-    onUnmount(() => watcherID->React.Router.unwatchUrl);
-  },
-  render: ({state}) =>
-    <div className="container">
-      <div className="header">
-        <h1> "Formality"->React.string </h1>
-        <a
-          href="https://github.com/alexfedoseev/re-formality" className="link">
-          "Github"->React.string
-        </a>
-      </div>
-      <div className="nav">
-        <button
-          className={Cn.make([
-            "nav-link",
-            switch (state.route) {
-            | Signup => "active"
-            | _ => ""
-            },
-          ])}
-          onClick={_ => React.Router.push("#signup")}>
-          "Signup"->React.string
-        </button>
-        <button
-          className={Cn.make([
-            "nav-link",
-            switch (state.route) {
-            | Login => "active"
-            | _ => ""
-            },
-          ])}
-          onClick={_ => React.Router.push("#login")}>
-          "Login"->React.string
-        </button>
-      </div>
-      {switch (state.route) {
-       | Signup => <SignupForm />
-       | Login => <LoginForm />
-       }}
-    </div>,
+  <div className="container">
+    <div className="header">
+      <h1> "Formality"->React.string </h1>
+      <a href="https://github.com/alexfedoseev/re-formality" className="link">
+        "Github"->React.string
+      </a>
+    </div>
+    <div className="nav">
+      <button
+        className={Cn.make([
+          "nav-link",
+          switch (route) {
+          | Signup => "active"
+          | _ => ""
+          },
+        ])}
+        onClick={_ => ReasonReactRouter.push("#signup")}>
+        "Signup"->React.string
+      </button>
+      <button
+        className={Cn.make([
+          "nav-link",
+          switch (route) {
+          | Login => "active"
+          | _ => ""
+          },
+        ])}
+        onClick={_ => ReasonReactRouter.push("#login")}>
+        "Login"->React.string
+      </button>
+    </div>
+    {switch (route) {
+     | Signup => <SignupForm />
+     | Login => <LoginForm />
+     }}
+  </div>;
 };

@@ -14,7 +14,7 @@
   ],
   "bs-dev-dependencies": ["re-classnames"],
   "reason": {
-    "react-jsx": 2
+    "react-jsx": 3
   },
   "refmt": 3,
   "bsc-flags": ["-open Belt"],

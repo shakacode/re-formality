@@ -102,15 +102,17 @@ module SignupForm = {
   ];
 };
 
-module SignupFormContainer = Formality.Async.Make(SignupForm);
+module SignupFormHook = Formality.Async.Make(SignupForm);
 
-let component = React.statelessComponent(__MODULE__);
-let make = _ => {
-  ...component,
-  render: _ =>
-    <SignupFormContainer
-      initialState={email: "", password: "", passwordConfirmation: ""}
-      onSubmit={(state, form) => {
+let initialState =
+  SignupForm.{email: "", password: "", passwordConfirmation: ""};
+
+[@react.component]
+let make = () => {
+  let form =
+    SignupFormHook.useForm(
+      ~initialState,
+      ~onSubmit=(state, form) => {
         Js.log2("Submitted with:", state);
         Js.Global.setTimeout(
           () => {
@@ -120,136 +122,130 @@ let make = _ => {
           500,
         )
         ->ignore;
-      }}>
-      ...{form =>
-        <form
-          className="form"
-          onSubmit={form.submit->Formality.Dom.preventDefault}>
-          <div className="form-messages-area form-messages-area-lg" />
-          <div className="form-content">
-            <h2 className="push-lg"> "Signup"->React.string </h2>
-            <div className="form-row">
-              <label htmlFor="signup--email" className="label-lg">
-                "Email"->React.string
-              </label>
-              <input
-                id="signup--email"
-                type_="text"
-                value={form.state.email}
-                disabled={form.submitting}
-                onBlur={_ => form.blur(Email)}
-                onChange={event =>
-                  form.change(
-                    Email,
-                    SignupForm.EmailField.update(
-                      form.state,
-                      event->ReactEvent.Form.target##value,
-                    ),
-                  )
-                }
-              />
-              {switch (Email->(form.result), Email->(form.validating)) {
-               | (_, true) =>
-                 <div className="form-message">
-                   "Checking..."->React.string
-                 </div>
-               | (Some(Error(message)), false) =>
-                 <div className={Cn.make(["form-message", "failure"])}>
-                   message->React.string
-                 </div>
-               | (Some(Ok(Valid)), false) =>
-                 <div className={Cn.make(["form-message", "success"])}>
-                   {j|✓|j}->React.string
-                 </div>
-               | (Some(Ok(NoValue)) | None, false) => React.null
-               }}
-            </div>
-            <div className="form-row form-row-footer">
-              <div className="note push-lg">
-                "Hint: try `test@taken.email`"->React.string
-              </div>
-            </div>
-            <div className="form-row">
-              <label htmlFor="signup--password" className="label-lg">
-                "Password"->React.string
-              </label>
-              <input
-                id="signup--password"
-                type_="text"
-                value={form.state.password}
-                disabled={form.submitting}
-                onBlur={_ => form.blur(Password)}
-                onChange={event =>
-                  form.change(
-                    Password,
-                    SignupForm.PasswordField.update(
-                      form.state,
-                      event->ReactEvent.Form.target##value,
-                    ),
-                  )
-                }
-              />
-              {switch (Password->(form.result)) {
-               | Some(Error(message)) =>
-                 <div className={Cn.make(["form-message", "failure"])}>
-                   message->React.string
-                 </div>
-               | Some(Ok(Valid)) =>
-                 <div className={Cn.make(["form-message", "success"])}>
-                   {j|✓|j}->React.string
-                 </div>
-               | Some(Ok(NoValue))
-               | None => React.null
-               }}
-            </div>
-            <div className="form-row">
-              <label
-                htmlFor="signup--passwordConfirmation" className="label-lg">
-                "Confirmation"->React.string
-              </label>
-              <input
-                id="signup--passwordConfirmation"
-                type_="text"
-                value={form.state.passwordConfirmation}
-                disabled={form.submitting}
-                onBlur={_ => form.blur(PasswordConfirmation)}
-                onChange={event =>
-                  form.change(
-                    PasswordConfirmation,
-                    SignupForm.PasswordConfirmationField.update(
-                      form.state,
-                      event->ReactEvent.Form.target##value,
-                    ),
-                  )
-                }
-              />
-              {switch (PasswordConfirmation->(form.result)) {
-               | Some(Error(message)) =>
-                 <div className={Cn.make(["form-message", "failure"])}>
-                   message->React.string
-                 </div>
-               | Some(Ok(Valid)) =>
-                 <div className={Cn.make(["form-message", "success"])}>
-                   {j|✓|j}->React.string
-                 </div>
-               | Some(Ok(NoValue))
-               | None => React.null
-               }}
-            </div>
-            <div className="form-row">
-              <button className="push-lg" disabled={form.submitting}>
-                (form.submitting ? "Submitting..." : "Submit")->React.string
-              </button>
-              {switch (form.status) {
-               | Submitted =>
-                 <div className={Cn.make(["form-status", "success"])}>
-                   {j|✓ Signed Up|j}->React.string
-                 </div>
-               | _ => React.null
-               }}
-            </div>
-          </div>
-        </form>
-      }
-    </SignupFormContainer>,
+      },
+    );
+
+  <form className="form" onSubmit={form.submit->Formality.Dom.preventDefault}>
+    <div className="form-messages-area form-messages-area-lg" />
+    <div className="form-content">
+      <h2 className="push-lg"> "Signup"->React.string </h2>
+      <div className="form-row">
+        <label htmlFor="signup--email" className="label-lg">
+          "Email"->React.string
+        </label>
+        <input
+          id="signup--email"
+          type_="text"
+          value={form.state.email}
+          disabled={form.submitting}
+          onBlur={_ => form.blur(Email)}
+          onChange={event =>
+            form.change(
+              Email,
+              SignupForm.EmailField.update(
+                form.state,
+                event->ReactEvent.Form.target##value,
+              ),
+            )
+          }
+        />
+        {switch (Email->(form.result), Email->(form.validating)) {
+         | (_, true) =>
+           <div className="form-message"> "Checking..."->React.string </div>
+         | (Some(Error(message)), false) =>
+           <div className={Cn.make(["form-message", "failure"])}>
+             message->React.string
+           </div>
+         | (Some(Ok(Valid)), false) =>
+           <div className={Cn.make(["form-message", "success"])}>
+             {j|✓|j}->React.string
+           </div>
+         | (Some(Ok(NoValue)) | None, false) => React.null
+         }}
+      </div>
+      <div className="form-row form-row-footer">
+        <div className="note push-lg">
+          "Hint: try `test@taken.email`"->React.string
+        </div>
+      </div>
+      <div className="form-row">
+        <label htmlFor="signup--password" className="label-lg">
+          "Password"->React.string
+        </label>
+        <input
+          id="signup--password"
+          type_="text"
+          value={form.state.password}
+          disabled={form.submitting}
+          onBlur={_ => form.blur(Password)}
+          onChange={event =>
+            form.change(
+              Password,
+              SignupForm.PasswordField.update(
+                form.state,
+                event->ReactEvent.Form.target##value,
+              ),
+            )
+          }
+        />
+        {switch (Password->(form.result)) {
+         | Some(Error(message)) =>
+           <div className={Cn.make(["form-message", "failure"])}>
+             message->React.string
+           </div>
+         | Some(Ok(Valid)) =>
+           <div className={Cn.make(["form-message", "success"])}>
+             {j|✓|j}->React.string
+           </div>
+         | Some(Ok(NoValue))
+         | None => React.null
+         }}
+      </div>
+      <div className="form-row">
+        <label htmlFor="signup--passwordConfirmation" className="label-lg">
+          "Confirmation"->React.string
+        </label>
+        <input
+          id="signup--passwordConfirmation"
+          type_="text"
+          value={form.state.passwordConfirmation}
+          disabled={form.submitting}
+          onBlur={_ => form.blur(PasswordConfirmation)}
+          onChange={event =>
+            form.change(
+              PasswordConfirmation,
+              SignupForm.PasswordConfirmationField.update(
+                form.state,
+                event->ReactEvent.Form.target##value,
+              ),
+            )
+          }
+        />
+        {switch (PasswordConfirmation->(form.result)) {
+         | Some(Error(message)) =>
+           <div className={Cn.make(["form-message", "failure"])}>
+             message->React.string
+           </div>
+         | Some(Ok(Valid)) =>
+           <div className={Cn.make(["form-message", "success"])}>
+             {j|✓|j}->React.string
+           </div>
+         | Some(Ok(NoValue))
+         | None => React.null
+         }}
+      </div>
+      <div className="form-row">
+        <button className="push-lg" disabled={form.submitting}>
+          (form.submitting ? "Submitting..." : "Submit")->React.string
+        </button>
+        {switch (form.status) {
+         | Submitted =>
+           <div className={Cn.make(["form-status", "success"])}>
+             {j|✓ Signed Up|j}->React.string
+           </div>
+         | _ => React.null
+         }}
+      </div>
+    </div>
+  </form>;
 };
