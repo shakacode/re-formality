@@ -11,12 +11,18 @@ module type Form = {
   let validators: list(Validation.Async.validator(field, state, message));
 };
 
-module Make = (Form: Form) => {
-  module FieldId =
-    Id.MakeComparable({
-      type t = Form.field;
-      let cmp = Pervasives.compare;
-    });
+module type FormWithId = {
+  include Form;
+  module FieldId: {
+    type identity;
+    type t = field;
+    let cmp: Belt.Id.cmp(t, identity);
+  };
+};
+
+
+module Make = (Form: FormWithId) => {
+  module FieldId = Form.FieldId;
 
   type state = {
     input: Form.state,
@@ -473,4 +479,16 @@ module Make = (Form: Form) => {
       reset: () => Reset->dispatch,
     };
   };
+};
+
+
+module MakeWithDefaultId = (Form: Form) => {
+  include Make({
+    include Form;
+    module FieldId =
+      Id.MakeComparable({
+        type t = Form.field;
+        let cmp = Pervasives.compare;
+      });
+  });
 };

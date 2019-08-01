@@ -2,7 +2,8 @@ module Dom = Formality__PublicHelpers.Dom;
 module Strategy = Formality__Strategy;
 module FormStatus = Formality__FormStatus;
 
-module Make = Formality__Form.Make;
+module Make = Formality__Form.MakeWithDefaultId;
+module MakeId = Formality__Form.Make;
 
 type ok = Formality__Validation.Result.ok = | Valid | NoValue;
 
@@ -28,8 +29,11 @@ type validator('field, 'state, 'message) =
   };
 
 module Async: {
-  module Make = Formality__FormAsyncOnChange.Make;
-  module MakeOnBlur = Formality__FormAsyncOnBlur.Make;
+  module Make = Formality__FormAsyncOnChange.MakeWithDefaultId;
+  module MakeId = Formality__FormAsyncOnChange.Make;
+
+  module MakeOnBlur = Formality__FormAsyncOnBlur.MakeWithDefaultId;
+  module MakeOnBlurId = Formality__FormAsyncOnBlur.Make;
 
   let debounceInterval: int;
 
