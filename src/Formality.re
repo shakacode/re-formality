@@ -5,15 +5,17 @@ include Formality__PublicHelpers;
 module Strategy = Formality__Strategy;
 module FormStatus = Formality__FormStatus;
 
-module Make = Formality__Form.MakeWithDefaultId;
-module MakeId = Formality__Form.Make;
+module Make = Formality__Form.Make;
+module MakeId = Formality__FormId.Make;
 
 module Async = {
   include Formality__Validation.Async;
-  module Make = Formality__FormAsyncOnChange.MakeWithDefaultId;
-  module MakeId = Formality__FormAsyncOnChange.Make;
 
-  module MakeOnBlur = Formality__FormAsyncOnBlur.MakeWithDefaultId;
-  module MakeOnBlurId = Formality__FormAsyncOnBlur.Make;
-  let debounceInterval = Formality__FormAsyncOnChange.defaultDebounceInterval;
+  module Make = Formality__FormAsyncOnChange.Make;
+  module MakeId = Formality__FormAsyncOnChangeId.Make;
+
+  module MakeOnBlur = Formality__FormAsyncOnBlur.Make;
+  module MakeOnBlurId = Formality__FormAsyncOnBlurId.Make;
+
+  let debounceInterval = Formality__FormAsyncOnChangeId.defaultDebounceInterval;
 };
