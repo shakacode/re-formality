@@ -511,8 +511,8 @@ module Make = (Form: FormWithId) => {
   };
 };
 
-module MakeWithDefaultId = (Form: Form) => {
-  include Make({
+module MakeWithDefaultId = (Form: Form) =>
+  Make({
     include Form;
     module FieldId =
       Id.MakeComparable({
@@ -520,4 +520,3 @@ module MakeWithDefaultId = (Form: Form) => {
         let cmp = Pervasives.compare;
       });
   });
-};
