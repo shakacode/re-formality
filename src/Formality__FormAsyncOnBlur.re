@@ -20,7 +20,6 @@ module type FormWithId = {
   };
 };
 
-
 module Make = (Form: FormWithId) => {
   module FieldId = Form.FieldId;
 
@@ -480,7 +479,6 @@ module Make = (Form: FormWithId) => {
     };
   };
 };
-
 
 module MakeWithDefaultId = (Form: Form) => {
   include Make({
