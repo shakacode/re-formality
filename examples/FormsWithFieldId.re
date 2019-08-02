@@ -45,16 +45,14 @@ module LoginFormAsyncId =
       });
   });
 
-module LoginFormAsyncBlurNoId =
-  Formality.Async.MakeOnBlur(LoginForm);
-
+module LoginFormAsyncBlurNoId = Formality.Async.MakeOnBlur(LoginForm);
 
 module LoginFormAsyncBlurId =
   Formality.Async.MakeOnBlurId({
-  include LoginForm;
-   module FieldId =
-        Id.MakeComparable({
-          type t = field;
-          let cmp = Pervasives.compare;
-        });
+    include LoginForm;
+    module FieldId =
+      Id.MakeComparable({
+        type t = field;
+        let cmp = Pervasives.compare;
+      });
   });

@@ -5,12 +5,12 @@ let validateEmail = value =>
     Js.log("Remote validation triggered");
     Js.Global.setTimeout(
       () =>
-        value !== takenEmail ?
-          {
+        value !== takenEmail
+          ? {
             Js.log("Remote validation succeeded");
             resolve(. true);
-          } :
-          {
+          }
+          : {
             Js.log("Remote validation failed");
             resolve(. false);
           },
