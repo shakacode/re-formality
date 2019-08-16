@@ -1,10 +1,11 @@
 # History
 
-## 3.0.0-beta.2
-* Add `FormalityCompat` to support `JSX@2`.
+## 3.1.0
+* Add `*WithId` functors to support custom comparator in configs (details: [#52](https://github.com/minima-app/re-formality/issues/52)).
 
-## 3.0.0-beta.1
+## 3.0.0
 * **[ BREAKING ]** React hooks support (`reason-react@0.7.0`).
+* Add `FormalityCompat` to support `JSX@2`.
 
 ## 2.0.0
 * **[ BREAKING ]** `bs-platform` updated to `5.0.0`.
