@@ -6,10 +6,16 @@ module Strategy = Formality__Strategy;
 module FormStatus = Formality__FormStatus;
 
 module Make = Formality__Form.Make;
+module MakeWithId = Formality__FormWithId.Make;
 
 module Async = {
   include Formality__Validation.Async;
+
   module Make = Formality__FormAsyncOnChange.Make;
+  module MakeWithId = Formality__FormAsyncOnChangeWithId.Make;
+
   module MakeOnBlur = Formality__FormAsyncOnBlur.Make;
-  let debounceInterval = Formality__FormAsyncOnChange.defaultDebounceInterval;
+  module MakeOnBlurWithId = Formality__FormAsyncOnBlurWithId.Make;
+
+  let debounceInterval = Formality__FormAsyncOnChangeWithId.defaultDebounceInterval;
 };

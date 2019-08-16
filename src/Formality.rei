@@ -3,6 +3,7 @@ module Strategy = Formality__Strategy;
 module FormStatus = Formality__FormStatus;
 
 module Make = Formality__Form.Make;
+module MakeWithId = Formality__FormWithId.Make;
 
 type ok = Formality__Validation.Result.ok = | Valid | NoValue;
 
@@ -29,7 +30,10 @@ type validator('field, 'state, 'message) =
 
 module Async: {
   module Make = Formality__FormAsyncOnChange.Make;
+  module MakeWithId = Formality__FormAsyncOnChangeWithId.Make;
+
   module MakeOnBlur = Formality__FormAsyncOnBlur.Make;
+  module MakeOnBlurWithId = Formality__FormAsyncOnBlurWithId.Make;
 
   let debounceInterval: int;
 

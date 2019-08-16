@@ -21,6 +21,7 @@ Reasonable form validation tool for [`reason-react`](https://reasonml.github.io/
   - [Form hook](#form-hook)
   - [Rendering](#rendering)
   - [Async validations](#async-validations)
+  - [Custom field comparator](#custom-field-comparator)
   - [I18n](#i18n)
 - [Alternatives](#alternatives)
 - [License](#license)
@@ -650,6 +651,45 @@ let validator = {
   ...
 };
 ```
+### Custom field comparator
+
+By default Formality uses `Pervasives.compare` to compare fields internally. This works when forms are simple, but can cause troubles when fields contain incomparable values, like functions. In such case `Pervasives.compare` will throw exception.
+You can create form with your own comparator
+```reason
+module LoginForm = {
+  type field =
+    | Email
+    | Password
+    | RememberMe;
+
+  type state = {
+    email: string,
+    password: string,
+    rememberMe: bool,
+  };
+
+  type message = string;
+  type submissionError = unit;
+
+  let validators = [];
+
+  module FieldId =
+    Belt.Id.MakeComparable({
+      type t = field;
+      let cmp = Pervasives.compare;
+    });
+};
+module LoginForm = Formality.MakeWithId(LoginForm);
+```
+Each Formality form functor has such helper-functor that requires FieldId
+
+```reason
+Formality.MakeWithId
+Formality.Async.MakeWithId
+Formality.Async.MakeOnBlurWithId
+```
+
+[Custom comparator usage examples](/examples/FormsWithFieldId.re)
 
 ### I18n
 If you build i18n'ized app then set `message` type in form config to your `I18n.t` type. E.g.:
