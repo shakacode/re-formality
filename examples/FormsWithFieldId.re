@@ -19,7 +19,7 @@ module LoginForm = {
 module LoginFormNoId = Formality.Make(LoginForm);
 
 module LoginFormWithId =
-  Formality.MakeId({
+  Formality.MakeWithId({
     include LoginForm;
     module FieldId =
       Id.MakeComparable({
@@ -35,7 +35,7 @@ module LoginFormAsyncNoId =
   });
 
 module LoginFormAsyncId =
-  Formality.Async.MakeId({
+  Formality.Async.MakeWithId({
     include LoginForm;
     let debounceInterval = 100;
     module FieldId =
@@ -48,7 +48,7 @@ module LoginFormAsyncId =
 module LoginFormAsyncBlurNoId = Formality.Async.MakeOnBlur(LoginForm);
 
 module LoginFormAsyncBlurId =
-  Formality.Async.MakeOnBlurId({
+  Formality.Async.MakeOnBlurWithId({
     include LoginForm;
     module FieldId =
       Id.MakeComparable({

@@ -1,6 +1,6 @@
-module Validation = Formality__FormAsyncOnChangeId.Validation;
+module Validation = Formality__FormAsyncOnChangeWithId.Validation;
 
-let defaultDebounceInterval = Formality__FormAsyncOnChangeId.defaultDebounceInterval;
+let defaultDebounceInterval = Formality__FormAsyncOnChangeWithId.defaultDebounceInterval;
 
 module type Form = {
   type field;
@@ -12,7 +12,7 @@ module type Form = {
 };
 
 module Make = (Form: Form) =>
-  Formality__FormAsyncOnChangeId.Make({
+  Formality__FormAsyncOnChangeWithId.Make({
     include Form;
     module FieldId =
       Id.MakeComparable({

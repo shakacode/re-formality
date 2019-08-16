@@ -1,4 +1,4 @@
-module Validation = Formality__FormId.Validation;
+module Validation = Formality__FormWithId.Validation;
 
 module type Form = {
   type field;
@@ -9,7 +9,7 @@ module type Form = {
 };
 
 module Make = (Form: Form) =>
-  Formality__FormId.Make({
+  Formality__FormWithId.Make({
     include Form;
     module FieldId =
       Id.MakeComparable({
