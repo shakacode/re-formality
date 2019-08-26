@@ -182,14 +182,12 @@ let make = () => {
         )
       }
     />
-    {switch (Email->form.result) {
-     | Some(Error(message)) =>
-       <div className={Cn.make(["form-message", "failure"])}>
-         message->React.string
-       </div>
-     | Some(Ok(Valid | NoValue))
-     | None => React.null
-     }}
+    {switch (Email->(form.result)) {
+      | Some(Error(message)) =>
+        <div className="failure"> message->React.string </div>
+      | Some(Ok(Valid | NoValue))
+      | None => React.null
+      }}
     <input
       value={form.state.password}
       disabled={form.submitting}
@@ -204,14 +202,12 @@ let make = () => {
         )
       }
     />
-    {switch (Password->form.result) {
-     | Some(Error(message)) =>
-       <div className={Cn.make(["form-message", "failure"])}>
-         message->React.string
-       </div>
-     | Some(Ok(Valid | NoValue))
-     | None => React.null
-     }}
+    {switch (Password->(form.result)) {
+      | Some(Error(message)) =>
+        <div className="failure"> message->React.string </div>
+      | Some(Ok(Valid | NoValue))
+      | None => React.null
+      }}
     <button disabled={form.submitting}>
       (form.submitting ? "Submitting..." : "Submit")->React.string
     </button>
