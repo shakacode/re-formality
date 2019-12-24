@@ -1,5 +1,8 @@
 # History
 
+## 3.2.0
+* `bs-platform` updated to `v7`.
+
 ## 3.1.0
 * Add `*WithId` functors to support custom comparator in configs (details: [#52](https://github.com/minima-app/re-formality/issues/52)).
 

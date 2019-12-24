@@ -36,18 +36,14 @@
     "type": "git",
     "url": "https://github.com/alexfedoseev/re-formality.git"
   },
-  "peerDependencies": {
-    "bs-platform": "^5.0.2",
-    "reason-react": "^0.6.0 || ^0.7.0"
-  },
   "devDependencies": {
-    "bs-platform": "5.0.4",
+    "bs-platform": "7.0.1",
     "bsb-js": "1.1.7",
-    "parcel-bundler": "1.12.3",
-    "re-classnames": "4.0.0",
+    "parcel-bundler": "1.12.4",
+    "re-classnames": "4.1.0",
     "reason-react": "0.7.0"
   },
   "dependencies": {
-    "re-debouncer": "2.0.0"
+    "re-debouncer": "2.1.0"
   }
 }
