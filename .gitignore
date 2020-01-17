@@ -7,3 +7,6 @@ dist/
 yarn-error.log
 .cache
 .DS_Store
+_esy
+_build
+re-formality-ppx.install
