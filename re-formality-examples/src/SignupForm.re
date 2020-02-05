@@ -1,119 +1,66 @@
-module SignupForm = {
-  open FormalityCompat;
-
-  type field =
-    | Email
-    | Password
-    | PasswordConfirmation;
-
-  type state = {
+module SignupForm = [%form
+  type input = {
     email: string,
-    password: string,
+    password: [@field.deps passwordConfirmation] string,
     passwordConfirmation: string,
   };
+  type output = input
+];
 
-  type message = string;
-  type submissionError = unit;
-
-  let debounceInterval = FormalityCompat.Async.debounceInterval;
-
-  module EmailField = {
-    let update = (state, value) => {...state, email: value};
-
-    let validator =
-      Async.{
-        field: Email,
-        strategy: OnFirstSuccessOrFirstBlur,
-        dependents: None,
-        validate: ({email}) => {
-          let emailRegex = [%bs.re {|/.*@.*\..+/|}];
-          switch (email) {
-          | "" => Error("Email is required")
-          | _ as value when !emailRegex->Js.Re.test_(value) =>
-            Error("Email is invalid")
-          | _ => Ok(Valid)
-          };
-        },
-        validateAsync:
-          Some((
-            state =>
-              Js.Promise.(
-                state.email
-                ->Api.validateEmail
-                ->then_(
-                    valid =>
-                      Result.(
-                        valid
-                          ? Ok(Valid)->resolve
-                          : Error("Email is already taken")->resolve
-                      ),
-                    _,
-                  )
-              ),
-            (prev, next) => prev.email == next.email,
-          )),
-      };
-  };
-
-  module PasswordField = {
-    let update = (state, value) => {...state, password: value};
-
-    let validator =
-      Async.{
-        field: Password,
-        strategy: OnFirstSuccessOrFirstBlur,
-        dependents: [PasswordConfirmation]->Some,
-        validate: ({password}) => {
-          let minLength = 4;
-          switch (password) {
-          | "" => Error("Password is required")
-          | _ when password->Js.String.length < minLength =>
-            Error({j| $(minLength)+ characters, please|j})
-          | _ => Ok(Valid)
-          };
-        },
-        validateAsync: None,
-      };
-  };
-
-  module PasswordConfirmationField = {
-    let update = (state, value) => {...state, passwordConfirmation: value};
-
-    let validator =
-      Async.{
-        field: PasswordConfirmation,
-        strategy: Strategy.OnFirstSuccessOrFirstBlur,
-        dependents: None,
-        validate: ({password, passwordConfirmation}) =>
-          switch (passwordConfirmation) {
-          | "" => Error("Confirmation is required")
-          | _ when passwordConfirmation !== password =>
-            Error("Password doesn't match")
-          | _ => Ok(Valid)
-          },
-        validateAsync: None,
-      };
-  };
-
-  let validators = [
-    EmailField.validator,
-    PasswordField.validator,
-    PasswordConfirmationField.validator,
-  ];
+let initialInput: SignupForm.input = {
+  email: "",
+  password: "",
+  passwordConfirmation: "",
 };
 
-module SignupFormHook = FormalityCompat.Async.Make(SignupForm);
-
-let initialState =
-  SignupForm.{email: "", password: "", passwordConfirmation: ""};
+let validators: SignupForm.validators = {
+  email:
+    Some({
+      strategy: OnFirstSuccessOrFirstBlur,
+      validate: ({email}) => {
+        let emailRegex = [%bs.re {|/.*@.*\..+/|}];
+        switch (email) {
+        | "" => Error("Email is required")
+        | _ as value when !emailRegex->Js.Re.test_(value) =>
+          Error("Email is invalid")
+        | _ => Ok(email)
+        };
+      },
+    }),
+  password:
+    Some({
+      strategy: OnFirstSuccessOrFirstBlur,
+      validate: ({password}) => {
+        let minLength = 4;
+        switch (password) {
+        | "" => Error("Password is required")
+        | _ when password->Js.String.length < minLength =>
+          Error({j| $(minLength)+ characters, please|j})
+        | _ => Ok(password)
+        };
+      },
+    }),
+  passwordConfirmation:
+    Some({
+      strategy: OnFirstSuccessOrFirstBlur,
+      validate: ({password, passwordConfirmation}) =>
+        switch (passwordConfirmation) {
+        | "" => Error("Confirmation is required")
+        | _ when passwordConfirmation !== password =>
+          Error("Password doesn't match")
+        | _ => Ok(passwordConfirmation)
+        },
+    }),
+};
 
 [@react.component]
 let make = () => {
   let form =
-    SignupFormHook.useForm(
-      ~initialState,
-      ~onSubmit=(state, form) => {
-        Js.log2("Submitted with:", state);
+    SignupForm.useForm(
+      ~initialInput,
+      ~validators,
+      ~onSubmit=(output, form) => {
+        Js.log2("Submitted with:", output);
         Js.Global.setTimeout(
           () => {
             form.notifyOnSuccess(None);
@@ -125,9 +72,7 @@ let make = () => {
       },
     );
 
-  <form
-    className="form"
-    onSubmit={form.submit->FormalityCompat.Dom.preventDefault}>
+  <Form className="form" onSubmit={form.submit}>
     <div className="form-messages-area form-messages-area-lg" />
     <div className="form-content">
       <h2 className="push-lg"> "Signup"->React.string </h2>
@@ -138,31 +83,26 @@ let make = () => {
         <input
           id="signup--email"
           type_="text"
-          value={form.state.email}
+          value={form.input.email}
           disabled={form.submitting}
-          onBlur={_ => form.blur(Email)}
+          onBlur={_ => form.blurEmail()}
           onChange={event =>
-            form.change(
-              Email,
-              SignupForm.EmailField.update(
-                form.state,
-                event->ReactEvent.Form.target##value,
-              ),
-            )
+            form.updateEmail({
+              ...form.input,
+              email: event->ReactEvent.Form.target##value,
+            })
           }
         />
-        {switch (Email->(form.result), Email->(form.validating)) {
-         | (_, true) =>
-           <div className="form-message"> "Checking..."->React.string </div>
-         | (Some(Error(message)), false) =>
+        {switch (form.emailResult()) {
+         | Some(Error(message)) =>
            <div className={Cn.make(["form-message", "failure"])}>
              message->React.string
            </div>
-         | (Some(Ok(Valid)), false) =>
+         | Some(Ok(_)) =>
            <div className={Cn.make(["form-message", "success"])}>
              {j|✓|j}->React.string
            </div>
-         | (Some(Ok(NoValue)) | None, false) => React.null
+         | None => React.null
          }}
       </div>
       <div className="form-row form-row-footer">
@@ -177,29 +117,25 @@ let make = () => {
         <input
           id="signup--password"
           type_="text"
-          value={form.state.password}
+          value={form.input.password}
           disabled={form.submitting}
-          onBlur={_ => form.blur(Password)}
+          onBlur={_ => form.blurPassword()}
           onChange={event =>
-            form.change(
-              Password,
-              SignupForm.PasswordField.update(
-                form.state,
-                event->ReactEvent.Form.target##value,
-              ),
-            )
+            form.updatePassword({
+              ...form.input,
+              password: event->ReactEvent.Form.target##value,
+            })
           }
         />
-        {switch (Password->(form.result)) {
+        {switch (form.passwordResult()) {
          | Some(Error(message)) =>
            <div className={Cn.make(["form-message", "failure"])}>
              message->React.string
            </div>
-         | Some(Ok(Valid)) =>
+         | Some(Ok(_)) =>
            <div className={Cn.make(["form-message", "success"])}>
              {j|✓|j}->React.string
            </div>
-         | Some(Ok(NoValue))
          | None => React.null
          }}
       </div>
@@ -210,29 +146,25 @@ let make = () => {
         <input
           id="signup--passwordConfirmation"
           type_="text"
-          value={form.state.passwordConfirmation}
+          value={form.input.passwordConfirmation}
           disabled={form.submitting}
-          onBlur={_ => form.blur(PasswordConfirmation)}
+          onBlur={_ => form.blurPasswordConfirmation()}
           onChange={event =>
-            form.change(
-              PasswordConfirmation,
-              SignupForm.PasswordConfirmationField.update(
-                form.state,
-                event->ReactEvent.Form.target##value,
-              ),
-            )
+            form.updatePasswordConfirmation({
+              ...form.input,
+              passwordConfirmation: event->ReactEvent.Form.target##value,
+            })
           }
         />
-        {switch (PasswordConfirmation->(form.result)) {
+        {switch (form.passwordConfirmationResult()) {
          | Some(Error(message)) =>
            <div className={Cn.make(["form-message", "failure"])}>
              message->React.string
            </div>
-         | Some(Ok(Valid)) =>
+         | Some(Ok(_)) =>
            <div className={Cn.make(["form-message", "success"])}>
              {j|✓|j}->React.string
            </div>
-         | Some(Ok(NoValue))
          | None => React.null
          }}
       </div>
@@ -249,5 +181,5 @@ let make = () => {
          }}
       </div>
     </div>
-  </form>;
+  </Form>;
 };

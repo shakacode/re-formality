@@ -32,10 +32,11 @@ module Field = {
   };
 
   type t = T.t;
-  external make: string => t = "%identity";
-  let make = (label: label_declaration) => label.pld_name.txt |> make;
-
   external to_string: t => string = "%identity";
+  external from_string: string => t = "%identity";
+
+  let make = (label: label_declaration) => label.pld_name.txt |> from_string;
+
   let to_capitalized_string = (field: t) =>
     field |> to_string |> String.capitalize_ascii;
 
@@ -87,12 +88,67 @@ module FieldType = {
   let eq = (x1: t, x2: t) => eq(x1 |> unpack, x2 |> unpack);
 };
 
+module FieldDeps = {
+  type unvalidated_dep = [ | `Field(string, Location.t)];
+
+  let report_error = (~loc) =>
+    Error.report(
+      ~loc,
+      "[@field.deps] attribute must contain field or tuple of fields",
+    );
+
+  let from_attributes = (attributes: list(attribute)) => {
+    let deps_attr =
+      attributes
+      |> List.find_opt(attr =>
+           switch (attr) {
+           | {attr_name: {txt: "field.deps"}} => true
+           | _ => false
+           }
+         );
+    switch (deps_attr) {
+    | None => []
+    | Some({
+        attr_payload: PStr([{pstr_desc: Pstr_eval(exp, _)}]),
+        attr_loc,
+      }) =>
+      let deps: result(list(unvalidated_dep), Location.t) =
+        switch (exp) {
+        | {pexp_desc: Pexp_ident({txt: Lident(dep), loc})} =>
+          Ok([`Field((dep, loc))])
+        | {pexp_desc: Pexp_tuple(exps)} =>
+          exps
+          |> List.fold_left(
+               (res, exp) =>
+                 switch (res, exp) {
+                 | (Error(loc), _) => Error(loc)
+                 | (
+                     Ok(deps),
+                     {pexp_desc: Pexp_ident({txt: Lident(dep), loc})},
+                   ) =>
+                   Ok([`Field((dep, loc)), ...deps])
+                 | (Ok(_), {pexp_loc}) => Error(pexp_loc)
+                 },
+               Ok([]),
+             )
+        | {pexp_loc} => Error(pexp_loc)
+        };
+      switch (deps) {
+      | Ok(deps) => deps
+      | Error(loc) => report_error(~loc)
+      };
+    | Some({attr_loc}) => report_error(~loc=attr_loc)
+    };
+  };
+};
+
 module FieldSpec = {
   type t = {
     id: Field.t,
     input_type: FieldType.t,
     output_type: FieldType.t,
     validator: [ | `Required | `Optional],
+    deps: list(Field.t),
   };
 };
 
@@ -155,7 +211,7 @@ module SubmissionErrorType = {
 module InputTypeParser = {
   type result = Pervasives.result(ok, error)
   and ok = {
-    fields: list((Field.t, FieldType.t)),
+    fields: list((Field.t, FieldType.t, list(FieldDeps.unvalidated_dep))),
     structure_item: InputType.t,
   }
   and error =
@@ -238,6 +294,8 @@ module Config = {
                                   (
                                     field |> Field.make,
                                     field.pld_type |> FieldType.make,
+                                    field.pld_type.ptyp_attributes
+                                    |> FieldDeps.from_attributes,
                                   ),
                                   ...acc,
                                 ],
@@ -354,133 +412,201 @@ module Config = {
     | (_, Some(Error(error))) => Error(OutputTypeParseError(error))
     | (_, None) => Error(OutputTypeParseError(NotFound))
     | (Some(Ok(input_data)), Some(Ok(output_result))) =>
-      let fields =
-        switch (output_result) {
-        | AliasOfInput(_) =>
-          Ok(
-            input_data.fields
-            |> List.map(((field, input_type)) =>
-                 FieldSpec.{
-                   id: field,
-                   input_type,
-                   output_type: input_type,
-                   validator: `Optional,
-                 }
-               ),
-          )
-        | Record({fields: output_fields, loc: output_loc}) =>
-          let (
-            matched_fields,
-            input_fields_not_in_output,
-            output_fields_not_in_input,
-          ) =
-            List.fold_right(
-              (
-                (input_field, input_field_type),
+      let deps_validity =
+        input_data.fields
+        |> List.fold_left(
+             (res, (field, _, deps)) =>
+               switch (res) {
+               | Error(error) => Error(error)
+               | Ok(_) =>
+                 deps
+                 |> List.fold_left(
+                      (res, dep) =>
+                        switch (res, dep) {
+                        | (Error(error), _) => Error(error)
+                        | (Ok (), `Field(dep, loc)) =>
+                          switch (
+                            deps
+                            |> List.find_all(dep' =>
+                                 switch (dep') {
+                                 | `Field(dep', _) => dep' == dep
+                                 }
+                               )
+                            |> List.length
+                          ) {
+                          | 0
+                          | 1 =>
+                            switch (
+                              input_data.fields
+                              |> List.find_opt(((field, _, _)) =>
+                                   field |> Field.to_string == dep
+                                 )
+                            ) {
+                            | None => Error(`DepNotFound((dep, loc)))
+                            | Some(_) when dep == (field |> Field.to_string) =>
+                              Error(`DepOfItself((dep, loc)))
+                            | Some(_) => Ok()
+                            }
+                          | _ => Error(`DuplicateDep((dep, loc)))
+                          }
+                        },
+                      Ok(),
+                    )
+               },
+             Ok(),
+           );
+      switch (deps_validity) {
+      | Error(`DepNotFound(dep, loc)) =>
+        Error.report(~loc, "Field %s doesn't exist in input", dep)
+      | Error(`DepOfItself(dep, loc)) =>
+        Error.report(~loc, "Field can't depend on itself")
+      | Error(`DuplicateDep(dep, loc)) =>
+        Error.report(
+          ~loc,
+          "Field %s is already declared as a dependency for this field",
+          dep,
+        )
+      | Ok () =>
+        let fields =
+          switch (output_result) {
+          | AliasOfInput(_) =>
+            Ok(
+              input_data.fields
+              |> List.map(((field, input_type, deps)) =>
+                   FieldSpec.{
+                     id: field,
+                     input_type,
+                     output_type: input_type,
+                     validator: `Optional,
+                     deps:
+                       deps
+                       |> List.map(
+                            fun
+                            | `Field(dep, _) => dep |> Field.from_string,
+                          ),
+                   }
+                 ),
+            )
+          | Record({fields: output_fields, loc: output_loc}) =>
+            let (
+              matched_fields,
+              input_fields_not_in_output,
+              output_fields_not_in_input,
+            ) =
+              List.fold_right(
                 (
-                  matched_fields,
-                  input_fields_not_in_output,
-                  output_fields_not_in_input,
-                ),
-              ) => {
-                let output_field =
-                  output_fields
-                  |> List.find_opt(((output_field, _, _)) =>
-                       input_field |> Field.eq(output_field)
-                     );
-                switch (output_field) {
-                | None => (
+                  (input_field, input_field_type, input_field_deps),
+                  (
                     matched_fields,
-                    [input_field, ...input_fields_not_in_output],
-                    output_fields_not_in_input,
-                  )
-                | Some((output_field, output_field_type, _)) => (
-                    [
-                      FieldSpec.{
-                        id: input_field,
-                        input_type: input_field_type,
-                        output_type: output_field_type,
-                        validator:
-                          if (FieldType.eq(
-                                input_field_type,
-                                output_field_type,
-                              )) {
-                            `Optional;
-                          } else {
-                            `Required;
-                          },
-                      },
-                      ...matched_fields,
-                    ],
                     input_fields_not_in_output,
-                    output_fields_not_in_input
-                    |> List.filter(((output_field, _, _)) =>
-                         !(input_field |> Field.eq(output_field))
-                       ),
-                  )
-                };
-              },
-              input_data.fields,
-              ([], [], output_fields),
-            );
-          switch (input_fields_not_in_output, output_fields_not_in_input) {
-          | ([], []) => Ok(matched_fields)
-          | (input_fields_not_in_output, []) =>
-            Error(
-              IOMismatch(
-                InputFieldsNotInOutput({
-                  fields: input_fields_not_in_output,
-                  loc: output_loc,
-                }),
-              ),
-            )
-          | ([], output_fields_not_in_input) =>
-            Error(
-              IOMismatch(
-                OutputFieldsNotInInput({
-                  fields:
-                    output_fields_not_in_input
-                    |> List.map(((field, _, loc)) => (field, loc)),
-                }),
-              ),
-            )
-          | (input_fields_not_in_output, output_fields_not_in_input) =>
-            Error(
-              IOMismatch(
-                Both({
-                  input_fields_not_in_output,
-                  output_fields_not_in_input:
-                    output_fields_not_in_input
-                    |> List.map(((field, _, loc)) => (field, loc)),
-                  loc: output_loc,
-                }),
-              ),
-            )
+                    output_fields_not_in_input,
+                  ),
+                ) => {
+                  let output_field =
+                    output_fields
+                    |> List.find_opt(((output_field, _, _)) =>
+                         input_field |> Field.eq(output_field)
+                       );
+                  switch (output_field) {
+                  | None => (
+                      matched_fields,
+                      [input_field, ...input_fields_not_in_output],
+                      output_fields_not_in_input,
+                    )
+                  | Some((output_field, output_field_type, _)) => (
+                      [
+                        FieldSpec.{
+                          id: input_field,
+                          input_type: input_field_type,
+                          output_type: output_field_type,
+                          validator:
+                            if (FieldType.eq(
+                                  input_field_type,
+                                  output_field_type,
+                                )) {
+                              `Optional;
+                            } else {
+                              `Required;
+                            },
+                          deps:
+                            input_field_deps
+                            |> List.map(
+                                 fun
+                                 | `Field(dep, _) => dep |> Field.from_string,
+                               ),
+                        },
+                        ...matched_fields,
+                      ],
+                      input_fields_not_in_output,
+                      output_fields_not_in_input
+                      |> List.filter(((output_field, _, _)) =>
+                           !(input_field |> Field.eq(output_field))
+                         ),
+                    )
+                  };
+                },
+                input_data.fields,
+                ([], [], output_fields),
+              );
+            switch (input_fields_not_in_output, output_fields_not_in_input) {
+            | ([], []) => Ok(matched_fields)
+            | (input_fields_not_in_output, []) =>
+              Error(
+                IOMismatch(
+                  InputFieldsNotInOutput({
+                    fields: input_fields_not_in_output,
+                    loc: output_loc,
+                  }),
+                ),
+              )
+            | ([], output_fields_not_in_input) =>
+              Error(
+                IOMismatch(
+                  OutputFieldsNotInInput({
+                    fields:
+                      output_fields_not_in_input
+                      |> List.map(((field, _, loc)) => (field, loc)),
+                  }),
+                ),
+              )
+            | (input_fields_not_in_output, output_fields_not_in_input) =>
+              Error(
+                IOMismatch(
+                  Both({
+                    input_fields_not_in_output,
+                    output_fields_not_in_input:
+                      output_fields_not_in_input
+                      |> List.map(((field, _, loc)) => (field, loc)),
+                    loc: output_loc,
+                  }),
+                ),
+              )
+            };
           };
-        };
 
-      switch (fields) {
-      | Ok(fields) =>
-        Ok({
-          fields,
-          input_type: input_data.structure_item,
-          output_type:
-            switch (output_result) {
-            | AliasOfInput(structure_item)
-            | Record({structure_item}) => structure_item
-            },
-          message_type:
-            switch (message_type^) {
-            | Some(x) => x
-            | None => MessageType.default(~loc=Location.none)
-            },
-          submission_error_type:
-            switch (submission_error_type^) {
-            | Some(x) => x
-            | None => SubmissionErrorType.default(~loc=Location.none)
-            },
-        })
-      | Error(error) => Error(error)
+        switch (fields) {
+        | Ok(fields) =>
+          Ok({
+            fields,
+            input_type: input_data.structure_item,
+            output_type:
+              switch (output_result) {
+              | AliasOfInput(structure_item)
+              | Record({structure_item}) => structure_item
+              },
+            message_type:
+              switch (message_type^) {
+              | Some(x) => x
+              | None => MessageType.default(~loc=Location.none)
+              },
+            submission_error_type:
+              switch (submission_error_type^) {
+              | Some(x) => x
+              | None => SubmissionErrorType.default(~loc=Location.none)
+              },
+          })
+        | Error(error) => Error(error)
+        };
       };
     };
   };
@@ -602,6 +728,20 @@ module AstHelpers = {
         Some(Exp.tuple([x])),
       );
 
+    let ref_ = (~loc, x) =>
+      Exp.apply(
+        Exp.ident(Lident("!") |> lid(~loc)),
+        [(Nolabel, Exp.ident(Lident(x) |> lid(~loc)))],
+      );
+
+    let rec seq = (~exp, ~make, list) =>
+      switch (list) {
+      | [] => exp
+      | [x] => x |> make |> Exp.sequence(exp)
+      | [x, ...rest] =>
+        rest |> seq(~exp=x |> make |> Exp.sequence(exp), ~make)
+      };
+
     let field = (~of_ as record, ~loc, field: Field.t) =>
       Exp.field(
         Exp.ident(Lident(record) |> lid(~loc)),
@@ -617,10 +757,23 @@ module AstHelpers = {
         Lident(field |> Field.to_string) |> lid(~loc),
       );
 
+    let ref_field = (~of_ as record, ~loc, field: Field.t) =>
+      Exp.field(
+        record |> ref_(~loc),
+        Lident(field |> Field.to_string) |> lid(~loc),
+      );
+
     let update_field = (~of_ as record, ~with_ as value, ~loc, field: Field.t) =>
       Exp.record(
         [(Lident(field |> Field.to_string) |> lid(~loc), value)],
         Some(Exp.ident(Lident(record) |> lid(~loc))),
+      );
+
+    let update_ref_field =
+        (~of_ as record, ~with_ as value, ~loc, field: Field.t) =>
+      Exp.record(
+        [(Lident(field |> Field.to_string) |> lid(~loc), value)],
+        Some(record |> ref_(~loc)),
       );
 
     let record = (~loc, xs: list((string, expression))) =>
@@ -1038,7 +1191,8 @@ module Render = {
                        Lident(field.id |> Field.update_action) |> lid(~loc),
                        Some(Pat.tuple([Pat.var("input" |> str(~loc))])),
                      ),
-                     {
+                     switch (field.deps) {
+                     | [] =>
                        %expr
                        {
                          let {fieldsStatuses, formSubmissions} = state;
@@ -1125,10 +1279,195 @@ module Render = {
                                }
                              },
                          });
-                       };
+                       }
+                     | [dep, ...deps] =>
+                       %expr
+                       {
+                         let fieldsStatuses = ref(state.fieldsStatuses);
+                         let {formSubmissions} = state;
+
+                         %e
+                         {
+                           let validate_dep = dep => {
+                             let field =
+                               fields
+                               |> List.find((field: FieldSpec.t) =>
+                                    field.id |> Field.eq(dep)
+                                  );
+                             switch (field.validator) {
+                             | `Required =>
+                               switch%expr (
+                                 Form.validateFieldDependencyOnChange(
+                                   ~input,
+                                   ~status=[%e
+                                     field.id
+                                     |> E.ref_field(
+                                          ~of_="fieldsStatuses",
+                                          ~loc,
+                                        )
+                                   ],
+                                   ~validator=[%e
+                                     field.id
+                                     |> E.field(~of_="validators", ~loc)
+                                   ],
+                                   ~setStatus=[%e
+                                     [%expr
+                                       status => [%e
+                                         field.id
+                                         |> E.update_ref_field(
+                                              ~of_="fieldsStatuses",
+                                              ~with_=[%expr status],
+                                              ~loc,
+                                            )
+                                       ]
+                                     ]
+                                   ],
+                                 )
+                               ) {
+                               | Some(result) => fieldsStatuses := result
+                               | None => ()
+                               }
+                             | `Optional =>
+                               switch%expr (
+                                 [%e
+                                   field.id
+                                   |> E.field(~of_="validators", ~loc)
+                                 ]
+                               ) {
+                               | None => ()
+                               | Some(validator) =>
+                                 switch (
+                                   Form.validateFieldDependencyOnChange(
+                                     ~input,
+                                     ~status=[%e
+                                       field.id
+                                       |> E.ref_field(
+                                            ~of_="fieldsStatuses",
+                                            ~loc,
+                                          )
+                                     ],
+                                     ~validator,
+                                     ~setStatus=[%e
+                                       [%expr
+                                         status => [%e
+                                           field.id
+                                           |> E.update_ref_field(
+                                                ~of_="fieldsStatuses",
+                                                ~with_=[%expr status],
+                                                ~loc,
+                                              )
+                                         ]
+                                       ]
+                                     ],
+                                   )
+                                 ) {
+                                 | Some(result) => fieldsStatuses := result
+                                 | None => ()
+                                 }
+                               }
+                             };
+                           };
+                           deps
+                           |> E.seq(
+                                ~exp=dep |> validate_dep,
+                                ~make=validate_dep,
+                              );
+                         };
+
+                         Update({
+                           ...state,
+                           input,
+                           fieldsStatuses:
+                             switch%e (field.validator) {
+                             | `Required =>
+                               %expr
+                               {
+                                 Form.validateFieldOnChangeWithValidator(
+                                   ~input,
+                                   ~status=[%e
+                                     field.id
+                                     |> E.ref_field(
+                                          ~of_="fieldsStatuses",
+                                          ~loc,
+                                        )
+                                   ],
+                                   ~submission=formSubmissions,
+                                   ~validator=[%e
+                                     field.id
+                                     |> E.field(~of_="validators", ~loc)
+                                   ],
+                                   ~setStatus=[%e
+                                     [%expr
+                                       status => [%e
+                                         field.id
+                                         |> E.update_ref_field(
+                                              ~of_="fieldsStatuses",
+                                              ~with_=[%expr status],
+                                              ~loc,
+                                            )
+                                       ]
+                                     ]
+                                   ],
+                                 );
+                               }
+                             | `Optional =>
+                               switch%expr (
+                                 [%e
+                                   field.id
+                                   |> E.field(~of_="validators", ~loc)
+                                 ]
+                               ) {
+                               | Some(validator) =>
+                                 Form.validateFieldOnChangeWithValidator(
+                                   ~input,
+                                   ~status=[%e
+                                     field.id
+                                     |> E.ref_field(
+                                          ~of_="fieldsStatuses",
+                                          ~loc,
+                                        )
+                                   ],
+                                   ~submission=formSubmissions,
+                                   ~validator,
+                                   ~setStatus=[%e
+                                     [%expr
+                                       status => [%e
+                                         field.id
+                                         |> E.update_ref_field(
+                                              ~of_="fieldsStatuses",
+                                              ~with_=[%expr status],
+                                              ~loc,
+                                            )
+                                       ]
+                                     ]
+                                   ],
+                                 )
+                               | None =>
+                                 Form.validateFieldOnChangeWithoutValidator(
+                                   ~fieldInput=[%e
+                                     field.id |> E.field(~of_="input", ~loc)
+                                   ],
+                                   ~setStatus=[%e
+                                     [%expr
+                                       status => [%e
+                                         field.id
+                                         |> E.update_ref_field(
+                                              ~of_="fieldsStatuses",
+                                              ~with_=[%expr status],
+                                              ~loc,
+                                            )
+                                       ]
+                                     ]
+                                   ],
+                                 )
+                               }
+                             },
+                         });
+                       }
                      },
                    )
                  );
+
             let blur_actions =
               fields
               |> List.map((field: FieldSpec.t) =>

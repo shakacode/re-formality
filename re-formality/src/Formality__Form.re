@@ -39,6 +39,24 @@ let validateFieldOnChangeWithoutValidator:
     Dirty(Ok(fieldInput), Hidden)->setStatus;
   };
 
+let validateFieldDependencyOnChange:
+  type o.
+    (
+      ~input: 'input,
+      ~status: Validation.status(o, 'message),
+      ~validator: Validation.SingleValue.validator('input, o, 'message),
+      ~setStatus: Validation.status(o, 'message) => 'statuses
+    ) =>
+    option('statuses) =
+  (~input, ~status, ~validator, ~setStatus) => {
+    let Validation.SingleValue.{validate} = validator;
+    switch (status) {
+    | Pristine
+    | Dirty(_, Hidden) => None
+    | Dirty(_, Shown) => Some(Dirty(input->validate, Shown)->setStatus)
+    };
+  };
+
 let validateFieldOnBlurWithValidator:
   type o.
     (
