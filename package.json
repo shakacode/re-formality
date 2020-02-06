@@ -1,7 +1,7 @@
 {
   "workspaces": [
-    "re-formality",
-    "re-formality-examples"
+    "lib",
+    "examples"
   ],
   "private": true
 }
