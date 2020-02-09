@@ -1,21 +1,11 @@
 module SignupForm = [%form
   type input = {
-    email: string,
+    email: [@field.async] string,
     password: [@field.deps passwordConfirmation] string,
     passwordConfirmation: string,
   };
-  type output = input
-];
-
-let initialInput: SignupForm.input = {
-  email: "",
-  password: "",
-  passwordConfirmation: "",
-};
-
-let validators: SignupForm.validators = {
-  email:
-    Some({
+  let validators = {
+    email: {
       strategy: OnFirstSuccessOrFirstBlur,
       validate: ({email}) => {
         let emailRegex = [%bs.re {|/.*@.*\..+/|}];
@@ -26,9 +16,20 @@ let validators: SignupForm.validators = {
         | _ => Ok(email)
         };
       },
-    }),
-  password:
-    Some({
+      validateAsync: email =>
+        Js.Promise.(
+          email
+          ->Api.validateEmail
+          ->then_(
+              valid =>
+                valid
+                  ? Ok(email)->resolve
+                  : Error("Email is already taken")->resolve,
+              _,
+            )
+        ),
+    },
+    password: {
       strategy: OnFirstSuccessOrFirstBlur,
       validate: ({password}) => {
         let minLength = 4;
@@ -39,9 +40,8 @@ let validators: SignupForm.validators = {
         | _ => Ok(password)
         };
       },
-    }),
-  passwordConfirmation:
-    Some({
+    },
+    passwordConfirmation: {
       strategy: OnFirstSuccessOrFirstBlur,
       validate: ({password, passwordConfirmation}) =>
         switch (passwordConfirmation) {
@@ -50,7 +50,14 @@ let validators: SignupForm.validators = {
           Error("Password doesn't match")
         | _ => Ok(passwordConfirmation)
         },
-    }),
+    },
+  }
+];
+
+let initialInput: SignupForm.input = {
+  email: "",
+  password: "",
+  passwordConfirmation: "",
 };
 
 [@react.component]
@@ -58,7 +65,6 @@ let make = () => {
   let form =
     SignupForm.useForm(
       ~initialInput,
-      ~validators,
       ~onSubmit=(output, form) => {
         Js.log2("Submitted with:", output);
         Js.Global.setTimeout(
@@ -94,11 +100,13 @@ let make = () => {
           }
         />
         {switch (form.emailResult()) {
-         | Some(Error(message)) =>
+         | Some(Validating(_)) =>
+           <div className="form-message"> "Checking..."->React.string </div>
+         | Some(Result(Error(message))) =>
            <div className={Cn.make(["form-message", "failure"])}>
              message->React.string
            </div>
-         | Some(Ok(_)) =>
+         | Some(Result(Ok(_))) =>
            <div className={Cn.make(["form-message", "success"])}>
              {j|✓|j}->React.string
            </div>

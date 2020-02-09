@@ -236,7 +236,6 @@ module Make = (Form: Form) => {
               })
             | OnFirstBlur
             | OnFirstSuccessOrFirstBlur =>
-              let result = state.input->(validator.validate);
               switch (result, validator.validateAsync) {
               | (_, None) =>
                 Update({
@@ -269,7 +268,7 @@ module Make = (Form: Form) => {
                   ...state,
                   fields: state.fields->Map.set(field, Dirty(result, Shown)),
                 })
-              };
+              }
             };
           };
 

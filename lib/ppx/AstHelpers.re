@@ -19,20 +19,28 @@ module T = {
       (
         ~name,
         ~loc,
-        ~typ: FieldSpec.t => core_type,
-        fields: list(FieldSpec.t),
+        ~typ:
+           (~validator: FieldValidator.t, ~output_type: FieldType.t) =>
+           core_type,
+        scheme: Scheme.t,
       ) =>
     name
     |> str(~loc)
     |> Type.mk(
          ~kind=
            Ptype_record(
-             fields
-             |> List.map((field: FieldSpec.t) =>
-                  Type.field(
-                    field.id |> Field.to_string |> str(~loc),
-                    field |> typ,
-                  )
+             scheme
+             |> List.map((entry: Scheme.entry) =>
+                  switch (entry) {
+                  | Field(field) =>
+                    Type.field(
+                      field.name |> str(~loc),
+                      typ(
+                        ~validator=field.validator,
+                        ~output_type=field.output_type,
+                      ),
+                    )
+                  }
                 ),
            ),
        )
@@ -64,7 +72,9 @@ module E = {
   let field = (~of_ as record, ~loc, field: Field.t) =>
     Exp.field(
       Exp.ident(Lident(record) |> lid(~loc)),
-      Lident(field |> Field.to_string) |> lid(~loc),
+      switch (field) {
+      | Field(field) => Lident(field) |> lid(~loc)
+      },
     );
 
   let field2 = (~of_ as (record1, record2), ~loc, field: Field.t) =>
@@ -73,25 +83,62 @@ module E = {
         Exp.ident(Lident(record1) |> lid(~loc)),
         Lident(record2) |> lid(~loc),
       ),
-      Lident(field |> Field.to_string) |> lid(~loc),
+      switch (field) {
+      | Field(field) => Lident(field) |> lid(~loc)
+      },
     );
 
   let ref_field = (~of_ as record, ~loc, field: Field.t) =>
     Exp.field(
       record |> ref_(~loc),
-      Lident(field |> Field.to_string) |> lid(~loc),
+      switch (field) {
+      | Field(field) => Lident(field) |> lid(~loc)
+      },
     );
 
   let update_field = (~of_ as record, ~with_ as value, ~loc, field: Field.t) =>
     Exp.record(
-      [(Lident(field |> Field.to_string) |> lid(~loc), value)],
+      [
+        (
+          switch (field) {
+          | Field(field) => Lident(field) |> lid(~loc)
+          },
+          value,
+        ),
+      ],
       Some(Exp.ident(Lident(record) |> lid(~loc))),
+    );
+
+  let update_field2 =
+      (~of_ as (record1, record2), ~with_ as value, ~loc, field: Field.t) =>
+    Exp.record(
+      [
+        (
+          switch (field) {
+          | Field(field) => Lident(field) |> lid(~loc)
+          },
+          value,
+        ),
+      ],
+      Some(
+        Exp.field(
+          Exp.ident(Lident(record1) |> lid(~loc)),
+          Lident(record2) |> lid(~loc),
+        ),
+      ),
     );
 
   let update_ref_field =
       (~of_ as record, ~with_ as value, ~loc, field: Field.t) =>
     Exp.record(
-      [(Lident(field |> Field.to_string) |> lid(~loc), value)],
+      [
+        (
+          switch (field) {
+          | Field(field) => Lident(field) |> lid(~loc)
+          },
+          value,
+        ),
+      ],
       Some(record |> ref_(~loc)),
     );
 

@@ -4,18 +4,8 @@ module LoginForm = [%form
     password: string,
     rememberMe: bool,
   };
-  type output = input
-];
-
-let initialInput: LoginForm.input = {
-  email: "",
-  password: "",
-  rememberMe: false,
-};
-
-let validators: LoginForm.validators = {
-  email:
-    Some({
+  let validators = {
+    email: {
       strategy: OnFirstSuccessOrFirstBlur,
       validate: ({email}) => {
         let emailRegex = [%bs.re {|/.*@.*\..+/|}];
@@ -26,17 +16,23 @@ let validators: LoginForm.validators = {
         | _ => Ok(email)
         };
       },
-    }),
-  password:
-    Some({
+    },
+    password: {
       strategy: OnFirstBlur,
       validate: ({password}) =>
         switch (password) {
         | "" => Error("Password is required")
         | _ => Ok(password)
         },
-    }),
-  rememberMe: None,
+    },
+    rememberMe: None,
+  }
+];
+
+let initialInput: LoginForm.input = {
+  email: "",
+  password: "",
+  rememberMe: false,
 };
 
 [@react.component]
@@ -44,7 +40,6 @@ let make = () => {
   let form =
     LoginForm.useForm(
       ~initialInput,
-      ~validators,
       ~onSubmit=(output, form) => {
         Js.log2("Submitted with:", output);
         Js.Global.setTimeout(
