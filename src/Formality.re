@@ -8,6 +8,14 @@ module FormStatus = Formality__FormStatus;
 module Make = Formality__Form.Make;
 module MakeWithId = Formality__FormWithId.Make;
 
+type interface('state, 'submissionError, 'field, 'message) =
+  Formality__FormWithId.genericInterface(
+    'state,
+    'submissionError,
+    'field,
+    'message,
+  );
+
 module Async = {
   include Formality__Validation.Async;
 

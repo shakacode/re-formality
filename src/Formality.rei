@@ -5,6 +5,14 @@ module FormStatus = Formality__FormStatus;
 module Make = Formality__Form.Make;
 module MakeWithId = Formality__FormWithId.Make;
 
+type interface('state, 'submissionError, 'field, 'message) =
+  Formality__FormWithId.genericInterface(
+    'state,
+    'submissionError,
+    'field,
+    'message,
+  );
+
 type ok = Formality__Validation.Result.ok = | Valid | NoValue;
 
 type result('message) = Belt.Result.t(ok, 'message);

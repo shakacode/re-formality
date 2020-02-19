@@ -3,6 +3,22 @@ module Strategy = Formality__Strategy;
 module FormStatus = Formality__FormStatus;
 module ReactUpdate = Formality__ReactUpdate;
 
+type genericInterface('state, 'submissionError, 'field, 'message) = {
+  state: 'state,
+  status: FormStatus.t('submissionError),
+  result: 'field => option(Validation.Result.result('message)),
+  dirty: unit => bool,
+  valid: unit => bool,
+  submitting: bool,
+  change: ('field, 'state) => unit,
+  blur: 'field => unit,
+  submit: unit => unit,
+  mapSubmissionError: ('submissionError => 'submissionError) => unit,
+  dismissSubmissionError: unit => unit,
+  dismissSubmissionResult: unit => unit,
+  reset: unit => unit,
+};
+
 module type Form = {
   type field;
   type state;
@@ -45,21 +61,13 @@ module Make = (Form: Form) => {
     | DismissSubmissionResult
     | Reset;
 
-  type interface = {
-    state: Form.state,
-    status: FormStatus.t(Form.submissionError),
-    result: Form.field => option(Validation.Result.result(Form.message)),
-    dirty: unit => bool,
-    valid: unit => bool,
-    submitting: bool,
-    change: (Form.field, Form.state) => unit,
-    blur: Form.field => unit,
-    submit: unit => unit,
-    mapSubmissionError: (Form.submissionError => Form.submissionError) => unit,
-    dismissSubmissionError: unit => unit,
-    dismissSubmissionResult: unit => unit,
-    reset: unit => unit,
-  };
+  type interface =
+    genericInterface(
+      Form.state,
+      Form.submissionError,
+      Form.field,
+      Form.message,
+    );
 
   let getInitialState = input => {
     input,
