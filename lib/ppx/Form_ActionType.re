@@ -1,29 +1,69 @@
 open Meta;
 open Ast;
 open AstHelpers;
+open Printer;
 
 open Ppxlib;
 open Ast_helper;
 
-let ast = (~loc, scheme: Scheme.t) => {
+let ast = (~scheme: Scheme.t, ~loc) => {
   let update_actions =
     scheme
-    |> List.map((entry: Scheme.entry) =>
-         switch (entry) {
-         | Field({name}) =>
-           Field.Field(name)
-           |> Field.update_action
-           |> T.constructor(~args=[[%type: input]], ~loc)
-         }
+    |> List.fold_left(
+         (acc, entry: Scheme.entry) =>
+           switch (entry) {
+           | Field(field) => [
+               FieldPrinter.update_action(~field=field.name)
+               |> T.constructor(~args=[[%type: input]], ~loc),
+               ...acc,
+             ]
+           | Collection({collection, fields}) =>
+             fields
+             |> List.fold_left(
+                  (acc, field: Scheme.field) =>
+                    [
+                      FieldOfCollectionPrinter.update_action(
+                        ~collection,
+                        ~field=field.name,
+                      )
+                      |> T.constructor(
+                           ~args=[[%type: input], [%type: index]],
+                           ~loc,
+                         ),
+                      ...acc,
+                    ],
+                  acc,
+                )
+           },
+         [],
        );
 
   let blur_actions =
     scheme
-    |> List.map((entry: Scheme.entry) =>
-         switch (entry) {
-         | Field({name}) =>
-           Field.Field(name) |> Field.blur_action |> T.constructor(~loc)
-         }
+    |> List.fold_left(
+         (acc, entry: Scheme.entry) =>
+           switch (entry) {
+           | Field(field) => [
+               FieldPrinter.blur_action(~field=field.name)
+               |> T.constructor(~loc),
+               ...acc,
+             ]
+           | Collection({collection, fields}) =>
+             List.fold_right(
+               (field: Scheme.field, acc) =>
+                 [
+                   FieldOfCollectionPrinter.blur_action(
+                     ~collection,
+                     ~field=field.name,
+                   )
+                   |> T.constructor(~args=[[%type: index]], ~loc),
+                   ...acc,
+                 ],
+               fields,
+               acc,
+             )
+           },
+         [],
        );
 
   let apply_async_result_actions =
@@ -32,22 +72,73 @@ let ast = (~loc, scheme: Scheme.t) => {
          (acc, entry: Scheme.entry) =>
            switch (entry) {
            | Field({validator: SyncValidator(_)}) => acc
-           | Field({name, validator: AsyncValidator(_), output_type}) => [
-               Field.Field(name)
-               |> Field.apply_async_result_action
+           | Field({validator: AsyncValidator(_)} as field) => [
+               FieldPrinter.apply_async_result_action(~field=field.name)
                |> T.constructor(
                     ~args=[
-                      output_type |> FieldType.unpack,
+                      field.output_type |> ItemType.unpack,
                       Typ.constr(
                         Lident("result") |> lid(~loc),
                         [
-                          output_type |> FieldType.unpack,
+                          field.output_type |> ItemType.unpack,
                           Typ.constr(Lident("message") |> lid(~loc), []),
                         ],
                       ),
                     ],
                     ~loc,
                   ),
+               ...acc,
+             ]
+           | Collection({collection, fields}) =>
+             fields
+             |> List.fold_left(
+                  (acc, field: Scheme.field) =>
+                    switch (field) {
+                    | {validator: SyncValidator(_)} => acc
+                    | {validator: AsyncValidator(_)} as field => [
+                        FieldOfCollectionPrinter.apply_async_result_action(
+                          ~collection,
+                          ~field=field.name,
+                        )
+                        |> T.constructor(
+                             ~args=[
+                               field.output_type |> ItemType.unpack,
+                               [%type: index],
+                               Typ.constr(
+                                 Lident("result") |> lid(~loc),
+                                 [
+                                   field.output_type |> ItemType.unpack,
+                                   Typ.constr(
+                                     Lident("message") |> lid(~loc),
+                                     [],
+                                   ),
+                                 ],
+                               ),
+                             ],
+                             ~loc,
+                           ),
+                        ...acc,
+                      ]
+                    },
+                  acc,
+                )
+           },
+         [],
+       );
+
+  let collections_actions =
+    scheme
+    |> List.fold_left(
+         (acc, entry: Scheme.entry) =>
+           switch (entry) {
+           | Field(_) => acc
+           | Collection({collection, input_type}) => [
+               collection
+               |> CollectionPrinter.add_action
+               |> T.constructor(~args=[input_type |> ItemType.unpack], ~loc),
+               collection
+               |> CollectionPrinter.remove_action
+               |> T.constructor(~args=[[%type: index]], ~loc),
                ...acc,
              ]
            },
@@ -70,16 +161,22 @@ let ast = (~loc, scheme: Scheme.t) => {
     "Reset" |> T.constructor(~loc),
   ];
 
-  "action"
-  |> str(~loc)
-  |> Type.mk(
-       ~kind=
-         Ptype_variant(
-           rest_actions
-           |> List.append(apply_async_result_actions)
-           |> List.append(blur_actions)
-           |> List.append(update_actions),
+  Str.type_(
+    ~loc,
+    Recursive,
+    [
+      "action"
+      |> str(~loc)
+      |> Type.mk(
+           ~kind=
+             Ptype_variant(
+               rest_actions
+               |> List.append(collections_actions)
+               |> List.append(apply_async_result_actions)
+               |> List.append(blur_actions)
+               |> List.append(update_actions),
+             ),
          ),
-     )
-  |> StructureItem.from_type_declaration(~loc, ~rec_flag=Recursive);
+    ],
+  );
 };

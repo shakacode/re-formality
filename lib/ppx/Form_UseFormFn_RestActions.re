@@ -18,12 +18,14 @@ let ast = (~loc, ~async) => [
           state.input
           ->validateForm(~validators, ~fieldsStatuses=state.fieldsStatuses)
         ) {
-        | None => NoUpdate
-        | Some(Valid({output, fieldsStatuses})) =>
+        | Validating({fieldsStatuses, collectionsStatuses}) =>
+          Update({...state, fieldsStatuses, collectionsStatuses})
+        | Valid({output, fieldsStatuses, collectionsStatuses}) =>
           UpdateWithSideEffects(
             {
               ...state,
               fieldsStatuses,
+              collectionsStatuses,
               formStatus:
                 Submitting(
                   switch (state.formStatus) {
@@ -45,10 +47,11 @@ let ast = (~loc, ~async) => [
                   DismissSubmissionResult->dispatch,
               }),
           )
-        | Some(Invalid({fieldsStatuses})) =>
+        | Invalid({fieldsStatuses, collectionsStatuses}) =>
           Update({
             ...state,
             fieldsStatuses,
+            collectionsStatuses,
             formStatus: Editing,
             submissionStatus: AttemptedToSubmit,
           })
@@ -67,11 +70,12 @@ let ast = (~loc, ~async) => [
           state.input
           ->validateForm(~validators, ~fieldsStatuses=state.fieldsStatuses)
         ) {
-        | Valid({output, fieldsStatuses}) =>
+        | Valid({output, fieldsStatuses, collectionsStatuses}) =>
           UpdateWithSideEffects(
             {
               ...state,
               fieldsStatuses,
+              collectionsStatuses,
               formStatus:
                 Submitting(
                   switch (state.formStatus) {
@@ -93,10 +97,11 @@ let ast = (~loc, ~async) => [
                   DismissSubmissionResult->dispatch,
               }),
           )
-        | Invalid({fieldsStatuses}) =>
+        | Invalid({fieldsStatuses, collectionsStatuses}) =>
           Update({
             ...state,
             fieldsStatuses,
+            collectionsStatuses,
             formStatus: Editing,
             submissionStatus: AttemptedToSubmit,
           })

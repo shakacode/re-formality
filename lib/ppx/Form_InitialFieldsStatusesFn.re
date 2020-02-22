@@ -1,22 +1,64 @@
 open Meta;
 open Ast;
 open AstHelpers;
+open Printer;
 
 open Ppxlib;
 open Ast_helper;
 
-let ast = (~loc, scheme: Scheme.t) => {
+let ast = (~scheme: Scheme.t, ~collections: list(Collection.t), ~loc) => {
   [%stri
-    let initialFieldsStatuses = (_input: input): fieldsStatuses => [%e
+    let initialFieldsStatuses =
+        (
+          [%p
+            switch (collections) {
+            | [] => [%pat? _input]
+            | _ => [%pat? input]
+            }
+          ]: input,
+        )
+        : fieldsStatuses => [%e
       Exp.record(
         scheme
         |> List.map((entry: Scheme.entry) =>
-             (
-               switch (entry) {
-               | Field({name}) => Lident(name) |> lid(~loc)
-               },
-               [%expr Pristine],
-             )
+             switch (entry) {
+             | Field(field) => (
+                 Lident(field.name) |> lid(~loc),
+                 [%expr Pristine],
+               )
+             | Collection({collection, fields}) => (
+                 Lident(collection.plural) |> lid(~loc),
+                 [%expr
+                   Belt.Array.make(
+                     Belt.Array.length(
+                       [%e collection.plural |> E.field(~in_="input", ~loc)],
+                     ),
+                     [%e
+                       Exp.constraint_(
+                         Exp.record(
+                           fields
+                           |> List.map((field: Scheme.field) =>
+                                (
+                                  Lident(field.name) |> lid(~loc),
+                                  [%expr Pristine],
+                                )
+                              ),
+                           None,
+                         ),
+                         Typ.constr(
+                           Lident(
+                             collection
+                             |> CollectionPrinter.fields_statuses_type,
+                           )
+                           |> lid(~loc),
+                           [],
+                         ),
+                       )
+                     ],
+                   )
+                 ],
+               )
+             }
            ),
         None,
       )

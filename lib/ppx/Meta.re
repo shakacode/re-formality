@@ -2,41 +2,7 @@ open Ast;
 
 open Ppxlib;
 
-module Field = {
-  type t =
-    | Field(string);
-
-  let make = (label: label_declaration) => Field(label.pld_name.txt);
-
-  let to_camelized_string =
-    fun
-    | Field(field) => field;
-
-  let to_capitalized_string =
-    fun
-    | Field(field) => field |> String.capitalize_ascii;
-
-  let eq = (x1, x2) =>
-    switch (x1, x2) {
-    | (Field(x1), Field(x2)) => x1 == x2
-    };
-
-  let cmp = (x1, x2) =>
-    switch (x1, x2) {
-    | (Field(x1), Field(x2)) => compare(x1, x2)
-    };
-
-  let update_action = x => "Update" ++ (x |> to_capitalized_string) ++ "Field";
-  let blur_action = x => "Blur" ++ (x |> to_capitalized_string) ++ "Field";
-  let apply_async_result_action = x =>
-    "ApplyAsyncResultFor" ++ (x |> to_capitalized_string) ++ "Field";
-
-  let update_fn = x => "update" ++ (x |> to_capitalized_string);
-  let blur_fn = x => "blur" ++ (x |> to_capitalized_string);
-  let result_fn = x => (x |> to_camelized_string) ++ "Result";
-};
-
-module FieldType = {
+module ItemType = {
   module T: {type t;} = {
     type t = core_type;
   };
@@ -44,8 +10,6 @@ module FieldType = {
   type t = T.t;
 
   external make: core_type => t = "%identity";
-  let make = (core_type: core_type) => core_type |> make;
-
   external unpack: t => core_type = "%identity";
 
   let rec eq = (t1: core_type, t2: core_type) =>
@@ -71,6 +35,34 @@ module FieldType = {
       false;
     };
   let eq = (x1: t, x2: t) => eq(x1 |> unpack, x2 |> unpack);
+};
+
+module Collection = {
+  type t = {
+    singular: string,
+    plural: string,
+  };
+};
+
+module FieldDep = {
+  type t =
+    | DepField(string)
+    | DepFieldOfCollection({
+        collection: Collection.t,
+        field: string,
+      });
+
+  type unvalidated =
+    | UnvalidatedDepField({
+        name: string,
+        loc: Location.t,
+      })
+    | UnvalidatedDepFieldOfCollection({
+        collection: string,
+        field: string,
+        c_loc: Location.t,
+        f_loc: Location.t,
+      });
 };
 
 module FieldOptionality = {
@@ -116,15 +108,90 @@ module FieldValidator = {
     | Optional(option(unit));
 };
 
+module CollectionValidator = {
+  type t = result(option(unit), unit);
+};
+
 module Scheme = {
   type t = list(entry)
   and entry =
-    | Field({
-        name: string,
-        input_type: FieldType.t,
-        output_type: FieldType.t,
-        validator: FieldValidator.t,
-        deps: list(Field.t),
+    | Field(field)
+    | Collection({
+        collection: Collection.t,
+        fields: list(field),
+        validator: CollectionValidator.t,
+        input_type: ItemType.t,
+        output_type: ItemType.t,
+      })
+  and field = {
+    name: string,
+    input_type: ItemType.t,
+    output_type: ItemType.t,
+    validator: FieldValidator.t,
+    deps: list(FieldDep.t),
+  };
+};
+
+module InputFieldData = {
+  type unvalidated = {
+    name: string,
+    typ: ItemType.t,
+    async: option(AsyncMode.t),
+    deps: list(FieldDep.unvalidated),
+  };
+
+  type validated = {
+    name: string,
+    typ: ItemType.t,
+    async: option(AsyncMode.t),
+    deps: list(FieldDep.t),
+  };
+
+  let unvalidated = (~async, ~deps, field: label_declaration): unvalidated => {
+    name: field.pld_name.txt,
+    typ: field.pld_type |> ItemType.make,
+    async,
+    deps,
+  };
+
+  let validated = (~deps, field: unvalidated): validated => {
+    name: field.name,
+    typ: field.typ,
+    async: field.async,
+    deps,
+  };
+};
+
+module InputField = {
+  type unvalidated =
+    | UnvalidatedInputField(InputFieldData.unvalidated)
+    | UnvalidatedInputFieldOfCollection({
+        collection: Collection.t,
+        field: InputFieldData.unvalidated,
+      });
+
+  type validated =
+    | ValidatedInputField(InputFieldData.validated)
+    | ValidatedInputFieldOfCollection({
+        collection: Collection.t,
+        field: InputFieldData.validated,
+      });
+};
+
+module OutputFieldData = {
+  type t = {
+    name: string,
+    typ: ItemType.t,
+    loc: Location.t,
+  };
+};
+
+module OutputField = {
+  type t =
+    | OutputField(OutputFieldData.t)
+    | OutputFieldOfCollection({
+        collection: Collection.t,
+        field: OutputFieldData.t,
       });
 };
 
@@ -163,8 +230,8 @@ module SubmissionErrorType = {
 };
 
 module FieldOptionalityParser = {
-  let parse = (typ: FieldType.t): option(FieldOptionality.t) =>
-    switch (typ |> FieldType.unpack) {
+  let parse = (typ: ItemType.t): option(FieldOptionality.t) =>
+    switch (typ |> ItemType.unpack) {
     | {ptyp_desc: Ptyp_constr({txt: Lident("string")}, [])} =>
       Some(StringType)
     | {
@@ -186,20 +253,19 @@ module AsyncFieldParser = {
     | InvalidPayload(Location.t)
     | InvalidAsyncMode(Location.t);
 
-  let parse = (attributes: list(attribute)) => {
-    let async_attr =
-      attributes
-      |> List.find_opt(attr =>
-           switch (attr) {
-           | {attr_name: {txt: "field.async"}} => true
-           | _ => false
-           }
-         );
-    switch (async_attr) {
-    | None => Ok(None)
-    | Some({attr_payload: PStr([]), attr_loc}) =>
-      Ok(Some(AsyncMode.default))
-    | Some({
+  let attr = field =>
+    field.pld_type.ptyp_attributes
+    |> List.find_opt(attr =>
+         switch (attr) {
+         | {attr_name: {txt: "field.async"}} => true
+         | _ => false
+         }
+       );
+
+  let parse = attribute => {
+    switch (attribute) {
+    | {attr_payload: PStr([]), attr_loc} => Ok(AsyncMode.default)
+    | {
         attr_payload:
           PStr([
             {
@@ -228,197 +294,841 @@ module AsyncFieldParser = {
             },
           ]),
         attr_loc,
-      }) =>
+      } =>
       switch (mode) {
-      | "OnChange" => Ok(Some(OnChange))
-      | "OnBlur" => Ok(Some(OnBlur))
+      | "OnChange" => Ok(OnChange)
+      | "OnBlur" => Ok(OnBlur)
       | _ => Error(InvalidAsyncMode(loc))
       }
-    | Some({attr_payload: PStr([{pstr_loc}])}) =>
+    | {attr_payload: PStr([{pstr_loc}])} =>
       Error(InvalidPayload(pstr_loc))
-    | Some({attr_loc}) => Error(InvalidPayload(attr_loc))
+    | {attr_loc} => Error(InvalidPayload(attr_loc))
     };
   };
+
+  let get = field =>
+    switch (field |> attr) {
+    | None => Ok(None)
+    | Some(attr) =>
+      switch (attr |> parse) {
+      | Ok(mode) => Ok(Some(mode))
+      | Error(error) => Error(error)
+      }
+    };
 };
 
 module FieldDepsParser = {
-  type unvalidated_dep = [ | `Field(string, Location.t)];
-
   type error =
     | DepsParseError(Location.t)
-    | DepNotFound(unvalidated_dep)
-    | DepOfItself(unvalidated_dep)
-    | DepDuplicate(unvalidated_dep);
+    | DepNotFound(FieldDep.unvalidated)
+    | DepOfItself([ | `Field(string, Location.t)])
+    | DepDuplicate(FieldDep.unvalidated);
 
-  let parse = (attributes: list(attribute)) => {
-    let deps_attr =
-      attributes
-      |> List.find_opt(attr =>
-           switch (attr) {
-           | {attr_name: {txt: "field.deps"}} => true
-           | _ => false
-           }
-         );
-    switch (deps_attr) {
-    | None => Ok([])
-    | Some({
-        attr_payload: PStr([{pstr_desc: Pstr_eval(exp, _)}]),
-        attr_loc,
-      }) =>
+  let attr = field =>
+    field.pld_type.ptyp_attributes
+    |> List.find_opt(attr =>
+         switch (attr) {
+         | {attr_name: {txt: "field.deps"}} => true
+         | _ => false
+         }
+       );
+
+  let parse =
+      (attribute: attribute): result(list(FieldDep.unvalidated), error) => {
+    switch (attribute) {
+    | {attr_payload: PStr([{pstr_desc: Pstr_eval(exp, _)}]), attr_loc} =>
       switch (exp) {
       | {pexp_desc: Pexp_ident({txt: Lident(dep), loc})} =>
-        Ok([`Field((dep, loc))])
+        Ok([UnvalidatedDepField({name: dep, loc})])
+      | {
+          pexp_desc:
+            Pexp_field(
+              {
+                pexp_desc: Pexp_ident({txt: Lident(collection), loc: c_loc}),
+              },
+              {txt: Lident(field), loc: f_loc},
+            ),
+        } =>
+        Ok([
+          UnvalidatedDepFieldOfCollection({collection, field, c_loc, f_loc}),
+        ])
       | {pexp_desc: Pexp_tuple(exps)} =>
         exps
         |> List.fold_left(
-             (res, exp) =>
+             (res: result(list(FieldDep.unvalidated), error), exp) =>
                switch (res, exp) {
-               | (Error(loc), _) => Error(loc)
+               | (Error(error), _) => Error(error)
                | (
                    Ok(deps),
                    {pexp_desc: Pexp_ident({txt: Lident(dep), loc})},
                  ) =>
-                 Ok([`Field((dep, loc)), ...deps])
+                 Ok([UnvalidatedDepField({name: dep, loc}), ...deps])
+               | (
+                   Ok(deps),
+                   {
+                     pexp_desc:
+                       Pexp_field(
+                         {
+                           pexp_desc:
+                             Pexp_ident({
+                               txt: Lident(collection),
+                               loc: c_loc,
+                             }),
+                         },
+                         {txt: Lident(field), loc: f_loc},
+                       ),
+                   },
+                 ) =>
+                 Ok([
+                   UnvalidatedDepFieldOfCollection({
+                     collection,
+                     field,
+                     c_loc,
+                     f_loc,
+                   }),
+                   ...deps,
+                 ])
                | (Ok(_), {pexp_loc}) => Error(DepsParseError(pexp_loc))
                },
              Ok([]),
            )
       | {pexp_loc} => Error(DepsParseError(pexp_loc))
       }
-    | Some({attr_loc}) => Error(DepsParseError(attr_loc))
+    | {attr_loc} => Error(DepsParseError(attr_loc))
     };
   };
 
-  let validate =
-      (
-        fields:
-          list(
-            (
-              Field.t,
-              FieldType.t,
-              option(AsyncMode.t),
-              list(unvalidated_dep),
-            ),
-          ),
-      ) =>
-    fields
-    |> List.fold_left(
-         (res, (field: Field.t, _, _, deps)) =>
-           switch (res) {
-           | Error(error) => Error(error)
-           | Ok(_) =>
-             deps
-             |> List.fold_left(
-                  (res, dep) =>
-                    switch (res, dep) {
-                    | (Error(error), _) => Error(error)
-                    | (Ok (), `Field(dep_name, loc)) =>
-                      switch (
-                        deps
-                        |> List.find_all(dep' =>
-                             switch (dep') {
-                             | `Field(dep', _) => dep' == dep_name
-                             }
-                           )
-                        |> List.length
-                      ) {
-                      | 0
-                      | 1 =>
-                        switch (
-                          fields
-                          |> List.find_opt(((field: Field.t, _, _, _)) =>
-                               switch (field) {
-                               | Field(field) => field == dep_name
-                               }
-                             ),
-                          field,
-                        ) {
-                        | (None, _) => Error(DepNotFound(dep))
-                        | (Some(_), Field(field)) =>
-                          dep_name != field ? Ok() : Error(DepOfItself(dep))
-                        }
-                      | _ => Error(DepDuplicate(dep))
-                      }
-                    },
-                  Ok(),
-                )
-           },
-         Ok(),
+  let get = field =>
+    switch (field |> attr) {
+    | None => Ok([])
+    | Some(attr) => attr |> parse
+    };
+};
+
+module FieldCollectionParser = {
+  type result = Pervasives.result(ok, error)
+  and ok = {
+    collection: Collection.t,
+    fields: list(InputFieldData.unvalidated),
+    input_type: ItemType.t,
+  }
+  and error =
+    | NotArray(Location.t)
+    | InvalidTypeRef(Location.t)
+    | RecordNotFound(Location.t)
+    | NotRecord(Location.t)
+    | InvalidAsyncField(AsyncFieldParser.error)
+    | InvalidFieldDeps(FieldDepsParser.error);
+
+  let attr = (field: label_declaration) =>
+    field.pld_type.ptyp_attributes
+    |> List.find_opt(attr =>
+         switch (attr) {
+         | {attr_name: {txt: "field.collection"}} => true
+         | _ => false
+         }
        );
+
+  let parse = (~structure: structure, field: label_declaration): result => {
+    switch (field.pld_type.ptyp_desc) {
+    | Ptyp_constr({txt: Lident("array"), loc: arr_loc}, payload) =>
+      switch (payload) {
+      | [] => Error(InvalidTypeRef(arr_loc))
+      | [
+          {ptyp_desc: Ptyp_constr({txt: Lident(typ_name)}, []), ptyp_loc} as input_type,
+          ..._,
+        ] =>
+        let record_type = ref(None);
+        structure
+        |> List.iter((item: structure_item) =>
+             switch (item) {
+             | {pstr_desc: Pstr_type(rec_flag, decls)} =>
+               decls
+               |> List.iter((decl: type_declaration) =>
+                    switch (decl) {
+                    | {ptype_name: {txt: name}} when name == typ_name =>
+                      switch (decl.ptype_kind) {
+                      | Ptype_record(fields) =>
+                        record_type := Some(Ok(fields))
+                      | _ =>
+                        record_type :=
+                          Some(Error(NotRecord(decl.ptype_loc)))
+                      }
+                    | _ => ()
+                    }
+                  )
+             | _ => ()
+             }
+           );
+        switch (record_type^) {
+        | None => Error(RecordNotFound(ptyp_loc))
+        | Some(Error(error)) => Error(error)
+        | Some(Ok(fields)) =>
+          let fields =
+            fields
+            |> List.fold_left(
+                 (res, field: label_declaration) =>
+                   switch (res) {
+                   | Error(error) => Error(error)
+                   | Ok(fields) =>
+                     switch (
+                       field |> AsyncFieldParser.get,
+                       field |> FieldDepsParser.get,
+                     ) {
+                     | (Ok(async), Ok(deps)) =>
+                       Ok([
+                         field |> InputFieldData.unvalidated(~async, ~deps),
+                         ...fields,
+                       ])
+                     | (Error(error), _) => Error(InvalidAsyncField(error))
+                     | (_, Error(error)) => Error(InvalidFieldDeps(error))
+                     }
+                   },
+                 Ok([]),
+               );
+          switch (fields) {
+          | Ok(fields) =>
+            Ok({
+              collection: {
+                plural: field.pld_name.txt,
+                singular: typ_name,
+              },
+              fields,
+              input_type: input_type |> ItemType.make,
+            })
+          | Error(error) => Error(error)
+          };
+        };
+      | [{ptyp_loc}, ..._] => Error(InvalidTypeRef(ptyp_loc))
+      }
+    | _ => Error(NotArray(field.pld_loc))
+    };
+  };
+};
+
+module FieldAttributesParser = {
+  type result = Pervasives.result(option(ok), error)
+  and ok =
+    | Collection(FieldCollectionParser.ok)
+    | AsyncDeps({
+        async: option(AsyncMode.t),
+        deps: list(FieldDep.unvalidated),
+      })
+  and error =
+    | Conflict(
+        [
+          | `AsyncWithCollection(Location.t)
+          | `DepsWithCollection(Location.t)
+        ],
+      )
+    | InvalidCollectionField(FieldCollectionParser.error)
+    | InvalidAsyncField(AsyncFieldParser.error)
+    | InvalidFieldDeps(FieldDepsParser.error);
+
+  let parse = (~structure: structure, field: label_declaration) =>
+    switch (
+      field |> FieldCollectionParser.attr,
+      field |> AsyncFieldParser.attr,
+      field |> FieldDepsParser.attr,
+    ) {
+    | (Some(_), None, None) =>
+      switch (field |> FieldCollectionParser.parse(~structure)) {
+      | Ok(collection) => Ok(Some(Collection(collection)))
+      | Error(error) => Error(InvalidCollectionField(error))
+      }
+    | (None, Some(async_attr), Some(deps_attr)) =>
+      switch (
+        async_attr |> AsyncFieldParser.parse,
+        deps_attr |> FieldDepsParser.parse,
+      ) {
+      | (Ok(async), Ok(deps)) =>
+        Ok(Some(AsyncDeps({async: Some(async), deps})))
+      | (Error(error), _) => Error(InvalidAsyncField(error))
+      | (_, Error(error)) => Error(InvalidFieldDeps(error))
+      }
+    | (None, Some(async_attr), None) =>
+      switch (async_attr |> AsyncFieldParser.parse) {
+      | Ok(async) => Ok(Some(AsyncDeps({async: Some(async), deps: []})))
+      | Error(error) => Error(InvalidAsyncField(error))
+      }
+    | (None, None, Some(deps_attr)) =>
+      switch (deps_attr |> FieldDepsParser.parse) {
+      | Ok(deps) => Ok(Some(AsyncDeps({async: None, deps})))
+      | Error(error) => Error(InvalidFieldDeps(error))
+      }
+    | (None, None, None) => Ok(None)
+    | (Some(_), Some({attr_loc}), _) =>
+      Error(Conflict(`AsyncWithCollection(attr_loc)))
+    | (Some(_), _, Some({attr_loc})) =>
+      Error(Conflict(`DepsWithCollection(attr_loc)))
+    };
 };
 
 module InputTypeParser = {
   type result = Pervasives.result(ok, error)
   and ok = {
-    fields,
+    entries: list(unvalidated_entry),
     type_declaration: InputType.t,
   }
-  and fields =
-    list(
-      (
-        Field.t,
-        FieldType.t,
-        option(AsyncMode.t),
-        list(FieldDepsParser.unvalidated_dep),
-      ),
-    )
+  and unvalidated_entry =
+    | UnvalidatedInputField(InputFieldData.unvalidated)
+    | UnvalidatedInputCollection({
+        collection: Collection.t,
+        fields: list(InputFieldData.unvalidated),
+        input_type: ItemType.t,
+      })
+  and validated_entry =
+    | ValidatedInputField(InputFieldData.validated)
+    | ValidatedInputCollection({
+        collection: Collection.t,
+        fields: list(InputFieldData.validated),
+        input_type: ItemType.t,
+      })
   and error =
     | NotFound
     | NotRecord(Location.t)
-    | InvalidAsyncField(AsyncFieldParser.error)
-    | InvalidFieldDeps(FieldDepsParser.error);
+    | InvalidAttributes(FieldAttributesParser.error);
 
-  let parse = (~decl, ~rec_flag, ~loc, fields) => {
-    let fields =
+  let parse = (~decl, ~structure, ~loc, fields) => {
+    let entries =
       List.fold_right(
         (field, res) =>
-          switch (
-            res,
-            field.pld_type.ptyp_attributes |> AsyncFieldParser.parse,
-            field.pld_type.ptyp_attributes |> FieldDepsParser.parse,
-          ) {
-          | (Ok(fields), Ok(async), Ok(deps)) =>
+          switch (res, field |> FieldAttributesParser.parse(~structure)) {
+          | (
+              Ok(entries),
+              Ok(Some(Collection({collection, fields, input_type}))),
+            ) =>
             Ok([
-              (
-                field |> Field.make,
-                field.pld_type |> FieldType.make,
-                async,
-                deps,
-              ),
-              ...fields,
+              UnvalidatedInputCollection({collection, fields, input_type}),
+              ...entries,
             ])
-          | (Error(error), _, _) => Error(error)
-          | (_, Error(error), _) => Error(InvalidAsyncField(error))
-          | (_, _, Error(error)) => Error(InvalidFieldDeps(error))
+          | (Ok(entries), Ok(Some(AsyncDeps({async, deps})))) =>
+            Ok([
+              UnvalidatedInputField(
+                field |> InputFieldData.unvalidated(~async, ~deps),
+              ),
+              ...entries,
+            ])
+          | (Ok(entries), Ok(None)) =>
+            Ok([
+              UnvalidatedInputField(
+                field |> InputFieldData.unvalidated(~async=None, ~deps=[]),
+              ),
+              ...entries,
+            ])
+          | (Error(error), _) => Error(error)
+          | (_, Error(error)) => Error(InvalidAttributes(error))
           },
         fields,
         Ok([]),
       );
-    switch (fields) {
+    switch (entries) {
     | Error(error) => Error(error)
-    | Ok(fields) => Ok({fields, type_declaration: decl |> InputType.make})
+    | Ok(entries) => Ok({entries, type_declaration: decl |> InputType.make})
     };
   };
 
-  let in_deps_of = (fields: fields, field: Field.t) =>
-    fields
-    |> List.find_opt(((field', _, _, deps)) =>
-         if (field |> Field.eq(field')) {
-           false;
-         } else {
-           switch (
-             deps
-             |> List.find_opt(dep =>
-                  switch (dep, field) {
-                  | (`Field(dep, _), Field(field)) => dep == field
-                  }
-                )
-           ) {
-           | Some(_) => true
-           | None => false
-           };
-         }
+  let validate =
+      (unvalidated_entries: list(unvalidated_entry))
+      : Pervasives.result(list(validated_entry), FieldDepsParser.error) => {
+    let dup = (deps: list(FieldDep.unvalidated), dep: FieldDep.unvalidated) =>
+      switch (
+        deps
+        |> List.find_all((dep': FieldDep.unvalidated) =>
+             switch (dep, dep') {
+             | (
+                 UnvalidatedDepField({name: dep}),
+                 UnvalidatedDepField({name: dep'}),
+               ) =>
+               dep == dep
+             | (
+                 UnvalidatedDepFieldOfCollection({collection, field}),
+                 UnvalidatedDepFieldOfCollection({
+                   collection: collection',
+                   field: field',
+                 }),
+               ) =>
+               collection == collection' && field == field'
+             | (UnvalidatedDepField(_), UnvalidatedDepFieldOfCollection(_))
+             | (UnvalidatedDepFieldOfCollection(_), UnvalidatedDepField(_)) =>
+               false
+             }
+           )
+        |> List.length
+      ) {
+      | 0
+      | 1 => None
+      | _ => Some()
+      };
+
+    unvalidated_entries
+    |> List.fold_left(
+         (
+           res:
+             Pervasives.result(list(validated_entry), FieldDepsParser.error),
+           unvalidated_entry: unvalidated_entry,
+         ) =>
+           switch (res, unvalidated_entry) {
+           | (Error(error), _) => Error(error)
+           | (Ok(validated_entries), UnvalidatedInputField(field)) =>
+             let deps =
+               field.deps
+               |> List.fold_left(
+                    (
+                      res:
+                        Pervasives.result(
+                          list(FieldDep.t),
+                          FieldDepsParser.error,
+                        ),
+                      dep,
+                    ) =>
+                      switch (res) {
+                      | Error(error) => Error(error)
+                      | Ok(validated_deps) =>
+                        switch (dep |> dup(field.deps)) {
+                        | Some () => Error(FieldDepsParser.DepDuplicate(dep))
+                        | None =>
+                          switch (
+                            unvalidated_entries
+                            |> List.fold_left(
+                                 (
+                                   res:
+                                     option(
+                                       Pervasives.result(
+                                         FieldDep.t,
+                                         FieldDepsParser.error,
+                                       ),
+                                     ),
+                                   entry,
+                                 ) =>
+                                   switch (res, dep, entry) {
+                                   | (Some(_) as res, _, _) => res
+                                   | (
+                                       None,
+                                       UnvalidatedDepField(dep'),
+                                       UnvalidatedInputField(field'),
+                                     ) =>
+                                     if (field.name == field'.name
+                                         && field'.name == dep'.name) {
+                                       Some(
+                                         Error(
+                                           FieldDepsParser.DepOfItself(
+                                             `Field((dep'.name, dep'.loc)),
+                                           ),
+                                         ),
+                                       );
+                                     } else if (field'.name == dep'.name) {
+                                       Some(Ok(DepField(dep'.name)));
+                                     } else {
+                                       None;
+                                     }
+                                   | (
+                                       None,
+                                       UnvalidatedDepFieldOfCollection(dep'),
+                                       UnvalidatedInputCollection(entry'),
+                                     ) =>
+                                     if (dep'.collection
+                                         != entry'.collection.singular) {
+                                       None;
+                                     } else {
+                                       switch (
+                                         entry'.fields
+                                         |> List.find_opt(
+                                              (
+                                                field: InputFieldData.unvalidated,
+                                              ) =>
+                                              dep'.field == field.name
+                                            )
+                                       ) {
+                                       | None =>
+                                         Some(
+                                           Error(
+                                             FieldDepsParser.DepNotFound(dep),
+                                           ),
+                                         )
+                                       | Some(field) =>
+                                         Some(
+                                           Ok(
+                                             DepFieldOfCollection({
+                                               collection: entry'.collection,
+                                               field: field.name,
+                                             }),
+                                           ),
+                                         )
+                                       };
+                                     }
+                                   | (
+                                       None,
+                                       UnvalidatedDepField(_),
+                                       UnvalidatedInputCollection(_),
+                                     )
+                                   | (
+                                       None,
+                                       UnvalidatedDepFieldOfCollection(_),
+                                       UnvalidatedInputField(_),
+                                     ) =>
+                                     None
+                                   },
+                                 None,
+                               )
+                          ) {
+                          | None => Error(FieldDepsParser.DepNotFound(dep))
+                          | Some(Error(error)) => Error(error)
+                          | Some(Ok(dep_entry)) =>
+                            Ok([dep_entry, ...validated_deps])
+                          }
+                        }
+                      },
+                    Ok([]),
+                  );
+             switch (deps) {
+             | Error(error) => Error(error)
+             | Ok(deps) =>
+               Ok([
+                 ValidatedInputField(
+                   field |> InputFieldData.validated(~deps),
+                 ),
+                 ...validated_entries,
+               ])
+             };
+           | (
+               Ok(validated_entries),
+               UnvalidatedInputCollection({
+                 collection,
+                 fields: unvalidated_fields,
+                 input_type,
+               }),
+             ) =>
+             let validated_fields =
+               unvalidated_fields
+               |> List.fold_left(
+                    (
+                      res:
+                        Pervasives.result(
+                          list(InputFieldData.validated),
+                          FieldDepsParser.error,
+                        ),
+                      field: InputFieldData.unvalidated,
+                    ) =>
+                      switch (res) {
+                      | Error(error) => Error(error)
+                      | Ok(validated_fields) =>
+                        let deps =
+                          field.deps
+                          |> List.fold_left(
+                               (
+                                 res:
+                                   Pervasives.result(
+                                     list(FieldDep.t),
+                                     FieldDepsParser.error,
+                                   ),
+                                 dep,
+                               ) =>
+                                 switch (res) {
+                                 | Error(error) => Error(error)
+                                 | Ok(validated_deps) =>
+                                   switch (dep |> dup(field.deps)) {
+                                   | Some () =>
+                                     Error(FieldDepsParser.DepDuplicate(dep))
+                                   | None =>
+                                     switch (
+                                       unvalidated_entries
+                                       |> List.fold_left(
+                                            (
+                                              res:
+                                                option(
+                                                  Pervasives.result(
+                                                    FieldDep.t,
+                                                    FieldDepsParser.error,
+                                                  ),
+                                                ),
+                                              entry,
+                                            ) =>
+                                              switch (res, dep, entry) {
+                                              | (Some(_) as res, _, _) => res
+                                              | (
+                                                  None,
+                                                  UnvalidatedDepField(dep'),
+                                                  UnvalidatedInputField(
+                                                    field',
+                                                  ),
+                                                ) =>
+                                                if (field'.name == dep'.name) {
+                                                  Some(
+                                                    Ok(DepField(dep'.name)),
+                                                  );
+                                                } else {
+                                                  None;
+                                                }
+                                              | (
+                                                  None,
+                                                  UnvalidatedDepFieldOfCollection(
+                                                    dep',
+                                                  ),
+                                                  UnvalidatedInputCollection(
+                                                    entry',
+                                                  ),
+                                                ) =>
+                                                if (dep'.collection
+                                                    != entry'.collection.
+                                                         singular) {
+                                                  None;
+                                                } else {
+                                                  switch (
+                                                    entry'.fields
+                                                    |> List.fold_left(
+                                                         (
+                                                           res:
+                                                             option(
+                                                               Pervasives.result(
+                                                                 FieldDep.t,
+                                                                 FieldDepsParser.error,
+                                                               ),
+                                                             ),
+                                                           field: InputFieldData.unvalidated,
+                                                         ) =>
+                                                           switch (res) {
+                                                           | Some(_) => res
+                                                           | None =>
+                                                             if (dep'.field
+                                                                 == field.name) {
+                                                               Some(
+                                                                 Ok(
+                                                                   DepFieldOfCollection({
+                                                                    collection:
+                                                                    entry'.
+                                                                    collection,
+                                                                    field:
+                                                                    field.name,
+                                                                   }),
+                                                                 ),
+                                                               );
+                                                             } else {
+                                                               None;
+                                                             }
+                                                           },
+                                                         None,
+                                                       )
+                                                  ) {
+                                                  | None =>
+                                                    Some(
+                                                      Error(
+                                                        FieldDepsParser.DepNotFound(
+                                                          dep,
+                                                        ),
+                                                      ),
+                                                    )
+                                                  | Some(Error(error)) =>
+                                                    Some(Error(error))
+                                                  | Some(Ok(dep)) =>
+                                                    Some(Ok(dep))
+                                                  };
+                                                }
+                                              | (
+                                                  None,
+                                                  UnvalidatedDepField(_),
+                                                  UnvalidatedInputCollection(
+                                                    _
+                                                  ),
+                                                )
+                                              | (
+                                                  None,
+                                                  UnvalidatedDepFieldOfCollection(
+                                                    _
+                                                  ),
+                                                  UnvalidatedInputField(_),
+                                                ) =>
+                                                None
+                                              },
+                                            None,
+                                          )
+                                     ) {
+                                     | None =>
+                                       Error(
+                                         FieldDepsParser.DepNotFound(dep),
+                                       )
+                                     | Some(Error(error)) => Error(error)
+                                     | Some(Ok(dep_entry)) =>
+                                       Ok([dep_entry, ...validated_deps])
+                                     }
+                                   }
+                                 },
+                               Ok([]),
+                             );
+                        switch (deps) {
+                        | Error(error) => Error(error)
+                        | Ok(deps) =>
+                          Ok([
+                            field |> InputFieldData.validated(~deps),
+                            ...validated_fields,
+                          ])
+                        };
+                      },
+                    Ok([]),
+                  );
+             switch (validated_fields) {
+             | Error(error) => Error(error)
+             | Ok(validated_fields) =>
+               Ok([
+                 ValidatedInputCollection({
+                   collection,
+                   fields: validated_fields,
+                   input_type,
+                 }),
+                 ...validated_entries,
+               ])
+             };
+           },
+         Ok([]),
        );
+  };
+
+  let in_deps_of =
+      (entries: list(validated_entry), field: InputField.validated)
+      : option(InputField.validated) => {
+    entries
+    |> List.fold_left(
+         (res, entry: validated_entry) =>
+           switch (res, field, entry) {
+           | (Some(_), _, _) => res
+           | (
+               None,
+               ValidatedInputField(subject_field),
+               ValidatedInputField(entry_field),
+             ) =>
+             entry_field.deps
+             |> List.fold_left(
+                  (res: option(InputField.validated), dep: FieldDep.t) =>
+                    switch (res, dep) {
+                    | (Some(_), _) => res
+                    | (None, DepField(dep)) =>
+                      if (dep == subject_field.name) {
+                        Some(ValidatedInputField(entry_field));
+                      } else {
+                        None;
+                      }
+                    | (None, DepFieldOfCollection(_)) => None
+                    },
+                  None,
+                )
+           | (
+               None,
+               ValidatedInputField(subject_field),
+               ValidatedInputCollection({
+                 collection: entry_collection,
+                 fields: entry_fields,
+               }),
+             ) =>
+             entry_fields
+             |> List.fold_left(
+                  (
+                    res: option(InputField.validated),
+                    entry_field: InputFieldData.validated,
+                  ) =>
+                    entry_field.deps
+                    |> List.fold_left(
+                         (res: option(InputField.validated), dep: FieldDep.t) =>
+                           switch (res, dep) {
+                           | (Some(_), _) => res
+                           | (None, DepField(dep)) =>
+                             if (dep == subject_field.name) {
+                               Some(
+                                 ValidatedInputFieldOfCollection({
+                                   collection: entry_collection,
+                                   field: entry_field,
+                                 }),
+                               );
+                             } else {
+                               None;
+                             }
+                           | (None, DepFieldOfCollection(_)) => None
+                           },
+                         None,
+                       ),
+                  None,
+                )
+           | (
+               None,
+               ValidatedInputFieldOfCollection({
+                 collection: subject_collection,
+                 field: subject_field,
+               }),
+               ValidatedInputField(entry_field),
+             ) =>
+             entry_field.deps
+             |> List.fold_left(
+                  (res: option(InputField.validated), dep: FieldDep.t) =>
+                    switch (res, dep) {
+                    | (Some(_), _) => res
+                    | (None, DepField(dep)) => None
+                    | (
+                        None,
+                        DepFieldOfCollection({
+                          collection: dep_collection,
+                          field: dep_field,
+                        }),
+                      ) =>
+                      if (dep_collection.singular
+                          == subject_collection.singular
+                          && dep_field == subject_field.name) {
+                        Some(ValidatedInputField(entry_field));
+                      } else {
+                        None;
+                      }
+                    },
+                  None,
+                )
+           | (
+               None,
+               ValidatedInputFieldOfCollection({
+                 collection: subject_collection,
+                 field: subject_field,
+               }),
+               ValidatedInputCollection({
+                 collection: entry_collection,
+                 fields: entry_fields,
+               }),
+             ) =>
+             entry_fields
+             |> List.fold_left(
+                  (
+                    res: option(InputField.validated),
+                    entry_field: InputFieldData.validated,
+                  ) =>
+                    entry_field.deps
+                    |> List.fold_left(
+                         (res: option(InputField.validated), dep: FieldDep.t) =>
+                           switch (res, dep) {
+                           | (Some(_), _) => res
+                           | (None, DepField(dep)) => None
+                           | (
+                               None,
+                               DepFieldOfCollection({
+                                 collection: dep_collection,
+                                 field: dep_field,
+                               }),
+                             ) =>
+                             if (subject_collection.singular
+                                 == dep_collection.singular
+                                 && subject_field.name == dep_field) {
+                               Some(
+                                 ValidatedInputFieldOfCollection({
+                                   collection: entry_collection,
+                                   field: entry_field,
+                                 }),
+                               );
+                             } else {
+                               None;
+                             }
+                           },
+                         None,
+                       ),
+                  None,
+                )
+           },
+         None,
+       );
+  };
 };
 
 module OutputTypeParser = {
@@ -427,34 +1137,185 @@ module OutputTypeParser = {
     | NotProvided
     | AliasOfInput
     | Record({
-        fields: list((Field.t, FieldType.t, Location.t)),
+        entries: list(entry),
         loc: Location.t,
       })
+  and entry =
+    | OutputField(OutputFieldData.t)
+    | OutputCollection({
+        collection: Collection.t,
+        fields: list(OutputFieldData.t),
+        output_type: ItemType.t,
+      })
   and error =
+    | InputNotAvailable(Location.t)
     | NotRecord(Location.t)
     | BadTypeAlias({
         alias: string,
         loc: Location.t,
-      });
+      })
+    | OutputCollectionNotFound({
+        input_collection: Collection.t,
+        loc: Location.t,
+      })
+    | InvalidCollection(collection_error)
+  and collection_error =
+    | InvalidCollectionTypeRef(Location.t)
+    | CollectionTypeNotRecord(Location.t)
+    | CollectionTypeNotFound(Location.t)
+    | CollectionOutputNotArray(Location.t);
 
-  let parse_as_record = (~decl, ~loc, fields) =>
-    Record({
-      loc,
-      fields:
+  let flatten = (entries: list(entry)): list(OutputField.t) =>
+    List.fold_right(
+      (entry, acc) =>
+        switch (entry) {
+        | OutputField(field) => [OutputField.OutputField(field), ...acc]
+        | OutputCollection({collection, fields}) =>
+          List.fold_right(
+            (field, acc) =>
+              [
+                OutputField.OutputFieldOfCollection({collection, field}),
+                ...acc,
+              ],
+            fields,
+            acc,
+          )
+        },
+      entries,
+      [],
+    );
+
+  let parse =
+      (
+        ~structure,
+        ~input_collections: list(Collection.t),
+        ~loc,
+        fields: list(label_declaration),
+      ) =>
+    switch (input_collections) {
+    | [] =>
+      Ok(
+        Record({
+          loc,
+          entries:
+            List.fold_right(
+              (field, acc) =>
+                [
+                  OutputField({
+                    name: field.pld_name.txt,
+                    typ: field.pld_type |> ItemType.make,
+                    loc: field.pld_loc,
+                  }),
+                  ...acc,
+                ],
+              fields,
+              [],
+            ),
+        }),
+      )
+    | _ =>
+      let entries =
         List.fold_right(
           (field, acc) =>
-            [
-              (
-                field |> Field.make,
-                field.pld_type |> FieldType.make,
-                field.pld_loc,
-              ),
-              ...acc,
-            ],
+            switch (acc) {
+            | Error(error) => Error(error)
+            | Ok(entries) =>
+              let field_name = field.pld_name.txt;
+              switch (
+                input_collections
+                |> List.find_opt((collection: Collection.t) =>
+                     collection.plural == field_name
+                   )
+              ) {
+              | None =>
+                Ok([
+                  OutputField({
+                    name: field_name,
+                    typ: field.pld_type |> ItemType.make,
+                    loc: field.pld_loc,
+                  }),
+                  ...entries,
+                ])
+              | Some(input_collection) =>
+                switch (field.pld_type.ptyp_desc) {
+                | Ptyp_constr({txt: Lident("array"), loc: arr_loc}, payload) =>
+                  switch (payload) {
+                  | [] => Error(InvalidCollectionTypeRef(arr_loc))
+                  | [
+                      {
+                        ptyp_desc: Ptyp_constr({txt: Lident(type_name)}, []),
+                        ptyp_loc,
+                      } as output_type,
+                      ..._,
+                    ] =>
+                    let record_type = ref(None);
+                    structure
+                    |> List.iter((item: structure_item) =>
+                         switch (item) {
+                         | {pstr_desc: Pstr_type(rec_flag, decls)} =>
+                           decls
+                           |> List.iter((decl: type_declaration) =>
+                                switch (decl) {
+                                | {ptype_name: {txt: name}}
+                                    when name == type_name =>
+                                  switch (decl.ptype_kind) {
+                                  | Ptype_record(fields) =>
+                                    record_type := Some(Ok(fields))
+                                  | _ =>
+                                    record_type :=
+                                      Some(
+                                        Error(
+                                          CollectionTypeNotRecord(
+                                            decl.ptype_loc,
+                                          ),
+                                        ),
+                                      )
+                                  }
+                                | _ => ()
+                                }
+                              )
+                         | _ => ()
+                         }
+                       );
+                    switch (record_type^) {
+                    | None => Error(CollectionTypeNotFound(ptyp_loc))
+                    | Some(Error(error)) => Error(error)
+                    | Some(Ok(fields)) =>
+                      Ok([
+                        OutputCollection({
+                          collection: {
+                            plural: field_name,
+                            singular: type_name,
+                          },
+                          fields:
+                            fields
+                            |> List.map((field: label_declaration) =>
+                                 OutputFieldData.{
+                                   name: field.pld_name.txt,
+                                   typ: field.pld_type |> ItemType.make,
+                                   loc: field.pld_loc,
+                                 }
+                               ),
+                          output_type: output_type |> ItemType.make,
+                        }),
+                        ...entries,
+                      ])
+                    };
+                  | [{ptyp_loc}, ..._] =>
+                    Error(InvalidCollectionTypeRef(ptyp_loc))
+                  }
+                | _ => Error(CollectionOutputNotArray(field.pld_loc))
+                }
+              };
+            },
           fields,
-          [],
-        ),
-    });
+          Ok([]),
+        );
+      switch (entries) {
+      | Ok(entries) => Ok(Record({loc, entries}))
+      | Error(error) => Error(InvalidCollection(error))
+      };
+    };
 };
 
 module DebounceIntervalParser = {
@@ -477,11 +1338,11 @@ module ValidatorsRecordParser = {
     | ValidatorError(
         [
           | `BadRequiredValidator(
-              Field.t,
+              InputField.validated,
               [ | `Some(Location.t) | `None(Location.t)],
               [
-                | `IncludedInDeps(Field.t)
-                | `DifferentIO(FieldType.t, FieldType.t)
+                | `IncludedInDeps(InputField.validated)
+                | `DifferentIO(ItemType.t, ItemType.t)
               ],
             )
         ],
@@ -586,72 +1447,145 @@ module ValidatorsRecordParser = {
        );
   };
 
-  let find = (field: Field.t, validators: ValidatorsRecord.fields) =>
+  let find_field =
+      (field: InputField.validated, validators: ValidatorsRecord.fields) =>
     validators
-    |> List.find_opt(validator =>
-         switch (field, validator) {
-         | (Field(field), ({txt: Lident(field')}, _)) => field == field'
-         | (Field(_), ({txt: _}, _)) => false
-         }
+    |> List.fold_left(
+         (res, validator) =>
+           switch (res, field, validator) {
+           | (Some(_), _, _) => res
+           | (None, ValidatedInputField(field), ({txt: Lident(key)}, _)) =>
+             field.name == key ? Some(validator) : None
+           | (
+               None,
+               ValidatedInputFieldOfCollection({collection, field}),
+               (
+                 {txt: Lident(key)},
+                 {pexp_desc: Pexp_record(fields, None)},
+               ),
+             ) =>
+             if (collection.plural == key) {
+               fields
+               |> List.fold_left(
+                    (res, entry) =>
+                      switch (res, entry) {
+                      | (Some(_), _) => res
+                      | (
+                          None,
+                          (
+                            {txt: Lident("fields")},
+                            {pexp_desc: Pexp_record(fields, None)},
+                          ),
+                        ) =>
+                        fields
+                        |> List.find_opt(entry =>
+                             switch (entry) {
+                             | ({txt: Lident(key)}, _) => key == field.name
+                             | _ => false
+                             }
+                           )
+                      | (None, _) => None
+                      },
+                    None,
+                  );
+             } else {
+               None;
+             }
+           | (
+               None,
+               ValidatedInputFieldOfCollection({collection, field}),
+               ({txt: _}, _),
+             ) =>
+             None
+           | (None, ValidatedInputField(_), ({txt: _}, _)) => None
+           },
+         None,
        );
 
-  let required = (field: Field.t, validators: ValidatorsRecord.fields) => {
-    switch (field, validators |> find(field)) {
-    | (Field(field), Some((_, {pexp_desc: Pexp_record(_)}))) => Ok()
-    | (
-        Field(field),
-        Some((
-          _,
-          {
-            pexp_desc:
-              Pexp_construct(
-                {txt: Lident("Some")},
-                Some({pexp_desc: Pexp_record(_)}),
-              ),
-            pexp_loc,
-          },
-        )),
-      ) =>
+  let find_collection =
+      (collection: Collection.t, validators: ValidatorsRecord.fields) =>
+    validators
+    |> List.fold_left(
+         (res, validator) =>
+           switch (res, validator) {
+           | (Some(_), _) => res
+           | (
+               None,
+               (
+                 {txt: Lident(key)},
+                 {pexp_desc: Pexp_record(fields, None)},
+               ),
+             )
+               when collection.plural == key =>
+             fields
+             |> List.fold_left(
+                  (res, entry) =>
+                    switch (res, entry) {
+                    | (Some(_), _) => res
+                    | (None, ({txt: Lident("collection")}, exp)) =>
+                      Some(exp)
+                    | (None, _) => None
+                    },
+                  None,
+                )
+           | (None, ({txt: _}, _)) => None
+           },
+         None,
+       );
+
+  let required =
+      (field: InputField.validated, validators: ValidatorsRecord.fields) => {
+    switch (validators |> find_field(field)) {
+    | Some((_, {pexp_desc: Pexp_record(_)})) => Ok()
+    | Some((
+        _,
+        {
+          pexp_desc:
+            Pexp_construct(
+              {txt: Lident("Some")},
+              Some({pexp_desc: Pexp_record(_)}),
+            ),
+          pexp_loc,
+        },
+      )) =>
       Error(`Some(pexp_loc))
-    | (
-        Field(field),
-        Some((
-          _,
-          {
-            pexp_desc: Pexp_construct({txt: Lident("None")}, None),
-            pexp_loc,
-          },
-        )),
-      ) =>
+    | Some((
+        _,
+        {pexp_desc: Pexp_construct({txt: Lident("None")}, None), pexp_loc},
+      )) =>
       Error(`None(pexp_loc))
-    // Don't know what it is, let compiler do the job
-    | (Field(field), Some(_)) => Error(`BadValue)
-    // Validator doesn't exist, delegating to compiler
-    | (Field(field), None) => Error(`NotFound)
+    | Some(_) => Error(`BadValue)
+    | None => Error(`NotFound)
     };
   };
 
-  let optional = (field: Field.t, validators: ValidatorsRecord.fields) => {
-    switch (field, validators |> find(field)) {
-    | (Field(field), Some((_, {pexp_desc: Pexp_record(_)}))) => Ok(Some())
-    | (
-        Field(field),
-        Some((
-          _,
-          {pexp_desc: Pexp_construct({txt: Lident("None")}, None)},
-        )),
-      ) =>
+  let optional =
+      (field: InputField.validated, validators: ValidatorsRecord.fields) => {
+    switch (validators |> find_field(field)) {
+    | Some((_, {pexp_desc: Pexp_record(_)})) => Ok(Some())
+    | Some((_, {pexp_desc: Pexp_construct({txt: Lident("None")}, None)})) =>
       Ok(None)
-    | (Field(field), Some(_)) => Error(`BadValue)
-    | (Field(field), None) => Error(`NotFound)
+    | Some(_) => Error(`BadValue)
+    | None => Error(`NotFound)
     };
   };
+
+  let collection =
+      (collection: Collection.t, validators: ValidatorsRecord.fields) =>
+    switch (validators |> find_collection(collection)) {
+    | Some({pexp_desc: Pexp_fun(_)}) => Ok(Some())
+    | Some({pexp_desc: Pexp_construct({txt: Lident("None")}, None)}) =>
+      Ok(None)
+    | Some(_) => Error(`BadValue)
+    | None => Error(`NotFound)
+    };
 };
 
 module Metadata = {
   type t = {
     scheme: Scheme.t,
     async: bool, // meh, it should be variant: Sync(_) | Async(_)
+    collections: list(Collection.t),
     output_type: OutputTypeParser.ok,
     validators_record: ValidatorsRecord.t,
     message_type: option(unit),
@@ -666,13 +1600,13 @@ module Metadata = {
     | IOMismatch(io_mismatch)
   and io_mismatch =
     | InputFieldsNotInOutput({
-        fields: list(Field.t),
+        fields: list(InputField.validated),
         loc: Location.t,
       })
-    | OutputFieldsNotInInput({fields: list((Field.t, Location.t))})
+    | OutputFieldsNotInInput({fields: list(OutputField.t)})
     | Both({
-        input_fields_not_in_output: list(Field.t),
-        output_fields_not_in_input: list((Field.t, Location.t)),
+        input_fields_not_in_output: list(InputField.validated),
+        output_fields_not_in_input: list(OutputField.t),
         loc: Location.t,
       });
 
@@ -706,7 +1640,7 @@ module Metadata = {
                         fields
                         |> InputTypeParser.parse(
                              ~decl,
-                             ~rec_flag,
+                             ~structure,
                              ~loc=ptype_loc,
                            ),
                       )
@@ -719,15 +1653,38 @@ module Metadata = {
                       ptype_name: {txt: "output"},
                       ptype_kind: Ptype_record(fields),
                       ptype_loc,
-                    } as decl =>
-                    output_parsing_result :=
-                      Ok(
+                    } =>
+                    switch (input_parsing_result^) {
+                    | None =>
+                      output_parsing_result :=
+                        Error(InputNotAvailable(ptype_loc))
+                    | Some(Ok({entries})) =>
+                      output_parsing_result :=
                         fields
-                        |> OutputTypeParser.parse_as_record(
-                             ~decl,
+                        |> OutputTypeParser.parse(
+                             ~structure,
                              ~loc=ptype_loc,
-                           ),
-                      )
+                             ~input_collections=
+                               entries
+                               |> List.fold_left(
+                                    (
+                                      acc,
+                                      entry: InputTypeParser.unvalidated_entry,
+                                    ) =>
+                                      switch (entry) {
+                                      | UnvalidatedInputField(_) => acc
+                                      | UnvalidatedInputCollection({
+                                          collection,
+                                        }) => [
+                                          collection,
+                                          ...acc,
+                                        ]
+                                      },
+                                    [],
+                                  ),
+                           )
+                    | Some(Error(_)) => ()
+                    }
                   | {
                       ptype_name: {txt: "output"},
                       ptype_kind: Ptype_abstract,
@@ -802,261 +1759,566 @@ module Metadata = {
         Ok(output_result),
         Some(Ok(validators_record)),
       ) =>
-      switch (input_data.fields |> FieldDepsParser.validate) {
-      | Error(error) => Error(InputTypeParseError(InvalidFieldDeps(error)))
-      | Ok () =>
+      switch (input_data.entries |> InputTypeParser.validate) {
+      | Error(error) =>
+        Error(
+          InputTypeParseError(InvalidAttributes(InvalidFieldDeps(error))),
+        )
+      | Ok(validated_input_entries) =>
         let scheme: result(Scheme.t, error) =
           switch (output_result) {
           | NotProvided
           | AliasOfInput =>
-            input_data.fields
+            let validator =
+                (
+                  ~field: InputField.validated,
+                  ~entries: list(InputTypeParser.validated_entry),
+                  ~validators_record: ValidatorsRecord.t,
+                  ~async_mode: option(AsyncMode.t),
+                  ~output_type: ItemType.t,
+                )
+                : result(FieldValidator.t, error) =>
+              switch (async_mode) {
+              | None =>
+                switch (field |> InputTypeParser.in_deps_of(entries)) {
+                | Some(in_deps_of_entry) =>
+                  switch (
+                    validators_record.fields
+                    |> ValidatorsRecordParser.required(field)
+                  ) {
+                  | Ok () => Ok(SyncValidator(Ok(Required)))
+                  | Error(`NotFound | `BadValue) =>
+                    // Proceeding here since compiler
+                    // would give more insightful error message
+                    Ok(SyncValidator(Error()))
+                  | Error(`Some(_) as reason | `None(_) as reason) =>
+                    // In this case we can give more insights (hopefully)
+                    // on how to fix this error
+                    Error(
+                      ValidatorsRecordParseError(
+                        ValidatorError(
+                          `BadRequiredValidator((
+                            field,
+                            reason,
+                            `IncludedInDeps(in_deps_of_entry),
+                          )),
+                        ),
+                      ),
+                    )
+                  }
+                | None =>
+                  switch (
+                    validators_record.fields
+                    |> ValidatorsRecordParser.optional(field)
+                  ) {
+                  | Ok(res) => Ok(SyncValidator(Ok(Optional(res))))
+                  | Error(`NotFound | `BadValue) =>
+                    // Proceeding here since compiler
+                    // would give more insightful error message
+                    Ok(SyncValidator(Error()))
+                  }
+                }
+              | Some(mode) =>
+                Ok(
+                  AsyncValidator({
+                    mode,
+                    optionality: output_type |> FieldOptionalityParser.parse,
+                  }),
+                )
+              };
+
+            validated_input_entries
             |> List.fold_left(
-                 (res, (field, input_type, async, deps)) => {
-                   switch (res) {
-                   | Error(error) => Error(error)
-                   | Ok(scheme) =>
-                     let validator: result(FieldValidator.t, error) =
-                       switch (async) {
-                       | None =>
-                         switch (
-                           field
-                           |> InputTypeParser.in_deps_of(input_data.fields)
-                         ) {
-                         | Some((in_deps_of_field, _, _, _)) =>
-                           switch (
-                             validators_record.fields
-                             |> ValidatorsRecordParser.required(field)
-                           ) {
-                           | Ok () => Ok(SyncValidator(Ok(Required)))
-                           | Error(`NotFound | `BadValue) =>
-                             // Proceeding here since compiler
-                             // would give more insightful error message
-                             Ok(SyncValidator(Error()))
-                           | Error(`Some(_) as reason | `None(_) as reason) =>
-                             // In this case we can give more insights (hopefully)
-                             // on how to fix this error
-                             Error(
-                               ValidatorsRecordParseError(
-                                 ValidatorError(
-                                   `BadRequiredValidator((
-                                     field,
-                                     reason,
-                                     `IncludedInDeps(in_deps_of_field),
-                                   )),
-                                 ),
-                               ),
-                             )
-                           }
-                         | None =>
-                           switch (
-                             validators_record.fields
-                             |> ValidatorsRecordParser.optional(field)
-                           ) {
-                           | Ok(res) =>
-                             Ok(SyncValidator(Ok(Optional(res))))
-                           | Error(`NotFound | `BadValue) =>
-                             // Proceeding here since compiler
-                             // would give more insightful error message
-                             Ok(SyncValidator(Error()))
-                           }
-                         }
-                       | Some(mode) =>
-                         Ok(
-                           AsyncValidator({
-                             mode,
-                             optionality:
-                               input_type |> FieldOptionalityParser.parse,
-                           }),
-                         )
-                       };
-                     switch (field, validator) {
-                     | (Field(field), Ok(validator)) =>
+                 (res, entry: InputTypeParser.validated_entry) => {
+                   switch (res, entry) {
+                   | (Error(error), _) => Error(error)
+                   | (Ok(scheme), ValidatedInputField(field)) =>
+                     let validator =
+                       validator(
+                         ~field=ValidatedInputField(field),
+                         ~entries=validated_input_entries,
+                         ~validators_record,
+                         ~async_mode=field.async,
+                         ~output_type=field.typ,
+                       );
+                     switch (validator) {
+                     | Ok(validator) =>
                        Ok([
                          Scheme.Field({
-                           name: field,
-                           input_type,
-                           output_type: input_type,
+                           name: field.name,
+                           input_type: field.typ,
+                           output_type: field.typ,
                            validator,
-                           deps:
-                             deps
-                             |> List.map(
-                                  fun
-                                  | `Field(dep, _) => Field.Field(dep),
-                                ),
+                           deps: field.deps,
                          }),
                          ...scheme,
                        ])
-                     | (_, Error(error)) => Error(error)
+                     | Error(error) => Error(error)
+                     };
+
+                   | (
+                       Ok(scheme),
+                       ValidatedInputCollection({
+                         collection,
+                         fields,
+                         input_type,
+                       }),
+                     ) =>
+                     let fields =
+                       fields
+                       |> List.fold_left(
+                            (res, field) =>
+                              switch (res) {
+                              | Error(error) => Error(error)
+                              | Ok(fields) =>
+                                let validator =
+                                  validator(
+                                    ~field=
+                                      ValidatedInputFieldOfCollection({
+                                        collection,
+                                        field,
+                                      }),
+                                    ~entries=validated_input_entries,
+                                    ~validators_record,
+                                    ~async_mode=field.async,
+                                    ~output_type=field.typ,
+                                  );
+                                switch (validator) {
+                                | Ok(validator) =>
+                                  Ok([
+                                    Scheme.{
+                                      name: field.name,
+                                      input_type: field.typ,
+                                      output_type: field.typ,
+                                      validator,
+                                      deps: field.deps,
+                                    },
+                                    ...fields,
+                                  ])
+                                | Error(error) => Error(error)
+                                };
+                              },
+                            Ok([]),
+                          );
+                     switch (fields) {
+                     | Error(error) => Error(error)
+                     | Ok(fields) =>
+                       Ok([
+                         Scheme.Collection({
+                           collection,
+                           fields,
+                           input_type,
+                           output_type: input_type,
+                           validator:
+                             switch (
+                               validators_record.fields
+                               |> ValidatorsRecordParser.collection(
+                                    collection,
+                                  )
+                             ) {
+                             | Ok(res) => Ok(res)
+                             | Error(_) => Error()
+                             },
+                         }),
+                         ...scheme,
+                       ])
                      };
                    }
                  },
                  Ok([]),
-               )
-          | Record({fields: output_fields, loc: output_loc}) =>
+               );
+          | Record({entries: output_entries, loc: output_loc}) =>
+            let validator =
+                (
+                  ~input_field: InputField.validated,
+                  ~input_field_data: InputFieldData.validated,
+                  ~output_field_data: OutputFieldData.t,
+                  ~input_entries: list(InputTypeParser.validated_entry),
+                  ~validators_record: ValidatorsRecord.t,
+                )
+                : result(FieldValidator.t, error) =>
+              switch (input_field_data.async) {
+              | None =>
+                switch (
+                  input_field |> InputTypeParser.in_deps_of(input_entries)
+                ) {
+                | Some(in_deps_of_field) =>
+                  switch (
+                    validators_record.fields
+                    |> ValidatorsRecordParser.required(input_field)
+                  ) {
+                  | Ok () => Ok(SyncValidator(Ok(Required)))
+                  | Error(`NotFound | `BadValue) =>
+                    // Proceeding here since compiler
+                    // would give more insightful error message
+                    Ok(SyncValidator(Error()))
+                  | Error(`Some(_) as reason | `None(_) as reason) =>
+                    // In this case we can give more insights (hopefully)
+                    // on how to fix this error
+                    Error(
+                      ValidatorsRecordParseError(
+                        ValidatorError(
+                          `BadRequiredValidator((
+                            input_field,
+                            reason,
+                            `IncludedInDeps(in_deps_of_field),
+                          )),
+                        ),
+                      ),
+                    )
+                  }
+                | None =>
+                  if (ItemType.eq(input_field_data.typ, output_field_data.typ)) {
+                    switch (
+                      validators_record.fields
+                      |> ValidatorsRecordParser.optional(input_field)
+                    ) {
+                    | Ok(res) => Ok(SyncValidator(Ok(Optional(res))))
+                    | Error(`NotFound | `BadValue) =>
+                      // Proceeding here since compiler
+                      // would give more insightful error message
+                      Ok(SyncValidator(Error()))
+                    };
+                  } else {
+                    switch (
+                      validators_record.fields
+                      |> ValidatorsRecordParser.required(input_field)
+                    ) {
+                    | Ok () => Ok(SyncValidator(Ok(Required)))
+                    | Error(`NotFound | `BadValue) =>
+                      // Proceeding here since compiler
+                      // would give more insightful error message
+                      Ok(SyncValidator(Error()))
+                    | Error(`Some(_) as reason | `None(_) as reason) =>
+                      // In this case we can give more insights (hopefully)
+                      // on how to fix this error
+                      Error(
+                        ValidatorsRecordParseError(
+                          ValidatorError(
+                            `BadRequiredValidator((
+                              input_field,
+                              reason,
+                              `DifferentIO((
+                                input_field_data.typ,
+                                output_field_data.typ,
+                              )),
+                            )),
+                          ),
+                        ),
+                      )
+                    };
+                  }
+                }
+              | Some(mode) =>
+                Ok(
+                  AsyncValidator({
+                    mode,
+                    optionality:
+                      output_field_data.typ |> FieldOptionalityParser.parse,
+                  }),
+                )
+              };
+
             let (
-              matched_fields,
+              result,
               input_fields_not_in_output,
               output_fields_not_in_input,
             ) =
               List.fold_right(
                 (
+                  input_entry: InputTypeParser.validated_entry,
                   (
-                    input_field,
-                    input_field_type,
-                    input_field_async_mode,
-                    input_field_deps,
+                    result: result(Scheme.t, error),
+                    input_fields_not_in_output: list(InputField.validated),
+                    output_fields_not_in_input: list(OutputField.t),
                   ),
-                  (
-                    matched_fields,
-                    input_fields_not_in_output,
-                    output_fields_not_in_input,
-                  ),
-                ) => {
-                  let output_field =
-                    output_fields
-                    |> List.find_opt(((output_field, _, _)) =>
-                         input_field |> Field.eq(output_field)
-                       );
-                  switch (matched_fields, output_field) {
-                  | (_, None) => (
-                      matched_fields,
-                      [input_field, ...input_fields_not_in_output],
-                      output_fields_not_in_input,
-                    )
-                  | (
-                      Error(error),
-                      Some((output_field, output_field_type, _)),
-                    ) => (
-                      Error(error),
-                      input_fields_not_in_output,
-                      output_fields_not_in_input
-                      |> List.filter(((output_field, _, _)) =>
-                           !(input_field |> Field.eq(output_field))
-                         ),
-                    )
+                ) =>
+                  switch (input_entry) {
+                  | ValidatedInputField(input_field_data) =>
+                    let output_field_data =
+                      output_entries
+                      |> List.fold_left(
+                           (res, output_entry: OutputTypeParser.entry) =>
+                             switch (res, output_entry) {
+                             | (Some(_), _) => res
+                             | (None, OutputField(output_field_data)) =>
+                               input_field_data.name == output_field_data.name
+                                 ? Some(output_field_data) : None
+                             | (None, OutputCollection(_)) => None
+                             },
+                           None,
+                         );
+                    switch (result, output_field_data) {
+                    | (_, None) => (
+                        result,
+                        [
+                          ValidatedInputField(input_field_data),
+                          ...input_fields_not_in_output,
+                        ],
+                        output_fields_not_in_input,
+                      )
 
-                  | (Ok(scheme), Some((output_field, output_field_type, _))) =>
-                    let validator: result(FieldValidator.t, error) =
-                      switch (input_field_async_mode) {
-                      | None =>
-                        switch (
-                          input_field
-                          |> InputTypeParser.in_deps_of(input_data.fields)
-                        ) {
-                        | Some((in_deps_of_field, _, _, _)) =>
-                          switch (
-                            validators_record.fields
-                            |> ValidatorsRecordParser.required(input_field)
-                          ) {
-                          | Ok () => Ok(SyncValidator(Ok(Required)))
-                          | Error(`NotFound | `BadValue) =>
-                            // Proceeding here since compiler
-                            // would give more insightful error message
-                            Ok(SyncValidator(Error()))
-                          | Error(`Some(_) as reason | `None(_) as reason) =>
-                            // In this case we can give more insights (hopefully)
-                            // on how to fix this error
-                            Error(
-                              ValidatorsRecordParseError(
-                                ValidatorError(
-                                  `BadRequiredValidator((
-                                    input_field,
-                                    reason,
-                                    `IncludedInDeps(in_deps_of_field),
-                                  )),
-                                ),
-                              ),
-                            )
-                          }
-                        | None =>
-                          if (FieldType.eq(
-                                input_field_type,
-                                output_field_type,
-                              )) {
-                            switch (
-                              validators_record.fields
-                              |> ValidatorsRecordParser.optional(input_field)
-                            ) {
-                            | Ok(res) =>
-                              Ok(SyncValidator(Ok(Optional(res))))
-                            | Error(`NotFound | `BadValue) =>
-                              // Proceeding here since compiler
-                              // would give more insightful error message
-                              Ok(SyncValidator(Error()))
-                            };
-                          } else {
-                            switch (
-                              validators_record.fields
-                              |> ValidatorsRecordParser.required(input_field)
-                            ) {
-                            | Ok () => Ok(SyncValidator(Ok(Required)))
-                            | Error(`NotFound | `BadValue) =>
-                              // Proceeding here since compiler
-                              // would give more insightful error message
-                              Ok(SyncValidator(Error()))
-                            | Error(`Some(_) as reason | `None(_) as reason) =>
-                              // In this case we can give more insights (hopefully)
-                              // on how to fix this error
-                              Error(
-                                ValidatorsRecordParseError(
-                                  ValidatorError(
-                                    `BadRequiredValidator((
-                                      input_field,
-                                      reason,
-                                      `DifferentIO((
-                                        input_field_type,
-                                        output_field_type,
-                                      )),
-                                    )),
-                                  ),
-                                ),
+                    | (Error(error), Some(output_field_data)) => (
+                        Error(error),
+                        input_fields_not_in_output,
+                        output_fields_not_in_input
+                        |> List.filter((output_field: OutputField.t) =>
+                             switch (output_field) {
+                             | OutputField(output_field_data) =>
+                               output_field_data.name != input_field_data.name
+                             | OutputFieldOfCollection(_) => true
+                             }
+                           ),
+                      )
+
+                    | (Ok(scheme), Some(output_field_data)) =>
+                      let validator =
+                        validator(
+                          ~input_field=ValidatedInputField(input_field_data),
+                          ~input_field_data,
+                          ~output_field_data,
+                          ~input_entries=validated_input_entries,
+                          ~validators_record,
+                        );
+                      (
+                        switch (validator) {
+                        | Error(error) => Error(error)
+                        | Ok(validator) =>
+                          Ok([
+                            Scheme.Field({
+                              name: input_field_data.name,
+                              input_type: input_field_data.typ,
+                              output_type: output_field_data.typ,
+                              validator,
+                              deps: input_field_data.deps,
+                            }),
+                            ...scheme,
+                          ])
+                        },
+                        input_fields_not_in_output,
+                        output_fields_not_in_input
+                        |> List.filter((output_field: OutputField.t) =>
+                             switch (output_field) {
+                             | OutputField(output_field_data) =>
+                               output_field_data.name != input_field_data.name
+                             | OutputFieldOfCollection(_) => true
+                             }
+                           ),
+                      );
+                    };
+
+                  | ValidatedInputCollection({
+                      collection: input_collection,
+                      fields: input_fields,
+                      input_type: input_collection_type,
+                    }) =>
+                    let output_collection =
+                      output_entries
+                      |> List.fold_left(
+                           (res, output_entry: OutputTypeParser.entry) =>
+                             switch (res, output_entry) {
+                             | (Some(_), _) => res
+                             | (None, OutputField(_)) => res
+                             | (
+                                 None,
+                                 OutputCollection({
+                                   collection: output_collection,
+                                   fields,
+                                   output_type,
+                                 }),
+                               ) =>
+                               if (output_collection.plural
+                                   == input_collection.plural) {
+                                 Some((
+                                   output_collection,
+                                   fields,
+                                   output_type,
+                                 ));
+                               } else {
+                                 None;
+                               }
+                             },
+                           None,
+                         );
+                    switch (output_collection) {
+                    | None => (
+                        Error(
+                          OutputTypeParseError(
+                            OutputCollectionNotFound({
+                              input_collection,
+                              loc: output_loc,
+                            }),
+                          ),
+                        ),
+                        input_fields
+                        |> List.fold_left(
+                             (acc: list(InputField.validated), field) =>
+                               [
+                                 ValidatedInputFieldOfCollection({
+                                   collection: input_collection,
+                                   field,
+                                 }),
+                                 ...acc,
+                               ],
+                             input_fields_not_in_output,
+                           ),
+                        output_fields_not_in_input,
+                      )
+                    | Some((output_collection, output_fields, output_type)) =>
+                      let (
+                        fields,
+                        input_fields_not_in_output,
+                        output_fields_not_in_input,
+                      ) =
+                        List.fold_right(
+                          (
+                            input_field_data: InputFieldData.validated,
+                            (
+                              res: result(list(Scheme.field), error),
+                              input_fields_not_in_output:
+                                list(InputField.validated),
+                              output_fields_not_in_input: list(OutputField.t),
+                            ),
+                          ) => {
+                            let output_field_data =
+                              output_fields
+                              |> List.find_opt(
+                                   (output_field_data: OutputFieldData.t) =>
+                                   output_field_data.name
+                                   == input_field_data.name
+                                 );
+
+                            switch (res, output_field_data) {
+                            | (_, None) => (
+                                res,
+                                [
+                                  ValidatedInputFieldOfCollection({
+                                    collection: input_collection,
+                                    field: input_field_data,
+                                  }),
+                                  ...input_fields_not_in_output,
+                                ],
+                                output_fields_not_in_input,
                               )
+
+                            | (Error(error), Some(output_field_data)) => (
+                                Error(error),
+                                input_fields_not_in_output,
+                                output_fields_not_in_input
+                                |> List.filter((output_field: OutputField.t) =>
+                                     switch (output_field) {
+                                     | OutputField(_) => true
+                                     | OutputFieldOfCollection({
+                                         collection,
+                                         field,
+                                       }) =>
+                                       !(
+                                         input_collection.plural
+                                         == collection.plural
+                                         && output_field_data.name
+                                         == field.name
+                                       )
+                                     }
+                                   ),
+                              )
+                            | (Ok(fields), Some(output_field_data)) =>
+                              let validator =
+                                validator(
+                                  ~input_field=
+                                    ValidatedInputFieldOfCollection({
+                                      collection: input_collection,
+                                      field: input_field_data,
+                                    }),
+                                  ~input_field_data,
+                                  ~output_field_data,
+                                  ~input_entries=validated_input_entries,
+                                  ~validators_record,
+                                );
+                              (
+                                switch (validator) {
+                                | Error(error) => Error(error)
+                                | Ok(validator) =>
+                                  Ok([
+                                    {
+                                      name: input_field_data.name,
+                                      input_type: input_field_data.typ,
+                                      output_type: output_field_data.typ,
+                                      validator,
+                                      deps: input_field_data.deps,
+                                    },
+                                    ...fields,
+                                  ])
+                                },
+                                input_fields_not_in_output,
+                                output_fields_not_in_input
+                                |> List.filter((output_field: OutputField.t) =>
+                                     switch (output_field) {
+                                     | OutputField(_) => true
+                                     | OutputFieldOfCollection({
+                                         collection,
+                                         field,
+                                       }) =>
+                                       !(
+                                         input_collection.plural
+                                         == collection.plural
+                                         && output_field_data.name
+                                         == field.name
+                                       )
+                                     }
+                                   ),
+                              );
                             };
-                          }
-                        }
-                      | Some(mode) =>
-                        Ok(
-                          AsyncValidator({
-                            mode,
-                            optionality:
-                              output_field_type |> FieldOptionalityParser.parse,
-                          }),
+                          },
+                          input_fields,
+                          (
+                            Ok([]),
+                            input_fields_not_in_output,
+                            output_fields_not_in_input,
+                          ),
+                        );
+
+                      switch (result, fields) {
+                      | (Error(error), _) => (
+                          result,
+                          input_fields_not_in_output,
+                          output_fields_not_in_input,
+                        )
+                      | (Ok(_), Error(error)) => (
+                          Error(error),
+                          input_fields_not_in_output,
+                          output_fields_not_in_input,
+                        )
+                      | (Ok(scheme), Ok(fields)) => (
+                          Ok([
+                            Scheme.Collection({
+                              collection: input_collection,
+                              fields,
+                              input_type: input_collection_type,
+                              output_type,
+                              validator:
+                                switch (
+                                  validators_record.fields
+                                  |> ValidatorsRecordParser.collection(
+                                       input_collection,
+                                     )
+                                ) {
+                                | Ok(res) => Ok(res)
+                                | Error(_) => Error()
+                                },
+                            }),
+                            ...scheme,
+                          ]),
+                          input_fields_not_in_output,
+                          output_fields_not_in_input,
                         )
                       };
-
-                    (
-                      switch (input_field, validator) {
-                      | (_, Error(error)) => Error(error)
-                      | (Field(field), Ok(validator)) =>
-                        Ok([
-                          Scheme.Field({
-                            name: field,
-                            input_type: input_field_type,
-                            output_type: output_field_type,
-                            validator,
-                            deps:
-                              input_field_deps
-                              |> List.map(
-                                   fun
-                                   | `Field(dep, _) => Field.Field(dep),
-                                 ),
-                          }),
-                          ...scheme,
-                        ])
-                      },
-                      input_fields_not_in_output,
-                      output_fields_not_in_input
-                      |> List.filter(((output_field, _, _)) =>
-                           !(input_field |> Field.eq(output_field))
-                         ),
-                    );
-                  };
-                },
-                input_data.fields,
-                (Ok([]), [], output_fields),
+                    };
+                  },
+                validated_input_entries,
+                (Ok([]), [], output_entries |> OutputTypeParser.flatten),
               );
             switch (input_fields_not_in_output, output_fields_not_in_input) {
-            | ([], []) => matched_fields
+            | ([], []) => result
             | (input_fields_not_in_output, []) =>
               Error(
                 IOMismatch(
@@ -1066,13 +2328,11 @@ module Metadata = {
                   }),
                 ),
               )
-            | ([], output_fields_not_in_input) =>
+            | ([], output_entries_not_in_input) =>
               Error(
                 IOMismatch(
                   OutputFieldsNotInInput({
-                    fields:
-                      output_fields_not_in_input
-                      |> List.map(((field, _, loc)) => (field, loc)),
+                    fields: output_fields_not_in_input,
                   }),
                 ),
               )
@@ -1081,9 +2341,7 @@ module Metadata = {
                 IOMismatch(
                   Both({
                     input_fields_not_in_output,
-                    output_fields_not_in_input:
-                      output_fields_not_in_input
-                      |> List.map(((field, _, loc)) => (field, loc)),
+                    output_fields_not_in_input,
                     loc: output_loc,
                   }),
                 ),
@@ -1105,7 +2363,25 @@ module Metadata = {
                    switch (entry) {
                    | Field({validator: AsyncValidator(_)}) => true
                    | Field({validator: SyncValidator(_)}) => false
+                   | Collection({fields}) =>
+                     fields
+                     |> List.exists((field: Scheme.field) =>
+                          switch (field) {
+                          | {validator: AsyncValidator(_)} => true
+                          | {validator: SyncValidator(_)} => false
+                          }
+                        )
                    }
+                 ),
+            collections:
+              scheme
+              |> List.fold_left(
+                   (acc, entry: Scheme.entry) =>
+                     switch (entry) {
+                     | Field(_) => acc
+                     | Collection({collection}) => [collection, ...acc]
+                     },
+                   [],
                  ),
             output_type: output_result,
             validators_record,
