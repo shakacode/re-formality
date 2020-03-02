@@ -264,44 +264,30 @@ let ast = (~loc, ~async: bool, scheme: Scheme.t) => {
          [],
        );
 
-  let result_fns =
+  let result_entries =
     scheme
     |> List.fold_left(
          (acc, entry: Scheme.entry) =>
            switch (entry) {
            | Field(field) => [
                (
-                 FieldPrinter.result_fn(~field=field.name),
+                 FieldPrinter.result_value(~field=field.name),
                  switch (field.validator) {
                  | SyncValidator(_) =>
                    %expr
-                   (
-                     () => {
-                       exposeFieldResult(
-                         [%e
-                           field.name
-                           |> E.field2(
-                                ~in_=("state", "fieldsStatuses"),
-                                ~loc,
-                              )
-                         ],
-                       );
-                     }
+                   exposeFieldResult(
+                     [%e
+                       field.name
+                       |> E.field2(~in_=("state", "fieldsStatuses"), ~loc)
+                     ],
                    )
                  | AsyncValidator(_) =>
                    %expr
-                   (
-                     () => {
-                       Async.exposeFieldResult(
-                         [%e
-                           field.name
-                           |> E.field2(
-                                ~in_=("state", "fieldsStatuses"),
-                                ~loc,
-                              )
-                         ],
-                       );
-                     }
+                   Async.exposeFieldResult(
+                     [%e
+                       field.name
+                       |> E.field2(~in_=("state", "fieldsStatuses"), ~loc)
+                     ],
                    )
                  },
                ),
@@ -414,10 +400,10 @@ let ast = (~loc, ~async: bool, scheme: Scheme.t) => {
 
   E.record(
     ~loc,
-    result_fns
+    base
     |> List.append(collection_entries)
+    |> List.append(result_entries)
     |> List.append(blur_fns)
-    |> List.append(update_fns)
-    |> List.append(base),
+    |> List.append(update_fns),
   );
 };

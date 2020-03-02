@@ -74,7 +74,7 @@ let make = () => {
             })
           }
         />
-        {switch (form.emailResult()) {
+        {switch (form.emailResult) {
          | Some(Error(message)) =>
            <div className={Cn.make(["form-message", "failure"])}>
              message->React.string
@@ -103,7 +103,7 @@ let make = () => {
             })
           }
         />
-        {switch (form.passwordResult()) {
+        {switch (form.passwordResult) {
          | Some(Error(message)) =>
            <div className={Cn.make(["form-message", "failure"])}>
              message->React.string

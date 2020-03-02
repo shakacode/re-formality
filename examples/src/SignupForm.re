@@ -99,7 +99,7 @@ let make = () => {
             })
           }
         />
-        {switch (form.emailResult()) {
+        {switch (form.emailResult) {
          | Some(Validating(_)) =>
            <div className="form-message"> "Checking..."->React.string </div>
          | Some(Result(Error(message))) =>
@@ -135,7 +135,7 @@ let make = () => {
             })
           }
         />
-        {switch (form.passwordResult()) {
+        {switch (form.passwordResult) {
          | Some(Error(message)) =>
            <div className={Cn.make(["form-message", "failure"])}>
              message->React.string
@@ -164,7 +164,7 @@ let make = () => {
             })
           }
         />
-        {switch (form.passwordConfirmationResult()) {
+        {switch (form.passwordConfirmationResult) {
          | Some(Error(message)) =>
            <div className={Cn.make(["form-message", "failure"])}>
              message->React.string

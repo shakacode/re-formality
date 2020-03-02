@@ -14,7 +14,7 @@ module FieldPrinter = {
 
   let blur_fn = (~field) => "blur" ++ (field |> String.capitalize_ascii);
 
-  let result_fn = (~field) => field ++ "Result";
+  let result_value = (~field) => field ++ "Result";
 };
 
 module FieldOfCollectionPrinter = {

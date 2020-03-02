@@ -92,17 +92,16 @@ let ast = (~scheme: Scheme.t, ~async: bool, ~loc) => {
          [],
        );
 
-  let result_fns =
+  let result_entries =
     scheme
     |> List.fold_left(
          (acc, entry: Scheme.entry) =>
            switch (entry) {
            | Field(field) => [
                f(
-                 FieldPrinter.result_fn(~field=field.name),
+                 FieldPrinter.result_value(~field=field.name),
                  switch (field.validator) {
                  | SyncValidator(_) => [%type:
-                     unit =>
                      option(
                        result(
                          [%t field.output_type |> ItemType.unpack],
@@ -111,7 +110,6 @@ let ast = (~scheme: Scheme.t, ~async: bool, ~loc) => {
                      )
                    ]
                  | AsyncValidator(_) => [%type:
-                     unit =>
                      option(
                        Async.exposedFieldStatus(
                          [%t field.output_type |> ItemType.unpack],
@@ -198,7 +196,7 @@ let ast = (~scheme: Scheme.t, ~async: bool, ~loc) => {
              Ptype_record(
                base
                |> List.append(collection_entries)
-               |> List.append(result_fns)
+               |> List.append(result_entries)
                |> List.append(blur_fns)
                |> List.append(update_fns),
              ),
