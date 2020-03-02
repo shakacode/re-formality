@@ -36,7 +36,7 @@ let ast = (~scheme: Scheme.t, ~async: bool, ~loc) => {
            | Field(field) => [
                f(
                  FieldPrinter.update_fn(~field=field.name),
-                 [%type: input => unit],
+                 [%type: (input => input) => unit],
                ),
                ...acc,
              ]
@@ -50,7 +50,7 @@ let ast = (~scheme: Scheme.t, ~async: bool, ~loc) => {
                           ~collection,
                           ~field=field.name,
                         ),
-                        [%type: (input, ~at: index) => unit],
+                        [%type: (input => input, ~at: index) => unit],
                       ),
                       ...acc,
                     ],

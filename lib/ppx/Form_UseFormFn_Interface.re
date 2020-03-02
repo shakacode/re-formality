@@ -152,14 +152,14 @@ let ast = (~loc, ~async: bool, scheme: Scheme.t) => {
                  FieldPrinter.update_fn(~field=field.name),
                  [%expr
                    (
-                     input =>
+                     nextInputFn =>
                        [%e
                          Exp.construct(
                            Lident(
                              FieldPrinter.update_action(~field=field.name),
                            )
                            |> lid(~loc),
-                           Some([%expr input]),
+                           Some([%expr nextInputFn]),
                          )
                        ]
                        ->dispatch
@@ -179,7 +179,7 @@ let ast = (~loc, ~async: bool, scheme: Scheme.t) => {
                           ~field=field.name,
                         ),
                         [%expr
-                          (input, ~at as index) =>
+                          (nextInputFn, ~at as index) =>
                             [%e
                               Exp.construct(
                                 Lident(
@@ -189,7 +189,7 @@ let ast = (~loc, ~async: bool, scheme: Scheme.t) => {
                                   ),
                                 )
                                 |> lid(~loc),
-                                Some([%expr (input, index)]),
+                                Some([%expr (nextInputFn, index)]),
                               )
                             ]
                             ->dispatch

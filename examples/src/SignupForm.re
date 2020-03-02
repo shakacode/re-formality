@@ -93,10 +93,9 @@ let make = () => {
           disabled={form.submitting}
           onBlur={_ => form.blurEmail()}
           onChange={event =>
-            form.updateEmail({
-              ...form.input,
-              email: event->ReactEvent.Form.target##value,
-            })
+            form.updateEmail(input =>
+              {...input, email: event->ReactEvent.Form.target##value}
+            )
           }
         />
         {switch (form.emailResult) {
@@ -129,10 +128,9 @@ let make = () => {
           disabled={form.submitting}
           onBlur={_ => form.blurPassword()}
           onChange={event =>
-            form.updatePassword({
-              ...form.input,
-              password: event->ReactEvent.Form.target##value,
-            })
+            form.updatePassword(input =>
+              {...input, password: event->ReactEvent.Form.target##value}
+            )
           }
         />
         {switch (form.passwordResult) {
@@ -158,10 +156,12 @@ let make = () => {
           disabled={form.submitting}
           onBlur={_ => form.blurPasswordConfirmation()}
           onChange={event =>
-            form.updatePasswordConfirmation({
-              ...form.input,
-              passwordConfirmation: event->ReactEvent.Form.target##value,
-            })
+            form.updatePasswordConfirmation(input =>
+              {
+                ...input,
+                passwordConfirmation: event->ReactEvent.Form.target##value,
+              }
+            )
           }
         />
         {switch (form.passwordConfirmationResult) {

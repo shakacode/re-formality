@@ -1,4 +1,3 @@
-// TODO: [Public Api] Change `updateField` siganture so it accepts `input => input` instead of `input`
 // TODO: [Meta] In some cases (records?) order of items is reversed.
 // TODO: [Collections] Reorder items in collections
 // TODO: [General] Prolly makes sense to move functions from Formality module to own modules to reduce bundle size

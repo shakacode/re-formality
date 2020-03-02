@@ -17,7 +17,7 @@ let ast = (~loc, scheme: Scheme.t) =>
                  ~attrs=[explicit_arity(~loc)],
                  Lident(FieldPrinter.update_action(~field=field.name))
                  |> lid(~loc),
-                 Some(Pat.tuple([Pat.var("nextInput" |> str(~loc))])),
+                 Some(Pat.tuple([Pat.var("nextInputFn" |> str(~loc))])),
                ),
                switch (field.deps) {
                | [] =>
@@ -36,41 +36,47 @@ let ast = (~loc, scheme: Scheme.t) =>
                         ~loc,
                       );
 
-                 switch (field.validator) {
-                 | SyncValidator(validator) =>
-                   Form_UseFormFn_UpdateActions_SyncField.ast(
-                     ~loc,
-                     ~kind=`Field,
-                     ~validator,
-                     ~field_status_expr,
-                     ~field_input_expr,
-                     ~validator_expr,
-                     ~set_status_expr,
-                   )
-                 | AsyncValidator({mode: OnBlur, optionality}) =>
-                   Form_UseFormFn_UpdateActions_AsyncFieldInOnBlurMode.ast(
-                     ~loc,
-                     ~kind=`Field,
-                     ~optionality,
-                     ~field_status_expr,
-                     ~validator_expr,
-                     ~set_status_expr,
-                   )
-                 | AsyncValidator({mode: OnChange, optionality}) =>
-                   Form_UseFormFn_UpdateActions_AsyncFieldInOnChangeMode.ast(
-                     ~loc,
-                     ~field,
-                     ~kind=`Field,
-                     ~optionality,
-                     ~field_status_expr,
-                     ~validator_expr,
-                     ~set_status_expr,
-                   )
+                 %expr
+                 {
+                   let nextInput = nextInputFn(state.input);
+
+                   switch%e (field.validator) {
+                   | SyncValidator(validator) =>
+                     Form_UseFormFn_UpdateActions_SyncField.ast(
+                       ~loc,
+                       ~kind=`Field,
+                       ~validator,
+                       ~field_status_expr,
+                       ~field_input_expr,
+                       ~validator_expr,
+                       ~set_status_expr,
+                     )
+                   | AsyncValidator({mode: OnBlur, optionality}) =>
+                     Form_UseFormFn_UpdateActions_AsyncFieldInOnBlurMode.ast(
+                       ~loc,
+                       ~kind=`Field,
+                       ~optionality,
+                       ~field_status_expr,
+                       ~validator_expr,
+                       ~set_status_expr,
+                     )
+                   | AsyncValidator({mode: OnChange, optionality}) =>
+                     Form_UseFormFn_UpdateActions_AsyncFieldInOnChangeMode.ast(
+                       ~loc,
+                       ~field,
+                       ~kind=`Field,
+                       ~optionality,
+                       ~field_status_expr,
+                       ~validator_expr,
+                       ~set_status_expr,
+                     )
+                   };
                  };
 
                | [dep, ...deps] =>
                  %expr
                  {
+                   let nextInput = nextInputFn(state.input);
                    let nextFieldsStatuses = ref(state.fieldsStatuses);
 
                    %e
@@ -155,7 +161,7 @@ let ast = (~loc, scheme: Scheme.t) =>
                         |> lid(~loc),
                         Some(
                           Pat.tuple([
-                            Pat.var("nextInput" |> str(~loc)),
+                            Pat.var("nextInputFn" |> str(~loc)),
                             Pat.var("index" |> str(~loc)),
                           ]),
                         ),
@@ -192,41 +198,47 @@ let ast = (~loc, scheme: Scheme.t) =>
                                ~loc,
                              );
 
-                        switch (field.validator) {
-                        | SyncValidator(validator) =>
-                          Form_UseFormFn_UpdateActions_SyncField.ast(
-                            ~loc,
-                            ~kind=`FieldOfCollection,
-                            ~validator,
-                            ~field_status_expr,
-                            ~field_input_expr,
-                            ~validator_expr,
-                            ~set_status_expr,
-                          )
-                        | AsyncValidator({mode: OnBlur, optionality}) =>
-                          Form_UseFormFn_UpdateActions_AsyncFieldInOnBlurMode.ast(
-                            ~loc,
-                            ~kind=`FieldOfCollection,
-                            ~optionality,
-                            ~field_status_expr,
-                            ~validator_expr,
-                            ~set_status_expr,
-                          )
-                        | AsyncValidator({mode: OnChange, optionality}) =>
-                          Form_UseFormFn_UpdateActions_AsyncFieldInOnChangeMode.ast(
-                            ~loc,
-                            ~field,
-                            ~kind=`FieldOfCollection,
-                            ~optionality,
-                            ~field_status_expr,
-                            ~validator_expr,
-                            ~set_status_expr,
-                          )
+                        %expr
+                        {
+                          let nextInput = nextInputFn(state.input);
+
+                          switch%e (field.validator) {
+                          | SyncValidator(validator) =>
+                            Form_UseFormFn_UpdateActions_SyncField.ast(
+                              ~loc,
+                              ~kind=`FieldOfCollection,
+                              ~validator,
+                              ~field_status_expr,
+                              ~field_input_expr,
+                              ~validator_expr,
+                              ~set_status_expr,
+                            )
+                          | AsyncValidator({mode: OnBlur, optionality}) =>
+                            Form_UseFormFn_UpdateActions_AsyncFieldInOnBlurMode.ast(
+                              ~loc,
+                              ~kind=`FieldOfCollection,
+                              ~optionality,
+                              ~field_status_expr,
+                              ~validator_expr,
+                              ~set_status_expr,
+                            )
+                          | AsyncValidator({mode: OnChange, optionality}) =>
+                            Form_UseFormFn_UpdateActions_AsyncFieldInOnChangeMode.ast(
+                              ~loc,
+                              ~field,
+                              ~kind=`FieldOfCollection,
+                              ~optionality,
+                              ~field_status_expr,
+                              ~validator_expr,
+                              ~set_status_expr,
+                            )
+                          };
                         };
 
                       | [dep, ...deps] =>
                         %expr
                         {
+                          let nextInput = nextInputFn(state.input);
                           let nextFieldsStatuses = ref(state.fieldsStatuses);
 
                           %e

@@ -68,10 +68,9 @@ let make = () => {
           disabled={form.submitting}
           onBlur={_ => form.blurEmail()}
           onChange={event =>
-            form.updateEmail({
-              ...form.input,
-              email: event->ReactEvent.Form.target##value,
-            })
+            form.updateEmail(input =>
+              {...input, email: event->ReactEvent.Form.target##value}
+            )
           }
         />
         {switch (form.emailResult) {
@@ -97,10 +96,9 @@ let make = () => {
           disabled={form.submitting}
           onBlur={_ => form.blurPassword()}
           onChange={event =>
-            form.updatePassword({
-              ...form.input,
-              password: event->ReactEvent.Form.target##value,
-            })
+            form.updatePassword(input =>
+              {...input, password: event->ReactEvent.Form.target##value}
+            )
           }
         />
         {switch (form.passwordResult) {
@@ -124,10 +122,9 @@ let make = () => {
           className="push-lg"
           onBlur={_ => form.blurRememberMe()}
           onChange={event =>
-            form.updateRememberMe({
-              ...form.input,
-              rememberMe: event->ReactEvent.Form.target##checked,
-            })
+            form.updateRememberMe(input =>
+              {...input, rememberMe: event->ReactEvent.Form.target##checked}
+            )
           }
         />
         <label htmlFor="login--remember"> "Remember me"->React.string </label>

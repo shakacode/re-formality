@@ -14,7 +14,7 @@ let ast = (~scheme: Scheme.t, ~loc) => {
            switch (entry) {
            | Field(field) => [
                FieldPrinter.update_action(~field=field.name)
-               |> T.constructor(~args=[[%type: input]], ~loc),
+               |> T.constructor(~args=[[%type: input => input]], ~loc),
                ...acc,
              ]
            | Collection({collection, fields}) =>
@@ -27,7 +27,7 @@ let ast = (~scheme: Scheme.t, ~loc) => {
                         ~field=field.name,
                       )
                       |> T.constructor(
-                           ~args=[[%type: input], [%type: index]],
+                           ~args=[[%type: input => input], [%type: index]],
                            ~loc,
                          ),
                       ...acc,
