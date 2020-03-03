@@ -1,0 +1,17 @@
+#!/bin/bash
+
+SRC="test/cases/$1.re"
+DEST="test/cases/$1.output"
+
+$(yarn bin)/bsc -color never -ppx _build/default/bin/bin.exe $SRC &> $DEST
+
+RESULT=$?
+
+if [ $RESULT -eq 2 ]
+then
+  echo "Output written to $DEST"
+  exit 0
+else
+  echo "Something went wrong"
+  exit 1
+fi

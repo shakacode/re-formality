@@ -1,0 +1,5 @@
+#!/bin/bash
+
+SRC="test/cases/$1.re"
+
+$(yarn bin)/bsc -ppx _build/default/bin/bin.exe $SRC
