@@ -689,81 +689,81 @@ module Sync = {
           : formValidationResult(output, fieldsStatuses, collectionsStatuses) => {
         %e
         {
-          let match_values =
-            Exp.tuple(
-              scheme
-              |> List.map((entry: Scheme.entry) =>
-                   switch (entry) {
-                   | Field(
-                       {
-                         validator:
-                           SyncValidator(
-                             Ok(Required | Optional(Some(_))) | Error (),
-                           ),
-                       } as field,
-                     ) =>
-                     validate_field_with_sync_validator(~field, ~loc)
-                   | Field(
-                       {validator: SyncValidator(Ok(Optional(None)))} as field,
-                     ) =>
-                     validate_field_without_validator(~field, ~loc)
-                   | Field({name, validator: AsyncValidator(_)}) =>
-                     failwith(
-                       "Form that supposed to be without async validators has one. Please, file an issue with yoour use-case.",
-                     )
-                   | Collection({collection, fields, validator, output_type}) =>
-                     switch (validator) {
-                     | Ok(Some ())
-                     | Error () =>
-                       %expr
-                       (
-                         [%e validate_whole_collection(~collection, ~loc)],
-                         [%e
-                           validate_fields_of_collection_in_sync_form(
-                             ~collection,
-                             ~fields,
-                             ~output_type,
-                             ~loc,
-                           )
-                         ],
-                       )
-                     | Ok(None) =>
-                       validate_fields_of_collection_in_sync_form(
-                         ~collection,
-                         ~fields,
-                         ~output_type,
-                         ~loc,
-                       )
-                     }
-                   }
-                 ),
-            );
+          let match_values = {
+            let value = (entry: Scheme.entry) =>
+              switch (entry) {
+              | Field(
+                  {
+                    validator:
+                      SyncValidator(
+                        Ok(Required | Optional(Some(_))) | Error (),
+                      ),
+                  } as field,
+                ) =>
+                validate_field_with_sync_validator(~field, ~loc)
+              | Field(
+                  {validator: SyncValidator(Ok(Optional(None)))} as field,
+                ) =>
+                validate_field_without_validator(~field, ~loc)
+              | Field({name, validator: AsyncValidator(_)}) =>
+                failwith(
+                  "Form that supposed to be without async validators has one. Please, file an issue with yoour use-case.",
+                )
+              | Collection({collection, fields, validator, output_type}) =>
+                switch (validator) {
+                | Ok(Some ())
+                | Error () =>
+                  %expr
+                  (
+                    [%e validate_whole_collection(~collection, ~loc)],
+                    [%e
+                      validate_fields_of_collection_in_sync_form(
+                        ~collection,
+                        ~fields,
+                        ~output_type,
+                        ~loc,
+                      )
+                    ],
+                  )
+                | Ok(None) =>
+                  validate_fields_of_collection_in_sync_form(
+                    ~collection,
+                    ~fields,
+                    ~output_type,
+                    ~loc,
+                  )
+                }
+              };
+            switch (scheme) {
+            | [x] => x |> value
+            | _ => Exp.tuple(scheme |> List.map(value))
+            };
+          };
 
-          let ok_case =
+          let ok_case = {
+            let pat = (entry: Scheme.entry) =>
+              switch (entry) {
+              | Field(field) => field |> ok_pat_for_sync_field(~loc)
+              | Collection({collection, validator}) =>
+                switch (validator) {
+                | Ok(Some ())
+                | Error () => [%pat?
+                    (
+                      [%p collection |> ok_pat_for_collection(~loc)],
+                      [%p
+                        collection |> ok_pat_for_fields_of_collection(~loc)
+                      ],
+                    )
+                  ]
+                | Ok(None) =>
+                  collection |> ok_pat_for_fields_of_collection(~loc)
+                }
+              };
             Exp.case(
-              Pat.tuple(
-                scheme
-                |> List.map((entry: Scheme.entry) =>
-                     switch (entry) {
-                     | Field(field) => field |> ok_pat_for_sync_field(~loc)
-                     | Collection({collection, validator}) =>
-                       switch (validator) {
-                       | Ok(Some ())
-                       | Error () => [%pat?
-                           (
-                             [%p collection |> ok_pat_for_collection(~loc)],
-                             [%p
-                               collection
-                               |> ok_pat_for_fields_of_collection(~loc)
-                             ],
-                           )
-                         ]
-                       | Ok(None) =>
-                         collection |> ok_pat_for_fields_of_collection(~loc)
-                       }
-                     }
-                   ),
-              ),
+              switch (scheme) {
+              | [x] => x |> pat
+              | _ => Pat.tuple(scheme |> List.map(pat))
+              },
               {
                 let output =
                   Exp.record(
@@ -813,36 +813,33 @@ module Sync = {
                 };
               },
             );
+          };
 
-          let error_case =
+          let error_case = {
+            let entry = (entry: Scheme.entry) =>
+              switch (entry) {
+              | Field(field) =>
+                field |> result_and_visibility_pat_for_field(~loc)
+              | Collection({collection, validator}) =>
+                switch (validator) {
+                | Ok(Some ())
+                | Error () => [%pat?
+                    (
+                      [%p collection |> result_pat_for_collection(~loc)],
+                      [%p
+                        collection |> error_pat_for_fields_of_collection(~loc)
+                      ],
+                    )
+                  ]
+                | Ok(None) =>
+                  collection |> error_pat_for_fields_of_collection(~loc)
+                }
+              };
             Exp.case(
-              Pat.tuple(
-                scheme
-                |> List.map((entry: Scheme.entry) =>
-                     switch (entry) {
-                     | Field(field) =>
-                       field |> result_and_visibility_pat_for_field(~loc)
-                     | Collection({collection, validator}) =>
-                       switch (validator) {
-                       | Ok(Some ())
-                       | Error () => [%pat?
-                           (
-                             [%p
-                               collection |> result_pat_for_collection(~loc)
-                             ],
-                             [%p
-                               collection
-                               |> error_pat_for_fields_of_collection(~loc)
-                             ],
-                           )
-                         ]
-                       | Ok(None) =>
-                         collection
-                         |> error_pat_for_fields_of_collection(~loc)
-                       }
-                     }
-                   ),
-              ),
+              switch (scheme) {
+              | [x] => x |> entry
+              | _ => Pat.tuple(scheme |> List.map(entry))
+              },
               {
                 let fields_statuses =
                   Exp.record(
@@ -877,6 +874,7 @@ module Sync = {
                 };
               },
             );
+          };
 
           Exp.match(match_values, [ok_case, error_case]);
         };
@@ -906,53 +904,54 @@ module Async = {
             ) => {
         %e
         {
-          let match_values =
-            Exp.tuple(
-              scheme
-              |> List.map((entry: Scheme.entry) =>
-                   switch (entry) {
-                   | Field(
-                       {
-                         validator:
-                           SyncValidator(
-                             Ok(Required | Optional(Some(_))) | Error (),
-                           ),
-                       } as field,
-                     ) =>
-                     validate_field_with_sync_validator(~field, ~loc)
-                   | Field(
-                       {validator: SyncValidator(Ok(Optional(None)))} as field,
-                     ) =>
-                     validate_field_without_validator(~field, ~loc)
-                   | Field({validator: AsyncValidator(_)} as field) =>
-                     validate_field_with_async_validator(~field, ~loc)
-                   | Collection({collection, fields, validator, output_type}) =>
-                     switch (validator) {
-                     | Ok(Some ())
-                     | Error () =>
-                       %expr
-                       (
-                         [%e validate_whole_collection(~collection, ~loc)],
-                         [%e
-                           validate_fields_of_collection_in_async_form(
-                             ~collection,
-                             ~fields,
-                             ~output_type,
-                             ~loc,
-                           )
-                         ],
-                       )
-                     | Ok(None) =>
-                       validate_fields_of_collection_in_async_form(
-                         ~collection,
-                         ~fields,
-                         ~output_type,
-                         ~loc,
-                       )
-                     }
-                   }
-                 ),
-            );
+          let match_values = {
+            let value = (entry: Scheme.entry) =>
+              switch (entry) {
+              | Field(
+                  {
+                    validator:
+                      SyncValidator(
+                        Ok(Required | Optional(Some(_))) | Error (),
+                      ),
+                  } as field,
+                ) =>
+                validate_field_with_sync_validator(~field, ~loc)
+              | Field(
+                  {validator: SyncValidator(Ok(Optional(None)))} as field,
+                ) =>
+                validate_field_without_validator(~field, ~loc)
+              | Field({validator: AsyncValidator(_)} as field) =>
+                validate_field_with_async_validator(~field, ~loc)
+              | Collection({collection, fields, validator, output_type}) =>
+                switch (validator) {
+                | Ok(Some ())
+                | Error () =>
+                  %expr
+                  (
+                    [%e validate_whole_collection(~collection, ~loc)],
+                    [%e
+                      validate_fields_of_collection_in_async_form(
+                        ~collection,
+                        ~fields,
+                        ~output_type,
+                        ~loc,
+                      )
+                    ],
+                  )
+                | Ok(None) =>
+                  validate_fields_of_collection_in_async_form(
+                    ~collection,
+                    ~fields,
+                    ~output_type,
+                    ~loc,
+                  )
+                }
+              };
+            switch (scheme) {
+            | [x] => x |> value
+            | _ => Exp.tuple(scheme |> List.map(value))
+            };
+          };
 
           let validating_case = {
             let entries_might_be_in_validating_state: list(validating_entry) =
