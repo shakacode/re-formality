@@ -1,0 +1,23 @@
+{
+  "name": "re-formality-specs",
+  "version": "0.0.0",
+  "author": "Alex Fedoseev <alex.fedoseev@gmail.com>",
+  "private": "true",
+  "license": "MIT",
+  "scripts": {
+    "app:start": "parcel app/index.html",
+    "bs:build": "bsb -clean-world -make-world",
+    "bs:watch": "bsb -make-world -w",
+    "bs:clean": "bsb -clean-world",
+    "cypress:open": "cypress open",
+    "cypress:run": "cypress run"
+  },
+  "dependencies": {
+    "bs-platform": "7.0.1",
+    "bsb-js": "1.1.7",
+    "cypress": "4.1.0",
+    "parcel-bundler": "1.12.4",
+    "re-formality": "*",
+    "reason-react": "0.7.0"
+  }
+}

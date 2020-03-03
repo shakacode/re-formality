@@ -1,6 +1,7 @@
 {
   "workspaces": [
     "lib",
+    "specs",
     "examples"
   ],
   "private": true

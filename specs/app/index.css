@@ -1,0 +1,29 @@
+:root {
+  --font-size: 18px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 4px;
+  padding: 4px;
+}
+
+body {
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: center;
+}
+
+form {
+  display: flex;
+  flex-flow: column nowrap;
+  width: 300px;
+}
+
+.ok {
+  color: green;
+}
+
+.error {
+  color: red;
+}
