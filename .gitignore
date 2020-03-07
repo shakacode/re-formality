@@ -10,4 +10,4 @@ yarn-error.log
 _esy
 _build
 re-formality-ppx.install
-lib/test/**/*.cmt
+lib/test/**/*.cm[itj]

@@ -166,21 +166,40 @@ let ast = (~scheme: Scheme.t, ~async: bool, ~loc) => {
          (acc, entry: Scheme.entry) =>
            switch (entry) {
            | Field(_) => acc
-           | Collection({collection, input_type}) => [
+           | Collection({collection, validator, input_type}) =>
+             let add_fn =
                f(
                  collection |> CollectionPrinter.add_fn,
                  [%type: [%t input_type |> ItemType.unpack] => unit],
-               ),
+               );
+             let remove_fn =
                f(
                  collection |> CollectionPrinter.remove_fn,
                  [%type: (~at: index) => unit],
-               ),
-               f(
-                 collection |> CollectionPrinter.result_value,
-                 [%type: option(collectionStatus(message))],
-               ),
-               ...acc,
-             ]
+               );
+
+             let result_value =
+               switch (validator) {
+               | Ok(Some ())
+               | Error () =>
+                 Some(
+                   f(
+                     collection |> CollectionPrinter.result_value,
+                     [%type: option(collectionStatus(message))],
+                   ),
+                 )
+               | Ok(None) => None
+               };
+
+             switch (result_value) {
+             | Some(result_value) => [
+                 add_fn,
+                 remove_fn,
+                 result_value,
+                 ...acc,
+               ]
+             | None => [add_fn, remove_fn, ...acc]
+             };
            },
          [],
        );

@@ -6,8 +6,7 @@ open Printer;
 open Ppxlib;
 open Ast_helper;
 
-let dirty_collection_guard =
-    (~loc, (collection: Collection.t, fields: list(Scheme.field))) => [%expr
+let dirty_collection_guard = (~loc, {collection, fields}: Scheme.collection) => [%expr
   Belt.Array.every(
     [%e Exp.ident(Lident(collection.plural) |> lid(~loc))], item => {
     %e
@@ -24,13 +23,30 @@ let dirty_collection_guard =
           ),
           [%expr true],
         ),
-        Exp.case([%pat? _], [%expr false]),
+        Exp.case(
+          Pat.record(
+            fields
+            |> List.map((field: Scheme.field) =>
+                 (
+                   Lident(field.name) |> lid(~loc),
+                   switch (field.validator) {
+                   | SyncValidator(_) => [%pat? Dirty(_)]
+                   | AsyncValidator(_) => [%pat? Dirty(_) | Validating(_)]
+                   },
+                 )
+               ),
+            Closed,
+          ),
+          [%expr false],
+        ),
       ],
     )
   })
 ];
 
 let ast = (~loc, ~async: bool, scheme: Scheme.t) => {
+  let collections = scheme |> Scheme.collections;
+
   let base = [
     ("input", [%expr state.input]),
     ("status", [%expr state.formStatus]),
@@ -59,20 +75,7 @@ let ast = (~loc, ~async: bool, scheme: Scheme.t) => {
                   Closed,
                 ),
                 ~guard=?{
-                  switch (
-                    scheme
-                    |> List.fold_left(
-                         (acc, entry: Scheme.entry) =>
-                           switch (entry) {
-                           | Field(_) => acc
-                           | Collection({collection, fields}) => [
-                               (collection, fields),
-                               ...acc,
-                             ]
-                           },
-                         [],
-                       )
-                  ) {
+                  switch (collections) {
                   | [] => None
                   | [collection] =>
                     Some(dirty_collection_guard(~loc, collection))
@@ -89,7 +92,36 @@ let ast = (~loc, ~async: bool, scheme: Scheme.t) => {
                 },
                 [%expr false],
               ),
-              Exp.case([%pat? _], [%expr true]),
+              Exp.case(
+                Pat.record(
+                  scheme
+                  |> List.map((entry: Scheme.entry) =>
+                       switch (entry) {
+                       | Field(field) => (
+                           Lident(field.name) |> lid(~loc),
+                           switch (scheme, field.validator) {
+                           | ([_x], SyncValidator(_)) => [%pat? Dirty(_)]
+                           | ([_x], AsyncValidator(_)) => [%pat?
+                               Dirty(_) | Validating(_)
+                             ]
+                           | (_, SyncValidator(_)) => [%pat?
+                               Pristine | Dirty(_)
+                             ]
+                           | (_, AsyncValidator(_)) => [%pat?
+                               Pristine | Dirty(_) | Validating(_)
+                             ]
+                           },
+                         )
+                       | Collection({collection}) => (
+                           Lident(collection.plural) |> lid(~loc),
+                           [%pat? _],
+                         )
+                       }
+                     ),
+                  Closed,
+                ),
+                [%expr true],
+              ),
             ],
           )
         ]
@@ -352,48 +384,60 @@ let ast = (~loc, ~async: bool, scheme: Scheme.t) => {
          (acc, entry: Scheme.entry) =>
            switch (entry) {
            | Field(_) => acc
-           | Collection({collection}) => [
-               (
-                 collection |> CollectionPrinter.add_fn,
-                 [%expr
-                   (
-                     entry =>
-                       [%e
-                         Exp.construct(
-                           Lident(collection |> CollectionPrinter.add_action)
-                           |> lid(~loc),
-                           Some([%expr entry]),
-                         )
-                       ]
-                       ->dispatch
-                   )
-                 ],
-               ),
-               (
-                 collection |> CollectionPrinter.remove_fn,
-                 [%expr
-                   (
-                     (~at as index) =>
-                       [%e
-                         Exp.construct(
-                           Lident(
-                             collection |> CollectionPrinter.remove_action,
-                           )
-                           |> lid(~loc),
-                           Some([%expr index]),
-                         )
-                       ]
-                       ->dispatch
-                   )
-                 ],
-               ),
-               (
-                 collection |> CollectionPrinter.result_value,
-                 collection.plural
-                 |> E.field2(~in_=("state", "collectionsStatuses"), ~loc),
-               ),
-               ...acc,
-             ]
+           | Collection({collection, validator}) =>
+             let add_fn = (
+               collection |> CollectionPrinter.add_fn,
+               [%expr
+                 (
+                   entry =>
+                     [%e
+                       Exp.construct(
+                         Lident(collection |> CollectionPrinter.add_action)
+                         |> lid(~loc),
+                         Some([%expr entry]),
+                       )
+                     ]
+                     ->dispatch
+                 )
+               ],
+             );
+             let remove_fn = (
+               collection |> CollectionPrinter.remove_fn,
+               [%expr
+                 (
+                   (~at as index) =>
+                     [%e
+                       Exp.construct(
+                         Lident(collection |> CollectionPrinter.remove_action)
+                         |> lid(~loc),
+                         Some([%expr index]),
+                       )
+                     ]
+                     ->dispatch
+                 )
+               ],
+             );
+             let result_value =
+               switch (validator) {
+               | Ok(Some ())
+               | Error () =>
+                 Some((
+                   collection |> CollectionPrinter.result_value,
+                   collection.plural
+                   |> E.field2(~in_=("state", "collectionsStatuses"), ~loc),
+                 ))
+               | Ok(None) => None
+               };
+
+             switch (result_value) {
+             | Some(result_value) => [
+                 add_fn,
+                 remove_fn,
+                 result_value,
+                 ...acc,
+               ]
+             | None => [add_fn, remove_fn, ...acc]
+             };
            },
          [],
        );

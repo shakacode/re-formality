@@ -128,7 +128,7 @@ let ast =
     | Validating(value) =>
       UpdateWithSideEffects(
         {...state, input: nextInput, fieldsStatuses: nextFieldsStatuses},
-        ({dispatch}) => {
+        ({state: _, dispatch}) => {
           %e
           E.apply_field2(
             ~in_=("validators", field.name),

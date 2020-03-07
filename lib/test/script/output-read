@@ -1,5 +1,5 @@
 #!/bin/bash
 
-SRC="test/cases/$1.re"
+source "test/script/var"
 
-$(yarn bin)/bsc -ppx _build/default/bin/bin.exe $SRC
+$BSC -ppx $PPX -I $RE_FORMALITY -I $REASON_REACT -w $ERRORS -warn-error $ERRORS -bs-cmi-only $SRC

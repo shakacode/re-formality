@@ -1,16 +1,38 @@
 type result = {
-  actual: string,
-  expected: string,
+  actual: (string, string),
+  expected: (string, string),
 };
 
-let testable = Alcotest.string;
+let testable = Alcotest.(pair(string, string));
+let nothing = "";
 
 module Case = {
   let dir = "test/cases/";
   let source = x => dir ++ x ++ ".re";
   let output = x => dir ++ x ++ ".output";
-  let build = x =>
-    "node_modules/.bin/bsc -color never -ppx _build/default/bin/bin.exe " ++ x;
+
+  let ppx = "_build/default/bin/bin.exe";
+  let bsc = "node_modules/.bin/bsc";
+  let refmt = "node_modules/.bin/bsrefmt";
+  let reason_react = "../node_modules/reason-react/lib/ocaml";
+  let re_formality = "../node_modules/re-formality/lib/ocaml";
+  let errors = "+A";
+
+  let build = case => {
+    bsc
+    ++ " -ppx "
+    ++ ppx
+    ++ " -I "
+    ++ re_formality
+    ++ " -I "
+    ++ reason_react
+    ++ " -w "
+    ++ errors
+    ++ " -warn-error "
+    ++ errors
+    ++ " -bs-cmi-only "
+    ++ (case |> source);
+  };
 };
 
 let read = channel => {
@@ -30,18 +52,18 @@ let read = channel => {
 let actual = case => {
   let (stdout, stdin, stderr) =
     Unix.open_process_full(
-      Case.(case |> source |> build),
+      Case.(case |> build),
       [|"PATH=/usr/local/bin/"|] // TODO: Node must be available
     );
 
-  let res = stderr |> read;
+  let res = (stdout |> read, stderr |> read);
 
   Unix.close_process_full((stdout, stdin, stderr)) |> ignore;
 
   res;
 };
 
-let expected = case => {
+let output = case => {
   let file = case |> Case.output |> open_in;
   let size = file |> in_channel_length;
   let buf = size |> Bytes.create;
@@ -50,4 +72,9 @@ let expected = case => {
   buf |> Bytes.to_string;
 };
 
-let run = case => {actual: case |> actual, expected: case |> expected};
+let ok = case => {actual: case |> actual, expected: (nothing, nothing)};
+
+let error = case => {
+  actual: case |> actual,
+  expected: (nothing, case |> output),
+};

@@ -215,6 +215,43 @@ let error_pat_for_fields_of_collection = (~loc, collection: Collection.t) =>
     Pat.var(collection |> collection_fields_statuses_var |> str(~loc)),
   ]);
 
+let error_pat_for_sync_field_in_single_field_form =
+    (~loc, field: Scheme.field) =>
+  Pat.tuple([
+    Pat.alias(
+      Pat.construct(
+        ~attrs=[explicit_arity(~loc)],
+        Lident("Error") |> lid(~loc),
+        Some([%pat? _]),
+      ),
+      field_result_var(~field=field.name) |> str(~loc),
+    ),
+    Pat.var(field_result_visibility_var(~field=field.name) |> str(~loc)),
+  ]);
+
+let error_pat_for_sync_field_in_multi_field_form = (~loc, field: Scheme.field) =>
+  Pat.tuple([
+    Pat.or_(
+      Pat.alias(
+        Pat.construct(
+          ~attrs=[explicit_arity(~loc)],
+          Lident("Ok") |> lid(~loc),
+          Some([%pat? _]),
+        ),
+        field_result_var(~field=field.name) |> str(~loc),
+      ),
+      Pat.alias(
+        Pat.construct(
+          ~attrs=[explicit_arity(~loc)],
+          Lident("Error") |> lid(~loc),
+          Some([%pat? _]),
+        ),
+        field_result_var(~field=field.name) |> str(~loc),
+      ),
+    ),
+    Pat.var(field_result_visibility_var(~field=field.name) |> str(~loc)),
+  ]);
+
 let result_and_visibility_pat_for_field = (~loc, field: Scheme.field) =>
   Pat.tuple([
     Pat.var(field_result_var(~field=field.name) |> str(~loc)),
@@ -316,32 +353,30 @@ let collection_statuses_record_field = (~loc, collection: Collection.t) => (
   ),
 );
 
-let collections_statuses_record = (~loc, scheme: Scheme.t) =>
+let collections_statuses_record =
+    (~loc, collections: list(Scheme.collection)) =>
   Exp.record(
-    scheme
-    |> List.fold_left(
-         (acc, entry: Scheme.entry) =>
-           switch (entry) {
-           | Field(_) => acc
-           | Collection({validator: Ok(None)}) => acc
-           | Collection({collection, validator: Ok(Some ()) | Error ()}) => [
-               (
-                 Lident(collection.plural) |> lid(~loc),
-                 [%expr
-                   Some(
-                     [%e
-                       Exp.ident(
-                         Lident(collection |> whole_collection_result_var)
-                         |> lid(~loc),
-                       )
-                     ],
-                   )
-                 ],
-               ),
-               ...acc,
-             ]
+    collections
+    |> List.map(({collection, validator}: Scheme.collection) =>
+         (
+           Lident(collection.plural) |> lid(~loc),
+           switch (validator) {
+           | Ok(Some ())
+           | Error () =>
+             %expr
+             Some(
+               [%e
+                 Exp.ident(
+                   Lident(collection |> whole_collection_result_var)
+                   |> lid(~loc),
+                 )
+               ],
+             )
+           | Ok(None) =>
+             %expr
+             ()
            },
-         [],
+         )
        ),
     None,
   );
@@ -421,7 +456,7 @@ let validate_fields_of_collection_in_sync_form =
   let error_case =
     Exp.case(
       Pat.tuple([
-        Pat.any(),
+        [%pat? Ok(_) | Error(_)],
         ...fields |> List.map(result_and_visibility_pat_for_field(~loc)),
       ]),
       [%expr
@@ -678,7 +713,7 @@ let validate_fields_of_collection_in_async_form =
 };
 
 module Sync = {
-  let ast = (~scheme: Scheme.t, ~collections: list(Collection.t), ~loc) => {
+  let ast = (~scheme: Scheme.t, ~loc) => {
     [%stri
       let validateForm =
           (
@@ -689,6 +724,8 @@ module Sync = {
           : formValidationResult(output, fieldsStatuses, collectionsStatuses) => {
         %e
         {
+          let collections = scheme |> Scheme.collections;
+
           let match_values = {
             let value = (entry: Scheme.entry) =>
               switch (entry) {
@@ -801,13 +838,13 @@ module Sync = {
                     fieldsStatuses: [%e fields_statuses],
                     collectionsStatuses: (),
                   })
-                | _ =>
+                | collections =>
                   %expr
                   Valid({
                     output: [%e output],
                     fieldsStatuses: [%e fields_statuses],
                     collectionsStatuses: [%e
-                      scheme |> collections_statuses_record(~loc)
+                      collections |> collections_statuses_record(~loc)
                     ],
                   })
                 };
@@ -819,7 +856,12 @@ module Sync = {
             let entry = (entry: Scheme.entry) =>
               switch (entry) {
               | Field(field) =>
-                field |> result_and_visibility_pat_for_field(~loc)
+                switch (scheme) {
+                | [_x] =>
+                  field |> error_pat_for_sync_field_in_single_field_form(~loc)
+                | _ =>
+                  field |> error_pat_for_sync_field_in_multi_field_form(~loc)
+                }
               | Collection({collection, validator}) =>
                 switch (validator) {
                 | Ok(Some ())
@@ -868,7 +910,7 @@ module Sync = {
                   Invalid({
                     fieldsStatuses: [%e fields_statuses],
                     collectionsStatuses: [%e
-                      scheme |> collections_statuses_record(~loc)
+                      collections |> collections_statuses_record(~loc)
                     ],
                   })
                 };
@@ -889,7 +931,7 @@ module Async = {
     | `Collection(Collection.t)
   ];
 
-  let ast = (~scheme: Scheme.t, ~collections: list(Collection.t), ~loc) => {
+  let ast = (~scheme: Scheme.t, ~loc) => {
     [%stri
       let validateForm =
           (
@@ -904,6 +946,8 @@ module Async = {
             ) => {
         %e
         {
+          let collections = scheme |> Scheme.collections;
+
           let match_values = {
             let value = (entry: Scheme.entry) =>
               switch (entry) {
@@ -1116,13 +1160,13 @@ module Async = {
                       collectionsStatuses: (),
                     });
                   }
-                | _ =>
+                | collections =>
                   %expr
                   {
                     Validating({
                       fieldsStatuses: [%e fields_statuses],
                       collectionsStatuses: [%e
-                        scheme |> collections_statuses_record(~loc)
+                        collections |> collections_statuses_record(~loc)
                       ],
                     });
                   }
@@ -1198,13 +1242,13 @@ module Async = {
                     fieldsStatuses: [%e fields_statuses],
                     collectionsStatuses: (),
                   })
-                | _ =>
+                | collections =>
                   %expr
                   Valid({
                     output: [%e output],
                     fieldsStatuses: [%e fields_statuses],
                     collectionsStatuses: [%e
-                      scheme |> collections_statuses_record(~loc)
+                      collections |> collections_statuses_record(~loc)
                     ],
                   })
                 };
@@ -1268,12 +1312,12 @@ module Async = {
                     fieldsStatuses: [%e fields_statuses],
                     collectionsStatuses: (),
                   })
-                | _ =>
+                | collections =>
                   %expr
                   Invalid({
                     fieldsStatuses: [%e fields_statuses],
                     collectionsStatuses: [%e
-                      scheme |> collections_statuses_record(~loc)
+                      collections |> collections_statuses_record(~loc)
                     ],
                   })
                 };

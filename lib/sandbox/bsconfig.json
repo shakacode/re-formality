@@ -1,0 +1,20 @@
+{
+  "name": "re-formality-sandbox",
+  "sources": ["src"],
+  "bs-dependencies": [
+    "reason-react",
+    "re-formality"
+  ],
+  "reason": {
+    "react-jsx": 3
+  },
+  "refmt": 3,
+  "package-specs": {
+    "module": "es6",
+    "in-source": true
+  },
+  "suffix": ".bs.js",
+  "warnings": {
+    "number": "+A"
+  }
+}

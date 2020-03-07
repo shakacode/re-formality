@@ -6,18 +6,29 @@ open Printer;
 open Ppxlib;
 open Ast_helper;
 
-let ast = (~collections: list(Collection.t), ~loc) => {
+let ast = (~scheme: Scheme.t, ~loc) => {
   [%stri
     let initialCollectionsStatuses =
-      switch%e (collections) {
+      switch%e (scheme |> Scheme.collections) {
       | [] =>
         %expr
         ()
-      | _ =>
+      | collections =>
         Exp.record(
           collections
-          |> List.map((collection: Collection.t) =>
-               (Lident(collection.plural) |> lid(~loc), [%expr None])
+          |> List.map(({collection, validator}: Scheme.collection) =>
+               (
+                 Lident(collection.plural) |> lid(~loc),
+                 switch (validator) {
+                 | Ok(Some ())
+                 | Error () =>
+                   %expr
+                   None
+                 | Ok(None) =>
+                   %expr
+                   ()
+                 },
+               )
              ),
           None,
         )

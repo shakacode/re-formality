@@ -1,6 +1,9 @@
 type result = {
-  actual: string,
-  expected: string,
+  actual: (string, string),
+  expected: (string, string),
 };
-let testable: Alcotest.testable(string);
-let run: string => result;
+
+let testable: Alcotest.testable((string, string));
+
+let ok: string => result;
+let error: string => result;

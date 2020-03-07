@@ -37,7 +37,7 @@ let ast = (~loc, ~async) => [
                 ),
               submissionStatus: AttemptedToSubmit,
             },
-            ({dispatch}) =>
+            ({state: _, dispatch}) =>
               output->onSubmit({
                 notifyOnSuccess: input => SetSubmittedStatus(input)->dispatch,
                 notifyOnFailure: error =>
@@ -87,7 +87,7 @@ let ast = (~loc, ~async) => [
                 ),
               submissionStatus: AttemptedToSubmit,
             },
-            ({dispatch}) =>
+            ({state: _, dispatch}) =>
               output->onSubmit({
                 notifyOnSuccess: input => SetSubmittedStatus(input)->dispatch,
                 notifyOnFailure: error =>

@@ -1,9 +1,8 @@
 #!/bin/bash
 
-SRC="test/cases/$1.re"
-DEST="test/cases/$1.output"
+source "test/script/var"
 
-$(yarn bin)/bsc -color never -ppx _build/default/bin/bin.exe $SRC &> $DEST
+$BSC -color never -ppx $PPX $SRC &> $DEST
 
 RESULT=$?
 

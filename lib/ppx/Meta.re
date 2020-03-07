@@ -116,20 +116,32 @@ module Scheme = {
   type t = list(entry)
   and entry =
     | Field(field)
-    | Collection({
-        collection: Collection.t,
-        fields: list(field),
-        validator: CollectionValidator.t,
-        input_type: ItemType.t,
-        output_type: ItemType.t,
-      })
+    | Collection(collection)
   and field = {
     name: string,
     input_type: ItemType.t,
     output_type: ItemType.t,
     validator: FieldValidator.t,
     deps: list(FieldDep.t),
+  }
+  and collection = {
+    collection: Collection.t,
+    fields: list(field),
+    validator: CollectionValidator.t,
+    input_type: ItemType.t,
+    output_type: ItemType.t,
   };
+
+  let collections = (scheme: t) =>
+    scheme
+    |> List.fold_left(
+         (acc, entry) =>
+           switch (entry) {
+           | Field(_) => acc
+           | Collection(collection) => [collection, ...acc]
+           },
+         [],
+       );
 };
 
 module InputFieldData = {
@@ -1585,7 +1597,7 @@ module Metadata = {
   type t = {
     scheme: Scheme.t,
     async: bool, // meh, it should be variant: Sync(_) | Async(_)
-    collections: list(Collection.t),
+    // collections: list(Collection.t),
     output_type: OutputTypeParser.ok,
     validators_record: ValidatorsRecord.t,
     message_type: option(unit),
@@ -2372,16 +2384,6 @@ module Metadata = {
                           }
                         )
                    }
-                 ),
-            collections:
-              scheme
-              |> List.fold_left(
-                   (acc, entry: Scheme.entry) =>
-                     switch (entry) {
-                     | Field(_) => acc
-                     | Collection({collection}) => [collection, ...acc]
-                     },
-                   [],
                  ),
             output_type: output_result,
             validators_record,

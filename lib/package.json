@@ -13,6 +13,7 @@
     "test": "esy x test.exe",
     "test:output:read": "test/script/output-read",
     "test:output:write": "test/script/output-write",
+    "test:clean": "test/script/clean",
     "format": "bsrefmt --in-place **/*.{re,rei}"
   },
   "keywords": [

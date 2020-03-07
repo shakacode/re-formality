@@ -6,12 +6,12 @@ open Printer;
 open Ppxlib;
 open Ast_helper;
 
-let ast = (~scheme: Scheme.t, ~collections: list(Collection.t), ~loc) => {
+let ast = (~scheme: Scheme.t, ~loc) => {
   [%stri
     let initialFieldsStatuses =
         (
           [%p
-            switch (collections) {
+            switch (scheme |> Scheme.collections) {
             | [] => [%pat? _input]
             | _ => [%pat? input]
             }

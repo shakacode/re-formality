@@ -6,10 +6,10 @@ open Printer;
 open Ppxlib;
 open Ast_helper;
 
-let ast = (~collections: list(Collection.t), ~loc) => {
-  switch (collections) {
+let ast = (~scheme: Scheme.t, ~loc) => {
+  switch (scheme |> Scheme.collections) {
   | [] => [%stri type collectionsStatuses = unit]
-  | _ =>
+  | collections =>
     Str.type_(
       ~loc,
       Recursive,
@@ -20,10 +20,16 @@ let ast = (~collections: list(Collection.t), ~loc) => {
              ~kind=
                Ptype_record(
                  collections
-                 |> List.map((collection: Collection.t) =>
+                 |> List.map(({collection, validator}: Scheme.collection) =>
                       Type.field(
                         collection.plural |> str(~loc),
-                        [%type: option(collectionStatus(message))],
+                        switch (validator) {
+                        | Ok(Some(_))
+                        | Error () => [%type:
+                            option(collectionStatus(message))
+                          ]
+                        | Ok(None) => [%type: unit]
+                        },
                       )
                     ),
                ),

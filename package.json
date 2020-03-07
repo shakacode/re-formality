@@ -2,7 +2,8 @@
   "workspaces": [
     "lib",
     "specs",
-    "examples"
+    "examples",
+    "lib/sandbox"
   ],
   "private": true
 }

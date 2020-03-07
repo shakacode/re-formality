@@ -5,8 +5,7 @@ open AstHelpers;
 open Ppxlib;
 open Ast_helper;
 
-let ast =
-    (~scheme: Scheme.t, ~async: bool, ~collections: list(Collection.t), ~loc) => [%stri
+let ast = (~scheme: Scheme.t, ~async: bool, ~loc) => [%stri
   let useForm =
       (
         ~initialInput: input,
@@ -17,27 +16,25 @@ let ast =
       React.useMemo1(() => initialInput->initialState, [|initialInput|]);
 
     let (state, dispatch) =
-      memoizedInitialState->ReactUpdate.useReducer((state, action) => {
-        %e
-        {
-          Exp.match(
-            [%expr action],
-            Form_UseFormFn_RestActions.ast(~loc, ~async)
-            |> List.append(
-                 Form_UseFormFn_CollectionsActions.ast(
-                   ~loc,
-                   ~collections,
-                   scheme,
-                 ),
-               )
-            |> List.append(
-                 Form_UseFormFn_ApplyAsyncResultActions.ast(~loc, scheme),
-               )
-            |> List.append(Form_UseFormFn_BlurActions.ast(~loc, scheme))
-            |> List.append(Form_UseFormFn_UpdateActions.ast(~loc, scheme)),
-          );
-        }
-      });
+      ReactUpdate.(
+        memoizedInitialState->useReducer((state, action) => {
+          %e
+          {
+            Exp.match(
+              [%expr action],
+              Form_UseFormFn_RestActions.ast(~loc, ~async)
+              |> List.append(
+                   Form_UseFormFn_CollectionsActions.ast(~loc, scheme),
+                 )
+              |> List.append(
+                   Form_UseFormFn_ApplyAsyncResultActions.ast(~loc, scheme),
+                 )
+              |> List.append(Form_UseFormFn_BlurActions.ast(~loc, scheme))
+              |> List.append(Form_UseFormFn_UpdateActions.ast(~loc, scheme)),
+            );
+          }
+        })
+      );
 
     %e
     {
