@@ -1,9 +1,24 @@
 let check = (Case.{expected, actual}) =>
   Alcotest.(check(Case.testable, "same string", expected, actual));
 
+module Ok__FieldWithNoValidator = {
+  let id = "Ok: field with no validator";
+  let case = () => Case.ok("Ok__FieldWithNoValidator") |> check;
+};
+
 module Ok__FieldWithSyncValidator = {
   let id = "Ok: field with sync validator";
   let case = () => Case.ok("Ok__FieldWithSyncValidator") |> check;
+};
+
+module Ok__TwoFieldsWithSyncValidators = {
+  let id = "Ok: two fields with sync validators";
+  let case = () => Case.ok("Ok__TwoFieldsWithSyncValidators") |> check;
+};
+
+module Ok__TwoFieldsWithNoValidators = {
+  let id = "Ok: two fields with no validators";
+  let case = () => Case.ok("Ok__TwoFieldsWithNoValidators") |> check;
 };
 
 module Ok__FieldWithSyncValidatorAndFieldWithNoValidator = {
@@ -40,9 +55,24 @@ let () =
           "oks",
           [
             test_case(
+              Ok__FieldWithNoValidator.id,
+              `Quick,
+              Ok__FieldWithNoValidator.case,
+            ),
+            test_case(
               Ok__FieldWithSyncValidator.id,
               `Quick,
               Ok__FieldWithSyncValidator.case,
+            ),
+            test_case(
+              Ok__TwoFieldsWithNoValidators.id,
+              `Quick,
+              Ok__TwoFieldsWithNoValidators.case,
+            ),
+            test_case(
+              Ok__TwoFieldsWithSyncValidators.id,
+              `Quick,
+              Ok__TwoFieldsWithSyncValidators.case,
             ),
             test_case(
               Ok__FieldWithSyncValidatorAndFieldWithNoValidator.id,
