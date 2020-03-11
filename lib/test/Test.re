@@ -16,6 +16,11 @@ module Ok__FieldWithAsyncValidatorInOnChangeMode = {
   let run = () => case |> Case.ok |> check;
 };
 
+module Ok__FieldWithAsyncValidatorInOnBlurMode = {
+  let case = "Ok__FieldWithAsyncValidatorInOnBlurMode";
+  let run = () => case |> Case.ok |> check;
+};
+
 module Ok__FieldWithSyncValidatorAndFieldWithAsyncValidatorInOnChangeMode = {
   let case = "Ok__FieldWithSyncValidatorAndFieldWithAsyncValidatorInOnChangeMode";
   let run = () => case |> Case.ok |> check;
@@ -36,8 +41,23 @@ module Ok__TwoFieldsWithAsyncValidatorsInOnChangeMode = {
   let run = () => case |> Case.ok |> check;
 };
 
+module Ok__TwoFieldsWithAsyncValidatorsInOnBlurMode = {
+  let case = "Ok__TwoFieldsWithAsyncValidatorsInOnBlurMode";
+  let run = () => case |> Case.ok |> check;
+};
+
 module Ok__TwoFieldsWithSyncValidatorAndFieldWithAsyncValidatorInOnChangeMode = {
   let case = "Ok__TwoFieldsWithSyncValidatorAndFieldWithAsyncValidatorInOnChangeMode";
+  let run = () => case |> Case.ok |> check;
+};
+
+module Ok__TwoFieldsWithSyncValidatorAndFieldWithAsyncValidatorInOnBlurMode = {
+  let case = "Ok__TwoFieldsWithSyncValidatorAndFieldWithAsyncValidatorInOnBlurMode";
+  let run = () => case |> Case.ok |> check;
+};
+
+module Ok__FieldWithSyncValidatorAndFieldWithAsyncValidatorInOnBlurMode = {
+  let case = "Ok__FieldWithSyncValidatorAndFieldWithAsyncValidatorInOnBlurMode";
   let run = () => case |> Case.ok |> check;
 };
 
@@ -66,8 +86,18 @@ module Ok__CollectionWithNoCollectionValidatorAndFieldOfCollectionWithAsyncValid
   let run = () => case |> Case.ok |> check;
 };
 
+module Ok__CollectionWithNoCollectionValidatorAndFieldOfCollectionWithAsyncValidatorInOnBlurMode = {
+  let case = "Ok__CollectionWithNoCollectionValidatorAndFieldOfCollectionWithAsyncValidatorInOnBlurMode";
+  let run = () => case |> Case.ok |> check;
+};
+
 module Ok__CollectionWithCollectionValidatorAndFieldOfCollectionWithAsyncValidatorInOnChangeMode = {
   let case = "Ok__CollectionWithCollectionValidatorAndFieldOfCollectionWithAsyncValidatorInOnChangeMode";
+  let run = () => case |> Case.ok |> check;
+};
+
+module Ok__CollectionWithCollectionValidatorAndFieldOfCollectionWithAsyncValidatorInOnBlurMode = {
+  let case = "Ok__CollectionWithCollectionValidatorAndFieldOfCollectionWithAsyncValidatorInOnBlurMode";
   let run = () => case |> Case.ok |> check;
 };
 
@@ -105,9 +135,19 @@ let () =
               Ok__FieldWithAsyncValidatorInOnChangeMode.run,
             ),
             test_case(
+              Ok__FieldWithAsyncValidatorInOnBlurMode.case,
+              `Quick,
+              Ok__FieldWithAsyncValidatorInOnBlurMode.run,
+            ),
+            test_case(
               Ok__FieldWithSyncValidatorAndFieldWithAsyncValidatorInOnChangeMode.case,
               `Quick,
               Ok__FieldWithSyncValidatorAndFieldWithAsyncValidatorInOnChangeMode.run,
+            ),
+            test_case(
+              Ok__FieldWithSyncValidatorAndFieldWithAsyncValidatorInOnBlurMode.case,
+              `Quick,
+              Ok__FieldWithSyncValidatorAndFieldWithAsyncValidatorInOnBlurMode.run,
             ),
             test_case(
               Ok__TwoFieldsWithNoValidators.case,
@@ -125,9 +165,19 @@ let () =
               Ok__TwoFieldsWithAsyncValidatorsInOnChangeMode.run,
             ),
             test_case(
+              Ok__TwoFieldsWithAsyncValidatorsInOnBlurMode.case,
+              `Quick,
+              Ok__TwoFieldsWithAsyncValidatorsInOnBlurMode.run,
+            ),
+            test_case(
               Ok__TwoFieldsWithSyncValidatorAndFieldWithAsyncValidatorInOnChangeMode.case,
               `Quick,
               Ok__TwoFieldsWithSyncValidatorAndFieldWithAsyncValidatorInOnChangeMode.run,
+            ),
+            test_case(
+              Ok__TwoFieldsWithSyncValidatorAndFieldWithAsyncValidatorInOnBlurMode.case,
+              `Quick,
+              Ok__TwoFieldsWithSyncValidatorAndFieldWithAsyncValidatorInOnBlurMode.run,
             ),
             test_case(
               Ok__FieldWithSyncValidatorAndFieldWithNoValidator.case,
@@ -155,9 +205,19 @@ let () =
               Ok__CollectionWithNoCollectionValidatorAndFieldOfCollectionWithAsyncValidatorInOnChangeMode.run,
             ),
             test_case(
+              Ok__CollectionWithNoCollectionValidatorAndFieldOfCollectionWithAsyncValidatorInOnBlurMode.case,
+              `Quick,
+              Ok__CollectionWithNoCollectionValidatorAndFieldOfCollectionWithAsyncValidatorInOnBlurMode.run,
+            ),
+            test_case(
               Ok__CollectionWithCollectionValidatorAndFieldOfCollectionWithAsyncValidatorInOnChangeMode.case,
               `Quick,
               Ok__CollectionWithCollectionValidatorAndFieldOfCollectionWithAsyncValidatorInOnChangeMode.run,
+            ),
+            test_case(
+              Ok__CollectionWithCollectionValidatorAndFieldOfCollectionWithAsyncValidatorInOnBlurMode.case,
+              `Quick,
+              Ok__CollectionWithCollectionValidatorAndFieldOfCollectionWithAsyncValidatorInOnBlurMode.run,
             ),
           ],
         ),
