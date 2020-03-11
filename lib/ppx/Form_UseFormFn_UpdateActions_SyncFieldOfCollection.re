@@ -13,32 +13,31 @@ let ast =
       ~field_input_expr: expression,
       ~validator_expr: expression,
       ~set_status_expr: expression,
-    ) => {
-  %expr
-  {
-    let result =
+    ) => [%expr
+  Update({
+    ...state,
+    input: nextInput,
+    fieldsStatuses:
       switch%e (validator) {
       | Ok(Required | Optional(Some(_)))
       | Error () =>
         %expr
-        validateFieldOnBlurWithValidator(
-          ~input=state.input,
-          ~fieldStatus=[%e field_status_expr],
-          ~validator=[%e validator_expr],
-          ~setStatus=[%e [%expr status => [%e set_status_expr]]],
-        )
+        {
+          validateFieldOfCollectionOnChangeWithValidator(
+            ~input=nextInput,
+            ~index,
+            ~fieldStatus=[%e field_status_expr],
+            ~submissionStatus=state.submissionStatus,
+            ~validator=[%e validator_expr],
+            ~setStatus=[%e [%expr status => [%e set_status_expr]]],
+          );
+        }
       | Ok(Optional(None)) =>
         %expr
-        validateFieldOnBlurWithoutValidator(
+        validateFieldOnChangeWithoutValidator(
           ~fieldInput=[%e field_input_expr],
-          ~fieldStatus=[%e field_status_expr],
           ~setStatus=[%e [%expr status => [%e set_status_expr]]],
         )
-      };
-
-    switch (result) {
-    | Some(fieldsStatuses) => Update({...state, fieldsStatuses})
-    | None => NoUpdate
-    };
-  };
-};
+      },
+  })
+];

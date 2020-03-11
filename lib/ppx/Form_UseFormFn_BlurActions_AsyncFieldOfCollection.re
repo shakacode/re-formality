@@ -9,6 +9,7 @@ let ast =
     (
       ~loc,
       ~field: Scheme.field,
+      ~collection: Collection.t,
       ~optionality: option(FieldOptionality.t),
       ~field_status_expr: expression,
       ~validator_expr: expression,
@@ -21,8 +22,9 @@ let ast =
       | None =>
         %expr
         {
-          Async.validateFieldOnBlur(
+          Async.validateFieldOfCollectionOnBlur(
             ~input=state.input,
+            ~index,
             ~fieldStatus=[%e field_status_expr],
             ~validator=[%e validator_expr],
             ~setStatus=[%e [%expr status => [%e set_status_expr]]],
@@ -31,8 +33,9 @@ let ast =
       | Some(OptionType) =>
         %expr
         {
-          Async.validateFieldOfOptionTypeOnBlur(
+          Async.validateFieldOfCollectionOfOptionTypeOnBlur(
             ~input=state.input,
+            ~index,
             ~fieldStatus=[%e field_status_expr],
             ~validator=[%e validator_expr],
             ~setStatus=[%e [%expr status => [%e set_status_expr]]],
@@ -41,8 +44,9 @@ let ast =
       | Some(StringType) =>
         %expr
         {
-          Async.validateFieldOfStringTypeOnBlur(
+          Async.validateFieldOfCollectionOfStringTypeOnBlur(
             ~input=state.input,
+            ~index,
             ~fieldStatus=[%e field_status_expr],
             ~validator=[%e validator_expr],
             ~setStatus=[%e [%expr status => [%e set_status_expr]]],
@@ -51,8 +55,9 @@ let ast =
       | Some(OptionStringType) =>
         %expr
         {
-          Async.validateFieldOfOptionStringTypeOnBlur(
+          Async.validateFieldOfCollectionOfOptionStringTypeOnBlur(
             ~input=state.input,
+            ~index,
             ~fieldStatus=[%e field_status_expr],
             ~validator=[%e validator_expr],
             ~setStatus=[%e [%expr status => [%e set_status_expr]]],
@@ -63,16 +68,21 @@ let ast =
     switch (result) {
     | None => NoUpdate
     | Some(fieldsStatuses) =>
-      switch ([%e field.name |> E.field(~in_="fieldsStatuses", ~loc)]) {
+      switch (
+        [%e
+          field.name
+          |> E.field_of_collection(~in_="fieldsStatuses", ~collection, ~loc)
+        ]
+      ) {
       | Validating(value) =>
         UpdateWithSideEffects(
           {...state, fieldsStatuses},
           ({state: _, dispatch}) => {
             %e
-            E.apply_field2(
-              ~in_=("validators", field.name),
+            E.apply_field4(
+              ~in_=("validators", collection.plural, "fields", field.name),
               ~fn="validateAsync",
-              ~args=[(Nolabel, [%expr (value, dispatch)])],
+              ~args=[(Nolabel, [%expr (value, index, dispatch)])],
               ~loc,
             )
           },

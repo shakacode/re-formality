@@ -11,13 +11,13 @@ module Ok__FieldWithSyncValidator = {
   let run = () => case |> Case.ok |> check;
 };
 
-module Ok__FieldWithAsyncValidator = {
-  let case = "Ok__FieldWithAsyncValidator";
+module Ok__FieldWithAsyncValidatorInOnChangeMode = {
+  let case = "Ok__FieldWithAsyncValidatorInOnChangeMode";
   let run = () => case |> Case.ok |> check;
 };
 
-module Ok__FieldWithSyncValidatorAndFieldWithAsyncValidator = {
-  let case = "Ok__FieldWithSyncValidatorAndFieldWithAsyncValidator";
+module Ok__FieldWithSyncValidatorAndFieldWithAsyncValidatorInOnChangeMode = {
+  let case = "Ok__FieldWithSyncValidatorAndFieldWithAsyncValidatorInOnChangeMode";
   let run = () => case |> Case.ok |> check;
 };
 
@@ -31,13 +31,13 @@ module Ok__TwoFieldsWithSyncValidators = {
   let run = () => case |> Case.ok |> check;
 };
 
-module Ok__TwoFieldsWithAsyncValidators = {
-  let case = "Ok__TwoFieldsWithAsyncValidators";
+module Ok__TwoFieldsWithAsyncValidatorsInOnChangeMode = {
+  let case = "Ok__TwoFieldsWithAsyncValidatorsInOnChangeMode";
   let run = () => case |> Case.ok |> check;
 };
 
-module Ok__TwoFieldsWithSyncValidatorAndFieldWithAsyncValidator = {
-  let case = "Ok__TwoFieldsWithSyncValidatorAndFieldWithAsyncValidator";
+module Ok__TwoFieldsWithSyncValidatorAndFieldWithAsyncValidatorInOnChangeMode = {
+  let case = "Ok__TwoFieldsWithSyncValidatorAndFieldWithAsyncValidatorInOnChangeMode";
   let run = () => case |> Case.ok |> check;
 };
 
@@ -46,8 +46,28 @@ module Ok__FieldWithSyncValidatorAndFieldWithNoValidator = {
   let run = () => case |> Case.ok |> check;
 };
 
-module Ok__FieldWithSyncValidatorsAndCollectionWithNoCollectionValidatorAndFieldWithSyncValidator = {
-  let case = "Ok__FieldWithSyncValidatorsAndCollectionWithNoCollectionValidatorAndFieldWithSyncValidator";
+module Ok__FieldWithSyncValidatorAndCollectionWithNoCollectionValidatorAndFieldWithSyncValidator = {
+  let case = "Ok__FieldWithSyncValidatorAndCollectionWithNoCollectionValidatorAndFieldWithSyncValidator";
+  let run = () => case |> Case.ok |> check;
+};
+
+module Ok__CollectionWithNoCollectionValidatorAndFieldOfCollectionWithSyncValidator = {
+  let case = "Ok__CollectionWithNoCollectionValidatorAndFieldOfCollectionWithSyncValidator";
+  let run = () => case |> Case.ok |> check;
+};
+
+module Ok__CollectionWithCollectionValidatorAndFieldOfCollectionWithSyncValidator = {
+  let case = "Ok__CollectionWithCollectionValidatorAndFieldOfCollectionWithSyncValidator";
+  let run = () => case |> Case.ok |> check;
+};
+
+module Ok__CollectionWithNoCollectionValidatorAndFieldOfCollectionWithAsyncValidatorInOnChangeMode = {
+  let case = "Ok__CollectionWithNoCollectionValidatorAndFieldOfCollectionWithAsyncValidatorInOnChangeMode";
+  let run = () => case |> Case.ok |> check;
+};
+
+module Ok__CollectionWithCollectionValidatorAndFieldOfCollectionWithAsyncValidatorInOnChangeMode = {
+  let case = "Ok__CollectionWithCollectionValidatorAndFieldOfCollectionWithAsyncValidatorInOnChangeMode";
   let run = () => case |> Case.ok |> check;
 };
 
@@ -80,14 +100,14 @@ let () =
               Ok__FieldWithSyncValidator.run,
             ),
             test_case(
-              Ok__FieldWithAsyncValidator.case,
+              Ok__FieldWithAsyncValidatorInOnChangeMode.case,
               `Quick,
-              Ok__FieldWithAsyncValidator.run,
+              Ok__FieldWithAsyncValidatorInOnChangeMode.run,
             ),
             test_case(
-              Ok__FieldWithSyncValidatorAndFieldWithAsyncValidator.case,
+              Ok__FieldWithSyncValidatorAndFieldWithAsyncValidatorInOnChangeMode.case,
               `Quick,
-              Ok__FieldWithSyncValidatorAndFieldWithAsyncValidator.run,
+              Ok__FieldWithSyncValidatorAndFieldWithAsyncValidatorInOnChangeMode.run,
             ),
             test_case(
               Ok__TwoFieldsWithNoValidators.case,
@@ -100,14 +120,14 @@ let () =
               Ok__TwoFieldsWithSyncValidators.run,
             ),
             test_case(
-              Ok__TwoFieldsWithAsyncValidators.case,
+              Ok__TwoFieldsWithAsyncValidatorsInOnChangeMode.case,
               `Quick,
-              Ok__TwoFieldsWithAsyncValidators.run,
+              Ok__TwoFieldsWithAsyncValidatorsInOnChangeMode.run,
             ),
             test_case(
-              Ok__TwoFieldsWithSyncValidatorAndFieldWithAsyncValidator.case,
+              Ok__TwoFieldsWithSyncValidatorAndFieldWithAsyncValidatorInOnChangeMode.case,
               `Quick,
-              Ok__TwoFieldsWithSyncValidatorAndFieldWithAsyncValidator.run,
+              Ok__TwoFieldsWithSyncValidatorAndFieldWithAsyncValidatorInOnChangeMode.run,
             ),
             test_case(
               Ok__FieldWithSyncValidatorAndFieldWithNoValidator.case,
@@ -115,9 +135,29 @@ let () =
               Ok__FieldWithSyncValidatorAndFieldWithNoValidator.run,
             ),
             test_case(
-              Ok__FieldWithSyncValidatorsAndCollectionWithNoCollectionValidatorAndFieldWithSyncValidator.case,
+              Ok__FieldWithSyncValidatorAndCollectionWithNoCollectionValidatorAndFieldWithSyncValidator.case,
               `Quick,
-              Ok__FieldWithSyncValidatorsAndCollectionWithNoCollectionValidatorAndFieldWithSyncValidator.run,
+              Ok__FieldWithSyncValidatorAndCollectionWithNoCollectionValidatorAndFieldWithSyncValidator.run,
+            ),
+            test_case(
+              Ok__CollectionWithNoCollectionValidatorAndFieldOfCollectionWithSyncValidator.case,
+              `Quick,
+              Ok__CollectionWithNoCollectionValidatorAndFieldOfCollectionWithSyncValidator.run,
+            ),
+            test_case(
+              Ok__CollectionWithCollectionValidatorAndFieldOfCollectionWithSyncValidator.case,
+              `Quick,
+              Ok__CollectionWithCollectionValidatorAndFieldOfCollectionWithSyncValidator.run,
+            ),
+            test_case(
+              Ok__CollectionWithNoCollectionValidatorAndFieldOfCollectionWithAsyncValidatorInOnChangeMode.case,
+              `Quick,
+              Ok__CollectionWithNoCollectionValidatorAndFieldOfCollectionWithAsyncValidatorInOnChangeMode.run,
+            ),
+            test_case(
+              Ok__CollectionWithCollectionValidatorAndFieldOfCollectionWithAsyncValidatorInOnChangeMode.case,
+              `Quick,
+              Ok__CollectionWithCollectionValidatorAndFieldOfCollectionWithAsyncValidatorInOnChangeMode.run,
             ),
           ],
         ),

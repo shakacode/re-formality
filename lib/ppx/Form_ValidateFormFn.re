@@ -173,13 +173,10 @@ let ok_pat_for_fields_of_async_collection = (~loc, collection: Collection.t) =>
     "FieldsOfCollectionResult",
     Some(
       Pat.tuple([
-        Pat.alias(
-          Pat.construct(
-            ~attrs=[explicit_arity(~loc)],
-            Lident("Ok") |> lid(~loc),
-            Some(Pat.tuple([Pat.var(collection.plural |> str(~loc))])),
-          ),
-          collection |> fields_of_collection_result_var |> str(~loc),
+        Pat.construct(
+          ~attrs=[explicit_arity(~loc)],
+          Lident("Ok") |> lid(~loc),
+          Some(Pat.tuple([Pat.var(collection.plural |> str(~loc))])),
         ),
         Pat.var(collection |> collection_fields_statuses_var |> str(~loc)),
       ]),
@@ -208,12 +205,6 @@ let ok_pat_for_fields_of_collection = (~loc, collection: Collection.t) =>
 
 let result_pat_for_collection = (~loc, collection: Collection.t) =>
   Pat.var(collection |> whole_collection_result_var |> str(~loc));
-
-let error_pat_for_fields_of_collection = (~loc, collection: Collection.t) =>
-  Pat.tuple([
-    Pat.any(),
-    Pat.var(collection |> collection_fields_statuses_var |> str(~loc)),
-  ]);
 
 let error_pat_for_sync_field_in_single_field_form =
     (~loc, field: Scheme.field) =>
@@ -300,6 +291,44 @@ let error_pat_for_async_field_in_multi_field_form =
     Pat.var(field_result_visibility_var(~field=field.name) |> str(~loc)),
   ]);
 
+let error_pat_for_fields_of_collection_in_single_field_form_without_collection_validator =
+    (~loc, collection: Collection.t) =>
+  Pat.tuple([
+    [%pat? Error(_)],
+    Pat.var(collection |> collection_fields_statuses_var |> str(~loc)),
+  ]);
+
+let error_pat_for_fields_of_collection_in_multi_field_form_or_single_field_form_with_collection_validator =
+    (~loc, collection: Collection.t) =>
+  Pat.tuple([
+    [%pat? Ok(_) | Error(_)],
+    Pat.var(collection |> collection_fields_statuses_var |> str(~loc)),
+  ]);
+
+let error_pat_for_fields_of_collection_in_single_field_async_form_without_collection_validator =
+    (~loc, collection: Collection.t) =>
+  Pat.variant(
+    "FieldsOfCollectionResult",
+    Some(
+      Pat.tuple([
+        [%pat? Error(_)],
+        Pat.var(collection |> collection_fields_statuses_var |> str(~loc)),
+      ]),
+    ),
+  );
+
+let error_pat_for_fields_statuses_of_async_collection =
+    (~loc, collection: Collection.t) =>
+  Pat.variant(
+    "FieldsOfCollectionResult",
+    Some(
+      Pat.tuple([
+        [%pat? Ok(_) | Error(_)],
+        Pat.var(collection |> collection_fields_statuses_var |> str(~loc)),
+      ]),
+    ),
+  );
+
 let result_and_visibility_pat_for_field = (~loc, field: Scheme.field) =>
   Pat.tuple([
     Pat.var(field_result_var(~field=field.name) |> str(~loc)),
@@ -317,18 +346,6 @@ let result_and_visibility_pat_for_async_field = (~loc, field: Scheme.field) =>
 
 let result_pat_for_fields_of_collection = (~loc, collection: Collection.t) =>
   Pat.var(collection |> fields_of_collection_result_var |> str(~loc));
-
-let fields_statuses_pat_for_async_collection =
-    (~loc, collection: Collection.t) =>
-  Pat.variant(
-    "FieldsOfCollectionResult",
-    Some(
-      Pat.tuple([
-        Pat.any(),
-        Pat.var(collection |> collection_fields_statuses_var |> str(~loc)),
-      ]),
-    ),
-  );
 
 let output_field_record_field = (~loc, field: Scheme.field) => (
   Lident(field.name) |> lid(~loc),
@@ -606,7 +623,7 @@ let validate_fields_of_collection_in_async_form =
         ~make=
           (field: Scheme.field) =>
             Pat.tuple([
-              [%pat? `FieldsOfCollectionResult(_, statuses)],
+              [%pat? `FieldsOfCollectionResult(Ok(_) | Error(_), statuses)],
               ...fields
                  |> List.map((field': Scheme.field) =>
                       if (field'.name == field.name) {
@@ -706,7 +723,7 @@ let validate_fields_of_collection_in_async_form =
   let error_case =
     Exp.case(
       Pat.tuple([
-        [%pat? `FieldsOfCollectionResult(_, statuses)],
+        [%pat? `FieldsOfCollectionResult(Ok(_) | Error(_), statuses)],
         ...fields |> List.map(result_and_visibility_pat_for_field(~loc)),
       ]),
       [%expr
@@ -987,21 +1004,13 @@ module Sync = {
 
                          let error_case = {
                            let pat = {
-                             let entry = (entry: Scheme.entry) =>
+                             let entry_of_one = (entry: Scheme.entry) =>
                                switch (entry) {
                                | Field(field) =>
-                                 switch (scheme) {
-                                 | [_x] =>
-                                   field
-                                   |> error_pat_for_sync_field_in_single_field_form(
-                                        ~loc,
-                                      )
-                                 | _ =>
-                                   field
-                                   |> error_pat_for_sync_field_in_multi_field_form(
-                                        ~loc,
-                                      )
-                                 }
+                                 field
+                                 |> error_pat_for_sync_field_in_single_field_form(
+                                      ~loc,
+                                    )
                                | Collection({collection, validator}) =>
                                  switch (validator) {
                                  | Ok(Some ())
@@ -1013,7 +1022,7 @@ module Sync = {
                                        ],
                                        [%p
                                          collection
-                                         |> error_pat_for_fields_of_collection(
+                                         |> error_pat_for_fields_of_collection_in_multi_field_form_or_single_field_form_with_collection_validator(
                                               ~loc,
                                             )
                                        ],
@@ -1021,12 +1030,46 @@ module Sync = {
                                    ]
                                  | Ok(None) =>
                                    collection
-                                   |> error_pat_for_fields_of_collection(~loc)
+                                   |> error_pat_for_fields_of_collection_in_single_field_form_without_collection_validator(
+                                        ~loc,
+                                      )
+                                 }
+                               };
+                             let entry_of_many = (entry: Scheme.entry) =>
+                               switch (entry) {
+                               | Field(field) =>
+                                 field
+                                 |> error_pat_for_sync_field_in_multi_field_form(
+                                      ~loc,
+                                    )
+                               | Collection({collection, validator}) =>
+                                 switch (validator) {
+                                 | Ok(Some ())
+                                 | Error () => [%pat?
+                                     (
+                                       [%p
+                                         collection
+                                         |> result_pat_for_collection(~loc)
+                                       ],
+                                       [%p
+                                         collection
+                                         |> error_pat_for_fields_of_collection_in_multi_field_form_or_single_field_form_with_collection_validator(
+                                              ~loc,
+                                            )
+                                       ],
+                                     )
+                                   ]
+                                 | Ok(None) =>
+                                   collection
+                                   |> error_pat_for_fields_of_collection_in_multi_field_form_or_single_field_form_with_collection_validator(
+                                        ~loc,
+                                      )
                                  }
                                };
                              switch (scheme) {
-                             | [x] => x |> entry
-                             | _ => scheme |> List.map(entry) |> Pat.tuple
+                             | [x] => x |> entry_of_one
+                             | _ =>
+                               scheme |> List.map(entry_of_many) |> Pat.tuple
                              };
                            };
                            let expr = {
@@ -1423,13 +1466,17 @@ module Async = {
                         [%p collection |> result_pat_for_collection(~loc)],
                         [%p
                           collection
-                          |> fields_statuses_pat_for_async_collection(~loc)
+                          |> error_pat_for_fields_statuses_of_async_collection(
+                               ~loc,
+                             )
                         ],
                       )
                     ]
                   | Ok(None) =>
                     collection
-                    |> fields_statuses_pat_for_async_collection(~loc)
+                    |> error_pat_for_fields_of_collection_in_single_field_async_form_without_collection_validator(
+                         ~loc,
+                       )
                   }
                 };
               let entry_of_many = (entry: Scheme.entry) =>
@@ -1446,13 +1493,15 @@ module Async = {
                         [%p collection |> result_pat_for_collection(~loc)],
                         [%p
                           collection
-                          |> fields_statuses_pat_for_async_collection(~loc)
+                          |> error_pat_for_fields_statuses_of_async_collection(
+                               ~loc,
+                             )
                         ],
                       )
                     ]
                   | Ok(None) =>
                     collection
-                    |> fields_statuses_pat_for_async_collection(~loc)
+                    |> error_pat_for_fields_statuses_of_async_collection(~loc)
                   }
                 };
               switch (scheme) {

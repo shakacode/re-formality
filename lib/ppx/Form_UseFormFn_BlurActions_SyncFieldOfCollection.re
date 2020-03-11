@@ -21,8 +21,9 @@ let ast =
       | Ok(Required | Optional(Some(_)))
       | Error () =>
         %expr
-        validateFieldOnBlurWithValidator(
+        validateFieldOfCollectionOnBlurWithValidator(
           ~input=state.input,
+          ~index,
           ~fieldStatus=[%e field_status_expr],
           ~validator=[%e validator_expr],
           ~setStatus=[%e [%expr status => [%e set_status_expr]]],

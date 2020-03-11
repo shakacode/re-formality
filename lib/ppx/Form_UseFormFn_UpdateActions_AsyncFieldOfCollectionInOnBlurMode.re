@@ -21,8 +21,9 @@ let ast =
       | None =>
         %expr
         {
-          Async.validateFieldOnChangeInOnBlurMode(
+          Async.validateFieldOfCollectionOnChangeInOnBlurMode(
             ~input=nextInput,
+            ~index,
             ~fieldStatus=[%e field_status_expr],
             ~submissionStatus=state.submissionStatus,
             ~validator=[%e validator_expr],
@@ -32,8 +33,9 @@ let ast =
       | Some(OptionType) =>
         %expr
         {
-          Async.validateFieldOfOptionTypeOnChangeInOnBlurMode(
+          Async.validateFieldOfCollectionOfOptionTypeOnChangeInOnBlurMode(
             ~input=nextInput,
+            ~index,
             ~fieldStatus=[%e field_status_expr],
             ~submissionStatus=state.submissionStatus,
             ~validator=[%e validator_expr],
@@ -43,8 +45,9 @@ let ast =
       | Some(StringType) =>
         %expr
         {
-          Async.validateFieldOfStringTypeOnChangeInOnBlurMode(
+          Async.validateFieldOfCollectionOfStringTypeOnChangeInOnBlurMode(
             ~input=nextInput,
+            ~index,
             ~fieldStatus=[%e field_status_expr],
             ~submissionStatus=state.submissionStatus,
             ~validator=[%e validator_expr],
@@ -54,8 +57,9 @@ let ast =
       | Some(OptionStringType) =>
         %expr
         {
-          Async.validateFieldOfOptionStringTypeOnChangeInOnBlurMode(
+          Async.validateFieldOfCollectionOfOptionStringTypeOnChangeInOnBlurMode(
             ~input=nextInput,
+            ~index,
             ~fieldStatus=[%e field_status_expr],
             ~submissionStatus=state.submissionStatus,
             ~validator=[%e validator_expr],

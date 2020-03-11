@@ -38,7 +38,6 @@ let ast = (~loc, scheme: Scheme.t) =>
                  | SyncValidator(validator) =>
                    Form_UseFormFn_BlurActions_SyncField.ast(
                      ~loc,
-                     ~kind=`Field,
                      ~validator,
                      ~field_status_expr,
                      ~field_input_expr,
@@ -49,7 +48,6 @@ let ast = (~loc, scheme: Scheme.t) =>
                    Form_UseFormFn_BlurActions_AsyncField.ast(
                      ~loc,
                      ~field,
-                     ~kind=`Field,
                      ~optionality,
                      ~field_status_expr,
                      ~validator_expr,
@@ -110,9 +108,8 @@ let ast = (~loc, scheme: Scheme.t) =>
 
                         switch (field.validator) {
                         | SyncValidator(validator) =>
-                          Form_UseFormFn_BlurActions_SyncField.ast(
+                          Form_UseFormFn_BlurActions_SyncFieldOfCollection.ast(
                             ~loc,
-                            ~kind=`FieldOfCollection,
                             ~validator,
                             ~field_status_expr,
                             ~field_input_expr,
@@ -120,10 +117,10 @@ let ast = (~loc, scheme: Scheme.t) =>
                             ~set_status_expr,
                           )
                         | AsyncValidator({optionality}) =>
-                          Form_UseFormFn_BlurActions_AsyncField.ast(
+                          Form_UseFormFn_BlurActions_AsyncFieldOfCollection.ast(
                             ~loc,
                             ~field,
-                            ~kind=`FieldOfCollection,
+                            ~collection,
                             ~optionality,
                             ~field_status_expr,
                             ~validator_expr,

@@ -8,7 +8,6 @@ open Ast_helper;
 let ast =
     (
       ~loc,
-      ~kind: [ | `Field | `FieldOfCollection],
       ~validator: result(FieldValidator.sync, unit),
       ~field_status_expr: expression,
       ~field_input_expr: expression,
@@ -22,30 +21,15 @@ let ast =
       switch%e (validator) {
       | Ok(Required | Optional(Some(_)))
       | Error () =>
-        switch (kind) {
-        | `Field =>
-          %expr
-          {
-            validateFieldOnChangeWithValidator(
-              ~input=nextInput,
-              ~fieldStatus=[%e field_status_expr],
-              ~submissionStatus=state.submissionStatus,
-              ~validator=[%e validator_expr],
-              ~setStatus=[%e [%expr status => [%e set_status_expr]]],
-            );
-          }
-        | `FieldOfCollection =>
-          %expr
-          {
-            validateFieldOfCollectionOnChangeWithValidator(
-              ~input=nextInput,
-              ~index,
-              ~fieldStatus=[%e field_status_expr],
-              ~submissionStatus=state.submissionStatus,
-              ~validator=[%e validator_expr],
-              ~setStatus=[%e [%expr status => [%e set_status_expr]]],
-            );
-          }
+        %expr
+        {
+          validateFieldOnChangeWithValidator(
+            ~input=nextInput,
+            ~fieldStatus=[%e field_status_expr],
+            ~submissionStatus=state.submissionStatus,
+            ~validator=[%e validator_expr],
+            ~setStatus=[%e [%expr status => [%e set_status_expr]]],
+          );
         }
       | Ok(Optional(None)) =>
         %expr

@@ -8,7 +8,7 @@ open Ast_helper;
 
 let ast = (~scheme: Scheme.t, ~loc) => {
   [%stri
-    let initialCollectionsStatuses =
+    let initialCollectionsStatuses: collectionsStatuses =
       switch%e (scheme |> Scheme.collections) {
       | [] =>
         %expr
