@@ -229,6 +229,25 @@ let error_pat_for_sync_field_in_single_field_form =
     Pat.var(field_result_visibility_var(~field=field.name) |> str(~loc)),
   ]);
 
+let error_pat_for_async_field_in_single_field_form =
+    (~loc, field: Scheme.field) =>
+  Pat.tuple([
+    Pat.variant(
+      "Result",
+      Some(
+        Pat.alias(
+          Pat.construct(
+            ~attrs=[explicit_arity(~loc)],
+            Lident("Error") |> lid(~loc),
+            Some([%pat? _]),
+          ),
+          field_result_var(~field=field.name) |> str(~loc),
+        ),
+      ),
+    ),
+    Pat.var(field_result_visibility_var(~field=field.name) |> str(~loc)),
+  ]);
+
 let error_pat_for_sync_field_in_multi_field_form = (~loc, field: Scheme.field) =>
   Pat.tuple([
     Pat.or_(
@@ -247,6 +266,35 @@ let error_pat_for_sync_field_in_multi_field_form = (~loc, field: Scheme.field) =
           Some([%pat? _]),
         ),
         field_result_var(~field=field.name) |> str(~loc),
+      ),
+    ),
+    Pat.var(field_result_visibility_var(~field=field.name) |> str(~loc)),
+  ]);
+
+let error_pat_for_async_field_in_multi_field_form =
+    (~loc, field: Scheme.field) =>
+  Pat.tuple([
+    Pat.variant(
+      "Result",
+      Some(
+        Pat.or_(
+          Pat.alias(
+            Pat.construct(
+              ~attrs=[explicit_arity(~loc)],
+              Lident("Ok") |> lid(~loc),
+              Some([%pat? _]),
+            ),
+            field_result_var(~field=field.name) |> str(~loc),
+          ),
+          Pat.alias(
+            Pat.construct(
+              ~attrs=[explicit_arity(~loc)],
+              Lident("Error") |> lid(~loc),
+              Some([%pat? _]),
+            ),
+            field_result_var(~field=field.name) |> str(~loc),
+          ),
+        ),
       ),
     ),
     Pat.var(field_result_visibility_var(~field=field.name) |> str(~loc)),
@@ -839,7 +887,7 @@ module Sync = {
                              };
                            switch (scheme) {
                            | [x] => x |> value
-                           | _ => Exp.tuple(scheme |> List.map(value))
+                           | _ => scheme |> List.map(value) |> Exp.tuple
                            };
                          };
 
@@ -978,7 +1026,7 @@ module Sync = {
                                };
                              switch (scheme) {
                              | [x] => x |> entry
-                             | _ => Pat.tuple(scheme |> List.map(entry))
+                             | _ => scheme |> List.map(entry) |> Pat.tuple
                              };
                            };
                            let expr = {
@@ -1104,7 +1152,7 @@ module Async = {
               };
             switch (scheme) {
             | [x] => x |> value
-            | _ => Exp.tuple(scheme |> List.map(value))
+            | _ => scheme |> List.map(value) |> Exp.tuple
             };
           };
 
@@ -1362,12 +1410,34 @@ module Async = {
 
           let error_case = {
             let pat = {
-              let entry = (entry: Scheme.entry) =>
+              let entry_of_one = (entry: Scheme.entry) =>
+                switch (entry) {
+                | Field(field) =>
+                  field
+                  |> error_pat_for_async_field_in_single_field_form(~loc)
+                | Collection({collection, validator}) =>
+                  switch (validator) {
+                  | Ok(Some ())
+                  | Error () => [%pat?
+                      (
+                        [%p collection |> result_pat_for_collection(~loc)],
+                        [%p
+                          collection
+                          |> fields_statuses_pat_for_async_collection(~loc)
+                        ],
+                      )
+                    ]
+                  | Ok(None) =>
+                    collection
+                    |> fields_statuses_pat_for_async_collection(~loc)
+                  }
+                };
+              let entry_of_many = (entry: Scheme.entry) =>
                 switch (entry) {
                 | Field({validator: SyncValidator(_)} as field) =>
                   field |> result_and_visibility_pat_for_field(~loc)
                 | Field({validator: AsyncValidator(_)} as field) =>
-                  field |> result_and_visibility_pat_for_async_field(~loc)
+                  field |> error_pat_for_async_field_in_multi_field_form(~loc)
                 | Collection({collection, validator}) =>
                   switch (validator) {
                   | Ok(Some ())
@@ -1386,8 +1456,8 @@ module Async = {
                   }
                 };
               switch (scheme) {
-              | [x] => x |> entry
-              | _ => scheme |> List.map(entry) |> Pat.tuple
+              | [x] => x |> entry_of_one
+              | _ => scheme |> List.map(entry_of_many) |> Pat.tuple
               };
             };
             let expr = {
