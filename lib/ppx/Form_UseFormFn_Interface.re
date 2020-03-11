@@ -29,9 +29,15 @@ let dirty_collection_guard = (~loc, {collection, fields}: Scheme.collection) => 
             |> List.map((field: Scheme.field) =>
                  (
                    Lident(field.name) |> lid(~loc),
-                   switch (field.validator) {
-                   | SyncValidator(_) => [%pat? Dirty(_)]
-                   | AsyncValidator(_) => [%pat? Dirty(_) | Validating(_)]
+                   switch (fields, field.validator) {
+                   | ([_x], SyncValidator(_)) => [%pat? Dirty(_)]
+                   | ([_x], AsyncValidator(_)) => [%pat?
+                       Dirty(_) | Validating(_)
+                     ]
+                   | (_, SyncValidator(_)) => [%pat? Pristine | Dirty(_)]
+                   | (_, AsyncValidator(_)) => [%pat?
+                       Pristine | Dirty(_) | Validating(_)
+                     ]
                    },
                  )
                ),

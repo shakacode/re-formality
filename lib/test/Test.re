@@ -101,6 +101,11 @@ module Ok__CollectionWithCollectionValidatorAndFieldOfCollectionWithAsyncValidat
   let run = () => case |> Case.ok |> check;
 };
 
+module Ok__CollectionWithNoCollectionValidatorAndTwoFieldsOfCollectionWithSyncValidator = {
+  let case = "Ok__CollectionWithNoCollectionValidatorAndTwoFieldsOfCollectionWithSyncValidator";
+  let run = () => case |> Case.ok |> check;
+};
+
 module Error__InputNotFound = {
   let case = "Error__InputNotFound";
   let run = () => case |> Case.error |> check;
@@ -218,6 +223,11 @@ let () =
               Ok__CollectionWithCollectionValidatorAndFieldOfCollectionWithAsyncValidatorInOnBlurMode.case,
               `Quick,
               Ok__CollectionWithCollectionValidatorAndFieldOfCollectionWithAsyncValidatorInOnBlurMode.run,
+            ),
+            test_case(
+              Ok__CollectionWithNoCollectionValidatorAndTwoFieldsOfCollectionWithSyncValidator.case,
+              `Quick,
+              Ok__CollectionWithNoCollectionValidatorAndTwoFieldsOfCollectionWithSyncValidator.run,
             ),
           ],
         ),
