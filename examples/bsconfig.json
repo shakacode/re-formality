@@ -16,8 +16,5 @@
     "module": "es6",
     "in-source": true
   },
-  "suffix": ".bs.js",
-  "warnings": {
-    "number": "-45"
-  }
+  "suffix": ".bs.js"
 }

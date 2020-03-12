@@ -92,21 +92,33 @@ let make = () => {
           value={form.input.email}
           disabled={form.submitting}
           onBlur={_ => form.blurEmail()}
-          onChange={event =>
-            form.updateEmail(input =>
-              {...input, email: event->ReactEvent.Form.target##value}
-            )
-          }
+          onChange={event => {
+            let value = event->ReactEvent.Form.target##value;
+            form.updateEmail(input => {...input, email: value});
+          }}
         />
         {switch (form.emailResult) {
          | Some(Validating(_)) =>
-           <div className="form-message"> "Checking..."->React.string </div>
+           <div
+             className={Cn.make(["form-message", "form-message-for-field"])}>
+             "Checking..."->React.string
+           </div>
          | Some(Result(Error(message))) =>
-           <div className={Cn.make(["form-message", "failure"])}>
+           <div
+             className={Cn.make([
+               "form-message",
+               "form-message-for-field",
+               "failure",
+             ])}>
              message->React.string
            </div>
          | Some(Result(Ok(_))) =>
-           <div className={Cn.make(["form-message", "success"])}>
+           <div
+             className={Cn.make([
+               "form-message",
+               "form-message-for-field",
+               "success",
+             ])}>
              {j|✓|j}->React.string
            </div>
          | None => React.null
@@ -127,19 +139,28 @@ let make = () => {
           value={form.input.password}
           disabled={form.submitting}
           onBlur={_ => form.blurPassword()}
-          onChange={event =>
-            form.updatePassword(input =>
-              {...input, password: event->ReactEvent.Form.target##value}
-            )
-          }
+          onChange={event => {
+            let value = event->ReactEvent.Form.target##value;
+            form.updatePassword(input => {...input, password: value});
+          }}
         />
         {switch (form.passwordResult) {
          | Some(Error(message)) =>
-           <div className={Cn.make(["form-message", "failure"])}>
+           <div
+             className={Cn.make([
+               "form-message",
+               "form-message-for-field",
+               "failure",
+             ])}>
              message->React.string
            </div>
          | Some(Ok(_)) =>
-           <div className={Cn.make(["form-message", "success"])}>
+           <div
+             className={Cn.make([
+               "form-message",
+               "form-message-for-field",
+               "success",
+             ])}>
              {j|✓|j}->React.string
            </div>
          | None => React.null
@@ -155,29 +176,39 @@ let make = () => {
           value={form.input.passwordConfirmation}
           disabled={form.submitting}
           onBlur={_ => form.blurPasswordConfirmation()}
-          onChange={event =>
+          onChange={event => {
+            let value = event->ReactEvent.Form.target##value;
             form.updatePasswordConfirmation(input =>
-              {
-                ...input,
-                passwordConfirmation: event->ReactEvent.Form.target##value,
-              }
-            )
-          }
+              {...input, passwordConfirmation: value}
+            );
+          }}
         />
         {switch (form.passwordConfirmationResult) {
          | Some(Error(message)) =>
-           <div className={Cn.make(["form-message", "failure"])}>
+           <div
+             className={Cn.make([
+               "form-message",
+               "form-message-for-field",
+               "failure",
+             ])}>
              message->React.string
            </div>
          | Some(Ok(_)) =>
-           <div className={Cn.make(["form-message", "success"])}>
+           <div
+             className={Cn.make([
+               "form-message",
+               "form-message-for-field",
+               "success",
+             ])}>
              {j|✓|j}->React.string
            </div>
          | None => React.null
          }}
       </div>
       <div className="form-row">
-        <button className="push-lg" disabled={form.submitting}>
+        <button
+          className={Cn.make(["primary", "push-lg"])}
+          disabled={form.submitting}>
           (form.submitting ? "Submitting..." : "Submit")->React.string
         </button>
         {switch (form.status) {

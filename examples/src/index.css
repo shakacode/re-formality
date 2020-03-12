@@ -1,7 +1,25 @@
-@import url('https://fonts.googleapis.com/css?family=Source+Sans+Pro:300');
+@import url('https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,600');
 
 :root {
-  --font-size: 18px;
+  --font-family: "Source Sans Pro", sans-serif;
+  --font-size: 20px;
+  
+  --bg-color: #eaeaea;
+  --active-color: #29d;
+  --border-color: #ccc;
+  
+  --container-width: 900px;
+  --form-padding-top: 30px;
+  --form-padding-bottom: 40px;
+  --form-padding-left: 40px;
+  --form-padding-right: 40px;
+  --label-width-md: 100px;
+  --label-width-lg: 130px;
+  --label-margin-right: 15px;
+  --input-margin-right: 15px;
+  --input-width: 350px;
+  --control-width: 20px;
+  --message-margin-left: 20px;
 }
 
 * {
@@ -15,10 +33,10 @@ body,
 #app {
   width: 100%;
   height: 100%;
-  background-color: #eaeaea;
-  font-family: "Source Sans Pro", sans-serif;
+  background-color: var(--bg-color);
+  font-family: var(--font-family);
   font-weight: 300;
-  font-size: 20px;
+  font-size: var(--font-size);
 }
 
 #app {
@@ -33,8 +51,8 @@ body,
 .container {
   display: flex;
   flex-flow: column nowrap;
-  width: 800px;
-  max-width: 800px;
+  width: var(--container-width);
+  max-width: var(--container-width);
 }
 
 .header {
@@ -68,7 +86,7 @@ body,
 }
 
 .nav-link.active {
-  border-bottom: 1px solid #29d;
+  border-bottom: 1px solid var(--active-color);
 }
 
 h1,
@@ -76,10 +94,17 @@ h2 {
   margin: 0 0 22px;
 }
 
+h3 {
+  margin: 0 var(--input-margin-right) 0 0;
+  width: var(--input-width);
+  font-weight: 600;
+  font-size: 1em;
+}
+
 .form {
   position: relative;
   background-color: #fff;
-  padding: 30px 40px 40px;
+  padding: var(--form-padding-top) var(--form-padding-right) var(--form-padding-bottom) var(--form-padding-left);
 }
 
 .form-messages-area {
@@ -88,15 +113,15 @@ h2 {
   right: 0;
   bottom: 0;
   background-color: #f9f9f9;
-  border-left: 1px dashed #ccc;
+  border-left: 1px dashed var(--border-color);
 }
 
 .form-messages-area-md {
-  width: calc(800px - 40px - 100px - 15px - 300px - 40px);
+  width: calc(var(--container-width) - var(--form-padding-left) - var(--label-width-md) - var(--label-margin-right) - var(--input-width) - var(--input-margin-right) - var(--control-width) - var(--input-margin-right));
 }
 
 .form-messages-area-lg {
-  width: calc(800px - 40px - 130px - 15px - 300px - 40px);
+  width: calc(var(--container-width) - var(--form-padding-left) - var(--label-width-lg) - var(--label-margin-right) - var(--input-width) - var(--input-margin-right) - var(--control-width) - var(--input-margin-right));
 }
 
 .form-content {
@@ -118,25 +143,25 @@ h2 {
 label {
   display: inline-flex;
   justify-content: flex-end;
-  margin-right: 15px;
+  margin-right: var(--label-margin-right);
   cursor: pointer;
   font-size: var(--font-size);
 }
 
 .label-md {
-  width: 100px;
+  width: var(--label-width-md);
 }
 
 .push-md {
-  margin-left: calc(100px + 15px);
+  margin-left: calc(var(--label-width-md) + var(--label-margin-right));
 }
 
 .label-lg {
-  width: 130px;
+  width: var(--label-width-lg);
 }
 
 .push-lg {
-  margin-left: calc(130px + 15px);
+  margin-left: calc(var(--label-width-lg) + var(--label-margin-right));
 }
 
 input,
@@ -148,30 +173,60 @@ button {
 
 input[type="text"] {
   display: inline-flex;
-  border: 1px solid #ccc;
+  border: 1px solid var(--border-color);
   padding: 8px;
   font-size: var(--font-size);
-  width: 300px;
+  width: var(--input-width);
 }
 
-label,
+label {
+  margin-right: var(--label-margin-right);
+}
+
 input {
-  margin-right: 15px;
+  margin-right: var(--input-margin-right);
 }
 
 button {
   display: inline-flex;
-  padding: 10px 20px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+  justify-content: center;
   color: #333;
 }
 
+button.primary,
+button.secondary {
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+}
+
+button.primary {
+  padding: 10px 20px;
+  font-size: 1em;
+}
+
+button.secondary {
+  padding: 6px 10px;
+  font-size: 0.75em;
+}
+
+button.control {
+  border: 0;
+  padding: 0;
+  width: var(--control-width);
+}
+
 input:focus,
-button:focus,
-button:hover {
+button.primary:focus,
+button.secondary:focus,
+button.primary:hover,
+button.secondary:hover {
   outline: none;
-  border: 1px solid #29d;
+  border: 1px solid var(--active-color);
+}
+
+button.control:focus,
+button.control:hover {
+  outline: none;
 }
 
 button:active {
@@ -194,8 +249,16 @@ button:disabled {
   font-size: 14px;
 }
 
-.form-message {
-  margin-left: 40px;
+.form-message-for-field {
+  margin-left: calc(var(--control-width) + var(--input-margin-right) + var(--message-margin-left));
+}
+
+.form-message-for-collection {
+  margin-left: calc(var(--control-width) + var(--input-margin-right) + var(--message-margin-left));
+}
+
+.form-message-for-field-of-collection {
+  margin-left: calc(var(--input-margin-right) + var(--message-margin-left));
 }
 
 .form-status {
