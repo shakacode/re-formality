@@ -1,3 +1,5 @@
+[@ocaml.warning "-30"];
+
 type update('state, 'action) =
   | NoUpdate
   | Update('state)

@@ -9,6 +9,7 @@
     "start": "yarn run bs:watch",
     "bs:build": "bsb -clean-world -make-world",
     "bs:watch": "bsb -clean-world -make-world -w",
+    "bs:install": "bsb -install",
     "bs:clean": "bsb -clean-world",
     "test": "esy x test.exe",
     "test:output:read": "test/script/output-read",
@@ -35,7 +36,7 @@
     "re-debouncer": "2.1.0"
   },
   "devDependencies": {
-    "bs-platform": "7.0.1",
+    "bs-platform": "7.2.2",
     "reason-react": "0.7.0"
   }
 }

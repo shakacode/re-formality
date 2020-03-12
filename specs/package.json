@@ -13,7 +13,7 @@
     "cypress:run": "cypress run"
   },
   "dependencies": {
-    "bs-platform": "7.0.1",
+    "bs-platform": "7.2.2",
     "bsb-js": "1.1.7",
     "cypress": "4.1.0",
     "parcel-bundler": "1.12.4",

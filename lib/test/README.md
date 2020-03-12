@@ -1,6 +1,20 @@
 # PPX tests
 These tests ensure that there are no errors/warnings during a compilation of valid forms and check proper error messages produced by PPX itself.
 
+Before running tests:
+
+```shell
+# Install yarn deps
+yarn install
+
+# Install esy deps
+cd lib
+esy install
+
+# Build public interface of the lib
+$(yarn bin)/bsb -install
+```
+
 To run tests:
 
 ```shell

@@ -1199,10 +1199,10 @@ bs-log@1.1.0:
   resolved "https://registry.yarnpkg.com/bs-log/-/bs-log-1.1.0.tgz#5866c611d39b1a490d0d1772f91ed98162fef885"
   integrity sha512-6LXOpFRfVHtIe81qjIRo2pAKWGonbJdm/3NjHm1Nbz8QqjKoYmtWOUaE9Zga4sNafi8iISeG3rWO9mIbpk507A==
 
-bs-platform@7.0.1:
-  version "7.0.1"
-  resolved "https://registry.yarnpkg.com/bs-platform/-/bs-platform-7.0.1.tgz#1d7b0ef6088b998dceee5db74a7cd8f01c20a3bd"
-  integrity sha512-UjStdtHhbtC/l6vKJ1XRDqrPk7rFf5PLYHtRX3akDXEYVnTbN36z0g4DEr5mU8S0N945e33HYts9x+i7hKKpZQ==
+bs-platform@7.2.2:
+  version "7.2.2"
+  resolved "https://registry.yarnpkg.com/bs-platform/-/bs-platform-7.2.2.tgz#76fdc63e4889458ae3d257a0132107a792f2309c"
+  integrity sha512-PWcFfN+jCTtT/rMaHDhKh+W9RUTpaRunmSF9vbLYcrJbpgCNW6aFKAY33u0P3mLxwuhshN3b4FxqGUBPj6exZQ==
 
 bsb-js@1.1.7:
   version "1.1.7"
