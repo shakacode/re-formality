@@ -1,9 +1,9 @@
 #!/bin/bash
 
-SRC="test/cases/$1.re"
-DEST="test/cases/$1.output"
+SRC="./test/cases/$1.re"
+DEST="./test/cases/$1.output"
 
-PPX="_build/default/bin/bin.exe"
+PPX="./_build/default/bin/bin.exe"
 BSC="$(yarn bin)/bsc"
 REFMT="$(yarn bin)/bsrefmt"
 REASON_REACT="../node_modules/reason-react/lib/ocaml"
