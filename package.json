@@ -1,9 +1,28 @@
 {
+  "name": "re-formality",
+  "version": "4.0.0-beta.1",
+  "description": "Form validation tool for reason-react",
+  "author": "Alex Fedoseev <alex.fedoseev@gmail.com>",
+  "license": "MIT",
   "workspaces": [
     "lib",
     "specs",
     "examples",
     "lib/sandbox"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MinimaHQ/re-formality.git"
+  },
+  "keywords": [
+    "react",
+    "reason",
+    "reason-react",
+    "reasonml",
+    "ocaml",
+    "bucklescript",
+    "forms",
+    "validation"
   ],
   "private": true
 }
