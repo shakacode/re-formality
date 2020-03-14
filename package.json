@@ -4,16 +4,16 @@
   "description": "Form validation tool for reason-react",
   "author": "Alex Fedoseev <alex.fedoseev@gmail.com>",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MinimaHQ/re-formality.git"
+  },
   "workspaces": [
     "lib",
     "specs",
     "examples",
     "lib/sandbox"
   ],
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/MinimaHQ/re-formality.git"
-  },
   "keywords": [
     "react",
     "reason",

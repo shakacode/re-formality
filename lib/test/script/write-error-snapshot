@@ -2,13 +2,13 @@
 
 source "test/script/var"
 
-$BSC -color never -ppx $PPX $SRC &> $DEST
+$BSC -color never -ppx $PPX $SRC &> $SNAPSHOT
 
 RESULT=$?
 
 if [ $RESULT -eq 2 ]
 then
-  echo "Output written to $DEST"
+  echo "Output written to $SNAPSHOT"
   exit 0
 else
   echo "Something went wrong"

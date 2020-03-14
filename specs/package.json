@@ -1,9 +1,7 @@
 {
   "name": "re-formality-specs",
   "version": "0.0.0",
-  "author": "Alex Fedoseev <alex.fedoseev@gmail.com>",
-  "private": "true",
-  "license": "MIT",
+  "private": true,
   "scripts": {
     "app:start": "parcel app/index.html --port 8080",
     "bs:build": "bsb -clean-world -make-world",

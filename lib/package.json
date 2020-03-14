@@ -1,6 +1,7 @@
 {
   "name": "re-formality",
   "version": "0.0.0",
+  "private": true,
   "scripts": {
     "start": "yarn run bs:watch",
     "bs:build": "bsb -clean-world -make-world",

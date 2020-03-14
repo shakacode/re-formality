@@ -1,10 +1,7 @@
 {
   "name": "re-formality-examples",
   "version": "0.0.0",
-  "description": "re-formality examples",
-  "main": "src/index.re",
-  "author": "Alex Fedoseev <alex.fedoseev@gmail.com>",
-  "license": "MIT",
+  "private": true,
   "scripts": {
     "start": "parcel src/index.html",
     "build": "parcel build src/index.html",
@@ -18,10 +15,6 @@
     "test": "exit 0",
     "deploy": "now deploy dist --public --name re-formality",
     "predeploy": "yarn run build"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/alexfedoseev/re-formality.git"
   },
   "dependencies": {
     "re-classnames": "4.1.0",

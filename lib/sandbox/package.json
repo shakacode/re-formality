@@ -1,8 +1,7 @@
 {
   "name": "re-formality-sandbox",
   "version": "0.0.0",
-  "private": "true",
-  "license": "MIT",
+  "private": true,
   "scripts": {
     "start": "bsb -clean-world -make-world -w"
   },

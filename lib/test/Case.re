@@ -6,11 +6,13 @@ type result = {
 let testable = Alcotest.(pair(string, string));
 let nothing = "";
 
-module Case = {
+module Path = {
   let join = xs => xs |> String.concat(Filename.dir_sep);
-  let dir = Filename.([current_dir_name, "test", "cases"] |> join);
-  let source = x => Filename.concat(dir, x ++ ".re");
-  let output = x => Filename.concat(dir, x ++ ".output");
+
+  let test_cases_dir = Filename.([current_dir_name, "test", "cases"] |> join);
+
+  let source = x => Filename.concat(test_cases_dir, x ++ ".re");
+  let snapshot = x => Filename.concat(test_cases_dir, x ++ ".snapshot");
 
   let ppx =
     Filename.(
@@ -37,46 +39,40 @@ module Case = {
       [parent_dir_name, "node_modules", "re-formality", "lib", "ocaml"]
       |> join
     );
+};
 
+module Bsc = {
   let errors = "+A";
 
-  let build = case => {
-    bsc
-    ++ " -ppx "
-    ++ ppx
-    ++ " -I "
-    ++ re_formality
-    ++ " -I "
-    ++ reason_react
-    ++ " -w "
-    ++ errors
-    ++ " -warn-error "
-    ++ errors
-    ++ " -color never "
-    ++ " -bs-cmi-only "
-    ++ (case |> source);
+  let cmd = case =>
+    Path.(
+      bsc
+      ++ " -ppx "
+      ++ ppx
+      ++ " -I "
+      ++ re_formality
+      ++ " -I "
+      ++ reason_react
+      ++ " -w "
+      ++ errors
+      ++ " -warn-error "
+      ++ errors
+      ++ " -color never"
+      ++ " -bs-cmi-only "
+      ++ (case |> source)
+    );
+};
+
+let env = {
+  let path = () => "PATH=" ++ Sys.getenv("PATH");
+  let systemroot = () => "SYSTEMROOT=" ++ Sys.getenv("SYSTEMROOT");
+  switch (Sys.os_type) {
+  | "Win32" => [|path(), systemroot()|]
+  | _ => [|path()|]
   };
 };
 
-// Uh not pretty
-module Win = {
-  // Since paths in snapshots are written on macOS,
-  // snapshot wouldn't match bsc output on Windows machine.
-  // Patching it up for now.
-  let patch_snapshot = x =>
-    x
-    |> Str.global_replace(
-         Str.regexp_string("/test/cases/"),
-         "\\\\test\\\\cases\\\\",
-       );
-
-  // For some reason bsc output contains double EOL
-  // in some places in output. Reducing those to one.
-  let patch_process_output = x =>
-    x |> Str.global_replace(Str.regexp_string("\n\n"), "\n");
-};
-
-let read = channel => {
+let read_from_channel = channel => {
   let buffer = Buffer.create(1024);
   let newline = "\n";
   try(
@@ -88,51 +84,49 @@ let read = channel => {
   | End_of_file => ()
   };
 
-  let output = buffer |> Buffer.contents;
-  switch (Sys.os_type) {
-  | "Win32" => output |> Win.patch_process_output
-  | _ => output
-  };
+  buffer |> Buffer.contents;
 };
 
-let actual = case => {
-  let env = {
-    let path = () => "PATH=" ++ Sys.getenv("PATH");
-    let systemroot = () => "SYSTEMROOT=" ++ Sys.getenv("SYSTEMROOT");
-    switch (Sys.os_type) {
-    | "Win32" => [|path(), systemroot()|]
-    | _ => [|path()|]
-    };
-  };
+let run_bsc = case => {
+  let (stdout, stdin, stderr) = Unix.open_process_full(case |> Bsc.cmd, env);
 
-  let (stdout, stdin, stderr) =
-    Unix.open_process_full(case |> Case.build, env);
-
-  let res = (stdout |> read, stderr |> read);
+  let res = (stdout |> read_from_channel, stderr |> read_from_channel);
 
   Unix.close_process_full((stdout, stdin, stderr)) |> ignore;
 
   res;
 };
 
-let output = case => {
-  let file = case |> Case.output |> open_in;
-  let size = file |> in_channel_length;
-  let buf = size |> Bytes.create;
-  try(really_input(file, buf, 0, size)) {
-  | End_of_file => ()
-  };
-  file |> close_in;
-  let output = buf |> Bytes.to_string;
-  switch (Sys.os_type) {
-  | "Win32" => output |> Win.patch_snapshot
-  | _ => output
-  };
+let diff_error_snapshot = case => {
+  let actual = case |> Bsc.cmd;
+  let snapshot = case |> Path.snapshot;
+
+  let cmd =
+    actual
+    ++ " 2>&1"
+    ++ (
+      // FIXME: It doesn't work on CI
+      switch (Sys.os_type) {
+      | "Win32" => {| | sed "s|\\test\\cases\\|/test/cases/|g"|}
+      | _ => ""
+      }
+    )
+    ++ {| | diff --ignore-blank-lines --ignore-space-change |}
+    ++ snapshot
+    ++ {| -|};
+
+  let (stdout, stdin, stderr) = Unix.open_process_full(cmd, env);
+
+  let res = (stdout |> read_from_channel, stderr |> read_from_channel);
+
+  Unix.close_process_full((stdout, stdin, stderr)) |> ignore;
+
+  res;
 };
 
-let ok = case => {actual: case |> actual, expected: (nothing, nothing)};
+let ok = case => {actual: case |> run_bsc, expected: (nothing, nothing)};
 
 let error = case => {
-  actual: case |> actual,
-  expected: (nothing, case |> output),
+  actual: case |> diff_error_snapshot,
+  expected: (nothing, nothing),
 };

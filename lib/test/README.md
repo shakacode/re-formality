@@ -24,13 +24,13 @@ esy x test.exe
 To inspect result produced by specific case:
 
 ```shell
-test/script/output-read [CASE_MODULE_NAME_WITHOUT_EXTENSION]
+test/script/print-bsc-output [CASE_MODULE_NAME_WITHOUT_EXTENSION]
 ```
 
 To write expected output for specific error case:
 
 ```shell
-test/script/output-write [CASE_MODULE_NAME_WITHOUT_EXTENSION]
+test/script/write-error-snapshot [CASE_MODULE_NAME_WITHOUT_EXTENSION]
 ```
 
 To write un-ppx'ed source of a test case to sandbox for debugging:

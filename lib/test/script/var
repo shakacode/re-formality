@@ -1,7 +1,7 @@
 #!/bin/bash
 
 SRC="./test/cases/$1.re"
-DEST="./test/cases/$1.output"
+SNAPSHOT="./test/cases/$1.snapshot"
 
 PPX="./_build/default/bin/bin.exe"
 BSC="$(yarn bin)/bsc"
