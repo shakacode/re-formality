@@ -74,6 +74,14 @@ First of all, you don't need to define a type for `validators`. It's already don
 1. `strategy`: as described in **[Validation Strategies](./02-ValidationStrategies.md)** section
 2. `validate`: function that takes `input` as argument and returns `result([OUTPUT_TYPE_OF_FIELD], message)`. In the `email` case, it's `result(Email.t, message)`.
 
+If field shouldn't be validated, set its validator to `None`:
+
+```reason
+let validators = {
+  field: None,
+};
+```
+
 Pretty much the same applies to the `password` field:
 
 ```reason
