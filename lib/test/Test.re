@@ -39,6 +39,8 @@ let () =
             "Ok__CollectionWithCollectionValidatorAndFieldOfCollectionWithAsyncValidatorInOnChangeMode",
             "Ok__CollectionWithCollectionValidatorAndFieldOfCollectionWithAsyncValidatorInOnBlurMode",
             "Ok__CollectionWithNoCollectionValidatorAndTwoFieldsOfCollectionWithSyncValidator",
+            "Ok__Message",
+            "Ok__SubmissionError",
           ]
           |> List.map(ok),
         ),

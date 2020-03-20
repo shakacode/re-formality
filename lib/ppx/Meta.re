@@ -1597,7 +1597,6 @@ module Metadata = {
   type t = {
     scheme: Scheme.t,
     async: bool, // meh, it should be variant: Sync(_) | Async(_)
-    // collections: list(Collection.t),
     output_type: OutputTypeParser.ok,
     validators_record: ValidatorsRecord.t,
     message_type: option(unit),
@@ -1724,19 +1723,11 @@ module Metadata = {
                       Error(OutputTypeParser.NotRecord(ptype_loc))
 
                   // Message type
-                  | {
-                      ptype_name: {txt: "message"},
-                      ptype_loc,
-                      ptype_manifest: Some(_),
-                    } =>
+                  | {ptype_name: {txt: "message"}, ptype_loc} =>
                     message_type := Some()
 
                   // Submission error type
-                  | {
-                      ptype_name: {txt: "submissionError"},
-                      ptype_loc,
-                      ptype_manifest: Some(_),
-                    } =>
+                  | {ptype_name: {txt: "submissionError"}, ptype_loc} =>
                     submission_error_type := Some()
 
                   // Rest
