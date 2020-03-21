@@ -1,6 +1,1 @@
-// TODO: [Meta] In some cases (records?) order of items is reversed.
-// TODO: [Collections] Reorder items in collections
-// TODO: [General] Prolly makes sense to move functions from Formality module to own modules to reduce bundle size
-//                 I.e. if user doesn't use async stuff or collections, those wouldn't get into the final bundle (unless tree shaking works these days)
-
 "formality" |> Ppxlib.Driver.register_transformation(~extensions=[Form.ext]);
