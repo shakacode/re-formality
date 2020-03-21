@@ -13,7 +13,7 @@
     "dist:clean": "rm -rf dist",
     "format": "bsrefmt --in-place **/*.{re,rei}",
     "test": "exit 0",
-    "deploy": "now deploy dist --public --name re-formality",
+    "deploy": "now deploy dist --prod --name re-formality",
     "predeploy": "yarn run build"
   },
   "dependencies": {
