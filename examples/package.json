@@ -1,0 +1,29 @@
+{
+  "name": "re-formality-examples",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "start": "parcel src/index.html",
+    "build": "parcel build src/index.html",
+    "prebuild": "yarn run clean && yarn run bs:build",
+    "clean": "yarn run dist:clean && yarn run bs:clean",
+    "bs:build": "bsb -clean-world -make-world",
+    "bs:watch": "bsb -clean-world -make-world -w",
+    "bs:clean": "bsb -clean-world",
+    "dist:clean": "rm -rf dist",
+    "format": "bsrefmt --in-place **/*.{re,rei}",
+    "test": "exit 0",
+    "deploy": "now deploy dist --public --name re-formality",
+    "predeploy": "yarn run build"
+  },
+  "dependencies": {
+    "re-classnames": "4.1.0",
+    "re-formality": "*",
+    "reason-react": "0.7.0"
+  },
+  "devDependencies": {
+    "bs-platform": "7.2.2",
+    "bsb-js": "1.1.7",
+    "parcel-bundler": "1.12.4"
+  }
+}

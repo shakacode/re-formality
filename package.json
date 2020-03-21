@@ -1,26 +1,18 @@
 {
   "name": "re-formality",
-  "version": "3.2.0",
-  "description": "Reasonable form validation tool for reason-react",
-  "main": "src/Formality.re",
+  "version": "4.0.0-beta.2",
+  "description": "Form validation tool for reason-react",
   "author": "Alex Fedoseev <alex.fedoseev@gmail.com>",
   "license": "MIT",
-  "scripts": {
-    "start": "parcel examples/index.html",
-    "build": "parcel build examples/index.html",
-    "prebuild": "yarn run clean && yarn run build:bs",
-    "build:bs": "bsb -make-world",
-    "clean": "yarn run clean:bs && yarn run clean:dist",
-    "clean:bs": "bsb -clean-world",
-    "clean:dist": "rm -rf dist",
-    "test": "exit 0",
-    "format": "bsrefmt --in-place **/*.{re,rei}",
-    "deploy": "now deploy dist --public --name re-formality",
-    "predeploy": "yarn run build"
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MinimaHQ/re-formality.git"
   },
-  "files": [
-    "src",
-    "bsconfig.json"
+  "workspaces": [
+    "lib",
+    "specs",
+    "examples",
+    "lib/sandbox"
   ],
   "keywords": [
     "react",
@@ -32,18 +24,5 @@
     "forms",
     "validation"
   ],
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/alexfedoseev/re-formality.git"
-  },
-  "devDependencies": {
-    "bs-platform": "7.0.1",
-    "bsb-js": "1.1.7",
-    "parcel-bundler": "1.12.4",
-    "re-classnames": "4.1.0",
-    "reason-react": "0.7.0"
-  },
-  "dependencies": {
-    "re-debouncer": "2.1.0"
-  }
+  "private": true
 }

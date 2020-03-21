@@ -1,0 +1,8 @@
+(library
+  (name Ppx)
+  (public_name re-formality-ppx.lib)
+  (kind ppx_rewriter)
+  (libraries ppxlib)
+  (flags (:standard -w -30))
+  (preprocess (pps ppxlib.metaquot ppxlib.runner))
+)

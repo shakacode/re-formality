@@ -1,0 +1,8 @@
+
+  We've found a bug for you!
+  ./test/cases/Error__InputNotRecord.re 1:22-37
+  
+  1 │ module Form = [%form type input = int];
+  
+  `input` must be of record type
+  

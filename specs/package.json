@@ -1,0 +1,24 @@
+{
+  "name": "re-formality-specs",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "app:start": "parcel app/index.html --port 8080",
+    "bs:build": "bsb -clean-world -make-world",
+    "bs:watch": "bsb -make-world -w",
+    "bs:clean": "bsb -clean-world",
+    "cypress:open": "cypress open",
+    "cypress:run": "cypress run",
+    "test": "start-server-and-test app:start http://localhost:8080 cypress:run",
+    "pretest": "yarn run bs:build"
+  },
+  "dependencies": {
+    "bs-platform": "7.2.2",
+    "bsb-js": "1.1.7",
+    "cypress": "4.1.0",
+    "parcel-bundler": "1.12.4",
+    "re-formality": "*",
+    "reason-react": "0.7.0",
+    "start-server-and-test": "1.10.10"
+  }
+}

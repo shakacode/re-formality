@@ -1,0 +1,12 @@
+#!/bin/bash
+
+SRC="./test/cases/$1.re"
+SNAPSHOT="./test/cases/$1.snapshot"
+
+PPX="./_build/default/bin/bin.exe"
+BSC="$(yarn bin)/bsc"
+REFMT="$(yarn bin)/bsrefmt"
+REASON_REACT="../node_modules/reason-react/lib/ocaml"
+RE_FORMALITY="../node_modules/re-formality/lib/ocaml"
+
+ERRORS="+A"

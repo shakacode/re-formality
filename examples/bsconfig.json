@@ -1,0 +1,20 @@
+{
+  "name": "re-formality-examples",
+  "sources": ["src"],
+  "bs-dependencies": [
+    "reason-react",
+    "re-formality",
+    "re-classnames"
+  ],
+  "reason": {
+    "react-jsx": 3
+  },
+  "refmt": 3,
+  "bsc-flags": ["-open Belt"],
+  "ppx-flags": ["../lib/_build/default/bin/bin.exe"],
+  "package-specs": {
+    "module": "es6",
+    "in-source": true
+  },
+  "suffix": ".bs.js"
+}
