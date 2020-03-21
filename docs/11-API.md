@@ -14,20 +14,20 @@
   - [`useForm`](#useform)
     - [`submissionCallbacks`](#submissioncallbacks)
   - [`interface`](#interface)
-    - general field handlers
-    - async field handlers
-    - field of collection handlers
-    - collection handlers
-    - `input`
-    - `status`
-    - `submitting`
-    - `dirty`
-    - `submit`
-    - `dismissSubmissionError`
-    - `dismissSubmissionResult`
-    - `mapSubmissionError`
-    - `reset`
-    - `valid`
+    - [Update handlers](#update-handlers)
+    - [Blur handlers](#blur-handlers)
+    - [Field result](#field-result)
+    - [Collection handlers](#collection-handlers)
+    - [`input`](#input)
+    - [`status`](#status)
+    - [`submitting`](#submitting)
+    - [`dirty`](#dirty)
+    - [`submit`](#submit)
+    - [`dismissSubmissionResult`](#dismisssubmissionresult)
+    - [`dismissSubmissionError`](#dismisssubmissionerror)
+    - [`mapSubmissionError`](#mapsubmissionerror)
+    - [`reset`](#reset)
+    - [`valid`](#valid)
 
 ## Configuration
 Form configuration module can be created using `[%form]` extension:
@@ -257,8 +257,8 @@ type interface = {
   submitting: bool,
   dirty: unit => bool,
   submit: unit => unit,
-  dismissSubmissionError: unit => unit,
   dismissSubmissionResult: unit => unit,
+  dismissSubmissionError: unit => unit,
   mapSubmissionError: (submissionError => submissionError) => unit,
   reset: unit => unit,
 
@@ -280,10 +280,159 @@ type interface = {
   // Field of collection
   update[CollectionEntry][Field]: (input => input, ~at: index) => unit,
   blur[CollectionEntry][Field]: (~at: index) => unit,
-  [collectionEntry][Field]Result: (~at: index) => option(result(string, message)),
+  [collectionEntry][Field]Result: (~at: index) => option(result('outputValue, message)),
 
   // Collection
-  add[CollectionEntry]: author => unit,
+  add[CollectionEntry]: 'collectionEntryInput => unit,
   remove[CollectionEntry]: (~at: index) => unit,
 };
+```
+<br>
+
+#### Update handlers
+Used to update form input for a specific field:
+
+```reason
+// Field
+update[Field]: (input => input) => unit
+
+// Field of collection
+update[CollectionEntry][Field]: (input => input, ~at: index) => unit,
+```
+<br>
+
+#### Blur handlers
+Used to notify hook on blur event for a specific field:
+
+```reason
+// Field
+blur[Field]: unit => unit
+
+// Field of collection
+blur[CollectionEntry][Field]: (~at: index) => unit,
+```
+<br>
+
+#### Field result
+Used to display validation result for a specific field:
+
+```reason
+// Field
+[field]Result: option(result('outputValue, message)),
+
+// Async field
+type asyncResult =
+  | Validating('outputValue)
+  | Result(result('outputValue, message));
+
+[field]Result: option(asyncResult),
+
+// Field of collection
+[collectionEntry][Field]Result: (~at: index) => option(result('outputValue, message)),
+```
+<br>
+
+#### Collection handlers
+Used to update collection contents:
+
+```reason
+// Add entry
+add[CollectionEntry]: 'collectionEntryInput => unit,
+
+// Remove entry
+remove[CollectionEntry]: (~at: index) => unit,
+```
+<br>
+
+#### `input`
+Current form input. Use it to set values of form fields.
+
+```reason
+input: MyForm.input
+```
+<br>
+
+#### `status`
+Current form status.
+
+```reason
+type formStatus =
+  | Editing
+  | Submitting(option(MyForm.submissionError))
+  | Submitted
+  | SubmissionFailed(MyForm.submissionError);
+
+status: formStatus
+```
+<br>
+
+#### `submitting`
+`bool` value, passed for convenience as it gets derived from the `form.status`. Set to `true` when `form.status` is `Submitting`, `false` otherwise.
+
+```reason
+submitting: bool
+```
+<br>
+
+#### `dirty`
+The function would return `true` if any form field was touched, `false` otherwise.
+
+```reason
+dirty: unit => bool
+```
+<br>
+
+#### `submit`
+Triggers form submission.
+
+```reason
+submit: unit => unit
+```
+<br>
+
+#### `dismissSubmissionResult`
+Use it when you want to let a user dismiss alerts with errors from a server or success message without resetting a form. Under the hood, it changes `Submitted` or `SubmissionFailed` form statuses back to `Editing`.
+
+```reason
+dismissSubmissionResult: unit => unit
+```
+<br>
+
+#### `dismissSubmissionError`
+Dismisses submission error only.
+
+```reason
+dismissSubmissionError: unit => unit
+```
+<br>
+
+#### `mapSubmissionError`
+Maps over submission error. Useful for animating errors.
+
+```reason
+mapSubmissionError: (submissionError => submissionError) => unit
+```
+<br>
+
+#### `reset`
+Resets the whole form to its initial state.
+
+```reason
+reset: unit => unit
+```
+<br>
+
+#### `valid`
+The function that would report the overall validity of the form.
+
+In forms with async fields, it would return `option(bool)`. `None` is possible when one of the async fields in `Validating` state, i.e. we don't know yet if it's valid or not. Also, keep in mind, if one of the async fields wasn't touched yet, it would perform only local validation.
+
+Use this function with caution since it might introduce noticeable overhead on large forms.
+
+```reason
+// General form
+valid: unit => bool
+
+// Form with async fields
+valid: unit => option(bool)
 ```
