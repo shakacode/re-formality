@@ -8,6 +8,7 @@
     "bs:watch": "bsb -clean-world -make-world -w",
     "bs:install": "bsb -install",
     "bs:clean": "bsb -clean-world",
+    "ppx:build": "esy build",
     "test": "esy x test.exe",
     "test:output:read": "test/script/output-read",
     "test:output:write": "test/script/output-write",
