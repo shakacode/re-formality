@@ -1,7 +1,7 @@
 # Caveats
 
-- [Runtime error during input update](runtime-error-during-input-update)
-- [Warning 42 during compilation](warning-42-during-compilation)
+- [Runtime error during input update](#runtime-error-during-input-update)
+- [Warning 42 during compilation](#warning-42-during-compilation)
 
 ## Runtime error during input update
 After implementing a form, you might face app crash when you type something in input field with this error in a browser console:
