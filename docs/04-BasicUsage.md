@@ -174,37 +174,24 @@ Next thing to render is a text input for `email` field:
 <input
   value={form.input.email}
   disabled={form.submitting}
-  onBlur={_ => form.blurEmail()}
-  onChange={event => {
-    let value = event->ReactEvent.Form.target##value;
-    form.updateEmail(input => {...input, email: value});
-  }}
+  onBlur={form.blurEmail}
+  onChange={
+    form.updateEmail((~target, input) => {
+      ...input,
+      email: target##value,
+    })
+  }
 />
 ```
 
 The value of the field is exposed via `form.input` record. For extra safety, we disable all inputs during form submission using `form.submitting` property which is of boolean type. The next 2 functions are very important:
-1. `form.blurEmail: unit => unit`: must be triggered from `onBlur` handler of an input field
-2. `form.updateEmail: (input => input) => unit`: must be triggered from `onChange` handler of an input field. It takes a function as an argument which takes the current form `input` and must return updated `input` record.
+1. `form.blurEmail: ReactEvent.Focus.t => unit`: must be triggered from `onBlur` handler of an input field
+2. `form.updateEmail: ((~target: Js.t({..}), input) => input, ReactEvent.Form.t) => unit`: must be triggered from `onChange` handler of an input field. It takes a function as an argument which takes the event target and the current form `input`, must return updated `input` record. Event target, as defined in `reason-react` bindings, is an open object (`Js.t({..})`), which means it is not type-safe but allows to access any target property you need. Most of the time you need either `target##value` or `target##checked`.
 
-Please, make sure you don't capture the whole `event` in this callback. Otherwise, it would result in a runtime error.
+For ReactNative users, type signatures would be a bit different since those don't include events related stuff:
 
-```reason
-// Bad, don't do this!
-onChange={event => {
-  form.updateEmail(input => {
-    ...input,
-    email: event->ReactEvent.Form.target##value,
-  });
-}}
-
-// Good: extract value from event before passing it to the callback
-onChange={event => {
-  let value = event->ReactEvent.Form.target##value;
-  form.updateEmail(input => {...input, email: value});
-}}
-```
-
-This runtime error happens due to [React's `SyntheticEvent` being pooled](https://reactjs.org/docs/events.html#event-pooling). Since callback gets triggered asynchronously, by the time it gets called, the event is already null'ed by React.
+1. `form.blurEmail: unit => unit`
+2. `form.updateEmail: (input => input) => unit`
 
 ### Messages
 To display feedback in UI, we can use `form.emailResult` value. It's exactly what email validator returns but wrapped in `option` type:
@@ -338,11 +325,13 @@ let make = () => {
     <input
       value={form.input.email}
       disabled={form.submitting}
-      onBlur={_ => form.blurEmail()}
-      onChange={event => {
-        let value = event->ReactEvent.Form.target##value;
-        form.updateEmail(input => {...input, email: value});
-      }}
+      onBlur={form.blurEmail}
+      onChange={
+        form.updateEmail((~target, input) => {
+          ...input,
+          email: target##value,
+        })
+      }
     />
     {switch (form.emailResult) {
      | Some(Error(message)) =>
@@ -353,11 +342,13 @@ let make = () => {
     <input
       value={form.input.password}
       disabled={form.submitting}
-      onBlur={_ => form.blurPassword()}
-      onChange={event => {
-        let value = event->ReactEvent.Form.target##value;
-        form.updatePassword(input => {...input, password: value});
-      }}
+      onBlur={form.blurPassword}
+      onChange={
+        form.updatePassword((~target, input) => {
+          ...input,
+          password: target##value,
+        })
+      }
     />
     {switch (form.passwordResult) {
      | Some(Error(message)) =>

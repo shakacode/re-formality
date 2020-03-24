@@ -143,7 +143,7 @@ let make = () => {
                    {
                      ...input,
                      authors:
-                       form.input.authors
+                       input.authors
                        ->Array.mapWithIndex((idx, author) =>
                            if (idx != index) {
                              author;
