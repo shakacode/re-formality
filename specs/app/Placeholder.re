@@ -27,11 +27,8 @@ let make = () => {
       id="field--name--input"
       value={form.input.name}
       disabled={form.submitting}
-      onBlur={_ => form.blurName()}
-      onChange={event => {
-        let value = event->ReactEvent.Form.target##value;
-        form.updateName(_input => {name: value});
-      }}
+      onBlur={form.blurName}
+      onChange={form.updateName((~target, _input) => {name: target##value})}
     />
     {switch (form.nameResult) {
      | Some(Error(message)) =>

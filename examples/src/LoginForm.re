@@ -66,11 +66,12 @@ let make = () => {
           type_="text"
           value={form.input.email}
           disabled={form.submitting}
-          onBlur={_ => form.blurEmail()}
-          onChange={event => {
-            let value = event->ReactEvent.Form.target##value;
-            form.updateEmail(input => {...input, email: value});
-          }}
+          onBlur={form.blurEmail}
+          onChange={
+            form.updateEmail((~target, input) =>
+              {...input, email: target##value}
+            )
+          }
         />
         {switch (form.emailResult) {
          | Some(Error(message)) =>
@@ -103,11 +104,12 @@ let make = () => {
           type_="text"
           value={form.input.password}
           disabled={form.submitting}
-          onBlur={_ => form.blurPassword()}
-          onChange={event => {
-            let value = event->ReactEvent.Form.target##value;
-            form.updatePassword(input => {...input, password: value});
-          }}
+          onBlur={form.blurPassword}
+          onChange={
+            form.updatePassword((~target, input) =>
+              {...input, password: target##value}
+            )
+          }
         />
         {switch (form.passwordResult) {
          | Some(Error(message)) =>
@@ -138,11 +140,12 @@ let make = () => {
           checked={form.input.rememberMe}
           disabled={form.submitting}
           className="push-lg"
-          onBlur={_ => form.blurRememberMe()}
-          onChange={event => {
-            let checked = event->ReactEvent.Form.target##checked;
-            form.updateRememberMe(input => {...input, rememberMe: checked});
-          }}
+          onBlur={form.blurRememberMe}
+          onChange={
+            form.updateRememberMe((~target, input) =>
+              {...input, rememberMe: target##checked}
+            )
+          }
         />
         <label htmlFor="login--remember"> "Remember me"->React.string </label>
       </div>
