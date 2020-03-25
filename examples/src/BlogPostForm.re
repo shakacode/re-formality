@@ -78,11 +78,12 @@ let make = () => {
           type_="text"
           value={form.input.title}
           disabled={form.submitting}
-          onBlur={_ => form.blurTitle()}
-          onChange={event => {
-            let value = event->ReactEvent.Form.target##value;
-            form.updateTitle(input => {...input, title: value});
-          }}
+          onBlur={form.blurTitle}
+          onChange={
+            form.updateTitle((~target, input) =>
+              {...input, title: target##value}
+            )
+          }
         />
         {switch (form.titleResult) {
          | Some(Error(message)) =>
@@ -136,24 +137,23 @@ let make = () => {
                type_="text"
                value={author.name}
                disabled={form.submitting}
-               onBlur={_ => form.blurAuthorName(~at=index)}
-               onChange={event => {
-                 let value = event->ReactEvent.Form.target##value;
-                 form.updateAuthorName(~at=index, input =>
+               onBlur={form.blurAuthorName(~at=index)}
+               onChange={
+                 form.updateAuthorName(~at=index, (~target, input) =>
                    {
                      ...input,
                      authors:
-                       form.input.authors
+                       input.authors
                        ->Array.mapWithIndex((idx, author) =>
                            if (idx != index) {
                              author;
                            } else {
-                             {name: value};
+                             {name: target##value};
                            }
                          ),
                    }
-                 );
-               }}
+                 )
+               }
              />
              <button
                type_="button"

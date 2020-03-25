@@ -91,11 +91,12 @@ let make = () => {
           type_="text"
           value={form.input.email}
           disabled={form.submitting}
-          onBlur={_ => form.blurEmail()}
-          onChange={event => {
-            let value = event->ReactEvent.Form.target##value;
-            form.updateEmail(input => {...input, email: value});
-          }}
+          onBlur={form.blurEmail}
+          onChange={
+            form.updateEmail((~target, input) =>
+              {...input, email: target##value}
+            )
+          }
         />
         {switch (form.emailResult) {
          | Some(Validating(_)) =>
@@ -138,11 +139,12 @@ let make = () => {
           type_="text"
           value={form.input.password}
           disabled={form.submitting}
-          onBlur={_ => form.blurPassword()}
-          onChange={event => {
-            let value = event->ReactEvent.Form.target##value;
-            form.updatePassword(input => {...input, password: value});
-          }}
+          onBlur={form.blurPassword}
+          onChange={
+            form.updatePassword((~target, input) =>
+              {...input, password: target##value}
+            )
+          }
         />
         {switch (form.passwordResult) {
          | Some(Error(message)) =>
@@ -175,13 +177,12 @@ let make = () => {
           type_="text"
           value={form.input.passwordConfirmation}
           disabled={form.submitting}
-          onBlur={_ => form.blurPasswordConfirmation()}
-          onChange={event => {
-            let value = event->ReactEvent.Form.target##value;
-            form.updatePasswordConfirmation(input =>
-              {...input, passwordConfirmation: value}
-            );
-          }}
+          onBlur={form.blurPasswordConfirmation}
+          onChange={
+            form.updatePasswordConfirmation((~target, input) =>
+              {...input, passwordConfirmation: target##value}
+            )
+          }
         />
         {switch (form.passwordConfirmationResult) {
          | Some(Error(message)) =>

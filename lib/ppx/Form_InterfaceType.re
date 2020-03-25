@@ -6,7 +6,7 @@ open Printer;
 open Ppxlib;
 open Ast_helper;
 
-let ast = (~scheme: Scheme.t, ~async: bool, ~loc) => {
+let ast = (~scheme: Scheme.t, ~target: Target.t, ~async: bool, ~loc) => {
   let f = (x, t) => t |> Type.field(x |> str(~loc));
 
   let base = [
@@ -28,6 +28,8 @@ let ast = (~scheme: Scheme.t, ~async: bool, ~loc) => {
     f("reset", [%type: unit => unit]),
   ];
 
+  let dom_event_target = [%type: Js.t({..} as 'eventTarget)];
+
   let update_fns =
     scheme
     |> List.fold_left(
@@ -36,7 +38,16 @@ let ast = (~scheme: Scheme.t, ~async: bool, ~loc) => {
            | Field(field) => [
                f(
                  FieldPrinter.update_fn(~field=field.name),
-                 [%type: (input => input) => unit],
+                 switch (target) {
+                 | ReactDom => [%type:
+                     (
+                       (~target: [%t dom_event_target], input) => input,
+                       ReactEvent.Form.t
+                     ) =>
+                     unit
+                   ]
+                 | ReactNative => [%type: (input => input) => unit]
+                 },
                ),
                ...acc,
              ]
@@ -50,7 +61,19 @@ let ast = (~scheme: Scheme.t, ~async: bool, ~loc) => {
                           ~collection,
                           ~field=field.name,
                         ),
-                        [%type: (input => input, ~at: index) => unit],
+                        switch (target) {
+                        | ReactDom => [%type:
+                            (
+                              ~at: index,
+                              (~target: [%t dom_event_target], input) => input,
+                              ReactEvent.Form.t
+                            ) =>
+                            unit
+                          ]
+                        | ReactNative => [%type:
+                            (~at: index, input => input) => unit
+                          ]
+                        },
                       ),
                       ...acc,
                     ],
@@ -68,7 +91,10 @@ let ast = (~scheme: Scheme.t, ~async: bool, ~loc) => {
            | Field(field) => [
                f(
                  FieldPrinter.blur_fn(~field=field.name),
-                 [%type: unit => unit],
+                 switch (target) {
+                 | ReactDom => [%type: ReactEvent.Focus.t => unit]
+                 | ReactNative => [%type: unit => unit]
+                 },
                ),
                ...acc,
              ]
@@ -82,7 +108,12 @@ let ast = (~scheme: Scheme.t, ~async: bool, ~loc) => {
                           ~collection,
                           ~field=field.name,
                         ),
-                        [%type: (~at: index) => unit],
+                        switch (target) {
+                        | ReactDom => [%type:
+                            (~at: index, ReactEvent.Focus.t) => unit
+                          ]
+                        | ReactNative => [%type: (~at: index) => unit]
+                        },
                       ),
                       ...acc,
                     ],
@@ -211,6 +242,11 @@ let ast = (~scheme: Scheme.t, ~async: bool, ~loc) => {
       "interface"
       |> str(~loc)
       |> Type.mk(
+           ~params=?
+             switch (target) {
+             | ReactDom => Some([([%type: 'eventTarget], Invariant)])
+             | ReactNative => None
+             },
            ~kind=
              Ptype_record(
                base
