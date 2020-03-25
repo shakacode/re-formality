@@ -8,9 +8,9 @@ Form validation tool for [`reason-react`](https://reasonml.github.io/reason-reac
 
 ## Features
 * Validation strategies
-* Dependent fields
-* Collections
 * Async validations
+* Collections
+* Dependent fields
 * I18n compatible
 
 ## Documentation
@@ -31,9 +31,12 @@ Form validation tool for [`reason-react`](https://reasonml.github.io/reason-reac
 * [Live @ minima.app](https://minima.app)
 * [Sources](./examples)
 
+## Contributing
+See [CONTRIBUTING](./CONTRIBUTING.md).
+
 ## Alternatives
 - [ReForm](https://github.com/Astrocoders/reform)<br>
   Alternative form state management solution for ReasonReact apps.
 
 ## License
-MIT.
+See [LICENSE](./LICENSE).
