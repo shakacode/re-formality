@@ -1,6 +1,6 @@
 # History
 
-## Unreleased
+## 4.0.0-beta.3
 * Added `ReactDom` & `ReactNative` targets and changed update handlers API. See: [#68](https://github.com/MinimaHQ/re-formality/issues/68) & [#72](https://github.com/MinimaHQ/re-formality/pull/72).
 
 ## 4.0.0-beta.2
