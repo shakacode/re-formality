@@ -228,7 +228,7 @@ In general, you would want to take the output and send it to your server asynchr
 - on success, reset the form
 - on error, show errors from the server, etc.
 
-In this example, we would stick with the simplest one. And elaborate on more advanced scenarios in **[Form Submission](./09-FormSubmission.md)** section.
+In this example, we would stick with the simplest one. And elaborate on more advanced scenarios in **[Form Submission](./08-FormSubmission.md)** section.
 
 So, the scenario is:
 - on success, store a user in the app state and redirect the user to another screen
