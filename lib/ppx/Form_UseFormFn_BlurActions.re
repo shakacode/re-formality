@@ -36,23 +36,120 @@ let ast = (~loc, scheme: Scheme.t) =>
 
                  switch (field.validator) {
                  | SyncValidator(validator) =>
-                   Form_UseFormFn_BlurActions_SyncField.ast(
-                     ~loc,
-                     ~validator,
-                     ~field_status_expr,
-                     ~field_input_expr,
-                     ~validator_expr,
-                     ~set_status_expr,
-                   )
+                   %expr
+                   {
+                     let result =
+                       switch%e (validator) {
+                       | Ok(Required | Optional(Some(_)))
+                       | Error () =>
+                         %expr
+                         validateFieldOnBlurWithValidator(
+                           ~input=state.input,
+                           ~fieldStatus=[%e field_status_expr],
+                           ~validator=[%e validator_expr],
+                           ~setStatus=[%e
+                             [%expr status => [%e set_status_expr]]
+                           ],
+                         )
+                       | Ok(Optional(None)) =>
+                         %expr
+                         validateFieldOnBlurWithoutValidator(
+                           ~fieldInput=[%e field_input_expr],
+                           ~fieldStatus=[%e field_status_expr],
+                           ~setStatus=[%e
+                             [%expr status => [%e set_status_expr]]
+                           ],
+                         )
+                       };
+
+                     switch (result) {
+                     | Some(fieldsStatuses) =>
+                       Update({...state, fieldsStatuses})
+                     | None => NoUpdate
+                     };
+                   }
                  | AsyncValidator({optionality}) =>
-                   Form_UseFormFn_BlurActions_AsyncField.ast(
-                     ~loc,
-                     ~field,
-                     ~optionality,
-                     ~field_status_expr,
-                     ~validator_expr,
-                     ~set_status_expr,
-                   )
+                   %expr
+                   {
+                     let result =
+                       switch%e (optionality) {
+                       | None =>
+                         %expr
+                         {
+                           Async.validateFieldOnBlur(
+                             ~input=state.input,
+                             ~fieldStatus=[%e field_status_expr],
+                             ~validator=[%e validator_expr],
+                             ~setStatus=[%e
+                               [%expr status => [%e set_status_expr]]
+                             ],
+                           );
+                         }
+                       | Some(OptionType) =>
+                         %expr
+                         {
+                           Async.validateFieldOfOptionTypeOnBlur(
+                             ~input=state.input,
+                             ~fieldStatus=[%e field_status_expr],
+                             ~validator=[%e validator_expr],
+                             ~setStatus=[%e
+                               [%expr status => [%e set_status_expr]]
+                             ],
+                           );
+                         }
+                       | Some(StringType) =>
+                         %expr
+                         {
+                           Async.validateFieldOfStringTypeOnBlur(
+                             ~input=state.input,
+                             ~fieldStatus=[%e field_status_expr],
+                             ~validator=[%e validator_expr],
+                             ~setStatus=[%e
+                               [%expr status => [%e set_status_expr]]
+                             ],
+                           );
+                         }
+                       | Some(OptionStringType) =>
+                         %expr
+                         {
+                           Async.validateFieldOfOptionStringTypeOnBlur(
+                             ~input=state.input,
+                             ~fieldStatus=[%e field_status_expr],
+                             ~validator=[%e validator_expr],
+                             ~setStatus=[%e
+                               [%expr status => [%e set_status_expr]]
+                             ],
+                           );
+                         }
+                       };
+
+                     switch (result) {
+                     | None => NoUpdate
+                     | Some(fieldsStatuses) =>
+                       switch (
+                         [%e
+                           field.name |> E.field(~in_="fieldsStatuses", ~loc)
+                         ]
+                       ) {
+                       | Validating(value) =>
+                         UpdateWithSideEffects(
+                           {...state, fieldsStatuses},
+                           ({state: _, dispatch}) => {
+                             %e
+                             E.apply_field2(
+                               ~in_=("validators", field.name),
+                               ~fn="validateAsync",
+                               ~args=[(Nolabel, [%expr (value, dispatch)])],
+                               ~loc,
+                             )
+                           },
+                         )
+                       | Pristine
+                       | Dirty(_, Shown | Hidden) =>
+                         Update({...state, fieldsStatuses})
+                       }
+                     };
+                   }
                  };
                },
              ),
@@ -108,24 +205,140 @@ let ast = (~loc, scheme: Scheme.t) =>
 
                         switch (field.validator) {
                         | SyncValidator(validator) =>
-                          Form_UseFormFn_BlurActions_SyncFieldOfCollection.ast(
-                            ~loc,
-                            ~validator,
-                            ~field_status_expr,
-                            ~field_input_expr,
-                            ~validator_expr,
-                            ~set_status_expr,
-                          )
+                          %expr
+                          {
+                            let result =
+                              switch%e (validator) {
+                              | Ok(Required | Optional(Some(_)))
+                              | Error () =>
+                                %expr
+                                validateFieldOfCollectionOnBlurWithValidator(
+                                  ~input=state.input,
+                                  ~index,
+                                  ~fieldStatus=[%e field_status_expr],
+                                  ~validator=[%e validator_expr],
+                                  ~setStatus=[%e
+                                    [%expr status => [%e set_status_expr]]
+                                  ],
+                                )
+                              | Ok(Optional(None)) =>
+                                %expr
+                                validateFieldOnBlurWithoutValidator(
+                                  ~fieldInput=[%e field_input_expr],
+                                  ~fieldStatus=[%e field_status_expr],
+                                  ~setStatus=[%e
+                                    [%expr status => [%e set_status_expr]]
+                                  ],
+                                )
+                              };
+
+                            switch (result) {
+                            | Some(fieldsStatuses) =>
+                              Update({...state, fieldsStatuses})
+                            | None => NoUpdate
+                            };
+                          }
                         | AsyncValidator({optionality}) =>
-                          Form_UseFormFn_BlurActions_AsyncFieldOfCollection.ast(
-                            ~loc,
-                            ~field,
-                            ~collection,
-                            ~optionality,
-                            ~field_status_expr,
-                            ~validator_expr,
-                            ~set_status_expr,
-                          )
+                          %expr
+                          {
+                            let result =
+                              switch%e (optionality) {
+                              | None =>
+                                %expr
+                                {
+                                  Async.validateFieldOfCollectionOnBlur(
+                                    ~input=state.input,
+                                    ~index,
+                                    ~fieldStatus=[%e field_status_expr],
+                                    ~validator=[%e validator_expr],
+                                    ~setStatus=[%e
+                                      [%expr status => [%e set_status_expr]]
+                                    ],
+                                  );
+                                }
+                              | Some(OptionType) =>
+                                %expr
+                                {
+                                  Async.validateFieldOfCollectionOfOptionTypeOnBlur(
+                                    ~input=state.input,
+                                    ~index,
+                                    ~fieldStatus=[%e field_status_expr],
+                                    ~validator=[%e validator_expr],
+                                    ~setStatus=[%e
+                                      [%expr status => [%e set_status_expr]]
+                                    ],
+                                  );
+                                }
+                              | Some(StringType) =>
+                                %expr
+                                {
+                                  Async.validateFieldOfCollectionOfStringTypeOnBlur(
+                                    ~input=state.input,
+                                    ~index,
+                                    ~fieldStatus=[%e field_status_expr],
+                                    ~validator=[%e validator_expr],
+                                    ~setStatus=[%e
+                                      [%expr status => [%e set_status_expr]]
+                                    ],
+                                  );
+                                }
+                              | Some(OptionStringType) =>
+                                %expr
+                                {
+                                  Async.validateFieldOfCollectionOfOptionStringTypeOnBlur(
+                                    ~input=state.input,
+                                    ~index,
+                                    ~fieldStatus=[%e field_status_expr],
+                                    ~validator=[%e validator_expr],
+                                    ~setStatus=[%e
+                                      [%expr status => [%e set_status_expr]]
+                                    ],
+                                  );
+                                }
+                              };
+
+                            switch (result) {
+                            | None => NoUpdate
+                            | Some(fieldsStatuses) =>
+                              switch (
+                                [%e
+                                  field.name
+                                  |> E.field_of_collection(
+                                       ~in_="fieldsStatuses",
+                                       ~collection,
+                                       ~loc,
+                                     )
+                                ]
+                              ) {
+                              | Validating(value) =>
+                                UpdateWithSideEffects(
+                                  {...state, fieldsStatuses},
+                                  ({state: _, dispatch}) => {
+                                    %e
+                                    E.apply_field4(
+                                      ~in_=(
+                                        "validators",
+                                        collection.plural,
+                                        "fields",
+                                        field.name,
+                                      ),
+                                      ~fn="validateAsync",
+                                      ~args=[
+                                        (
+                                          Nolabel,
+                                          [%expr (value, index, dispatch)],
+                                        ),
+                                      ],
+                                      ~loc,
+                                    )
+                                  },
+                                )
+                              | Pristine
+                              | Dirty(_, Shown | Hidden) =>
+                                Update({...state, fieldsStatuses})
+                              }
+                            };
+                          }
                         };
                       },
                     ),
