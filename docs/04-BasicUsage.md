@@ -174,24 +174,36 @@ Next thing to render is a text input for `email` field:
 <input
   value={form.input.email}
   disabled={form.submitting}
-  onBlur={form.blurEmail}
+  onBlur={_ => form.blurEmail()}
   onChange={
-    form.updateEmail((~target, input) => {
-      ...input,
-      email: target##value,
-    })
+    event =>
+      form.updateEmail(
+        (input, value) => {...input, email: value},
+        event->ReactEvent.Form.target##value,
+      )
   }
 />
 ```
 
 The value of the field is exposed via `form.input` record. For extra safety, we disable all inputs during form submission using `form.submitting` property which is of boolean type. The next 2 functions are very important:
-1. `form.blurEmail: ReactEvent.Focus.t => unit`: must be triggered from `onBlur` handler of an input field
-2. `form.updateEmail: ((~target: Js.t({..}), input) => input, ReactEvent.Form.t) => unit`: must be triggered from `onChange` handler of an input field. It takes a function as an argument which takes the event target and the current form `input`, must return updated `input` record. Event target, as defined in `reason-react` bindings, is an open object (`Js.t({..})`), which means it is not type-safe but allows to access any target property you need. Most of the time you need either `target##value` or `target##checked`.
+1. `form.blurEmail: unit => unit`: must be triggered from `onBlur` handler of an input field
+2. `form.updateEmail: ((input, 'inputValue) => input, 'inputValue) => unit`: must be triggered from `onChange` handler of an input field. It takes 2 arguments:
+  - a function which takes 2 arguments—the current form `input` and updated input value of the current field—and returns updated `input` record
+  - an updated input value of the current field
 
-For ReactNative users, type signatures would be a bit different since those don't include events related stuff:
+The second argument—updated input value—that gets passed to the `form.updateEmail` is exactly the same value as a second argument of the callback. Why it's done this way? Why not just use this value within the callback? It is designed this way to ensure that synthetic DOM event won't be captured by the callback.
 
-1. `form.blurEmail: unit => unit`
-2. `form.updateEmail: (input => input) => unit`
+```reason
+// Bad
+onChange={event => {
+  form.updateEmail(input => {
+    ...input,
+    email: event->ReactEvent.Form.target##value,
+  });
+}}
+```
+
+As you might already know, [React's `SyntheticEvent` is pooled](https://reactjs.org/docs/events.html#event-pooling). If you would capture the event in the callback (as shown above), since the callback gets triggered asynchronously, by the time it gets called, the event is already null'ed by React and it will result in a runtime error. To avoid this, we ensure that the value is extracted from event outside of the callback.
 
 ### Messages
 To display feedback in UI, we can use `form.emailResult` value. It's exactly what email validator returns but wrapped in `option` type:
@@ -325,12 +337,13 @@ let make = () => {
     <input
       value={form.input.email}
       disabled={form.submitting}
-      onBlur={form.blurEmail}
+      onBlur={_ => form.blurEmail()}
       onChange={
-        form.updateEmail((~target, input) => {
-          ...input,
-          email: target##value,
-        })
+        event =>
+          form.updateEmail(
+            (input, value) => {...input, email: value},
+            event->ReactEvent.Form.target##value,
+          )
       }
     />
     {switch (form.emailResult) {
@@ -342,12 +355,13 @@ let make = () => {
     <input
       value={form.input.password}
       disabled={form.submitting}
-      onBlur={form.blurPassword}
+      onBlur={_ => form.blurPassword()}
       onChange={
-        form.updatePassword((~target, input) => {
-          ...input,
-          password: target##value,
-        })
+        event =>
+          form.updatePassword(
+            (input, value) => {...input, password: value},
+            event->ReactEvent.Form.target##value,
+          )
       }
     />
     {switch (form.passwordResult) {

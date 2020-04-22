@@ -6,7 +6,7 @@ open Printer;
 open Ppxlib;
 open Ast_helper;
 
-let ast = (~scheme: Scheme.t, ~target: Target.t, ~async: bool, ~loc) => {
+let ast = (~scheme: Scheme.t, ~async: bool, ~loc) => {
   let f = (x, t) => t |> Type.field(x |> str(~loc));
 
   let base = [
@@ -28,8 +28,6 @@ let ast = (~scheme: Scheme.t, ~target: Target.t, ~async: bool, ~loc) => {
     f("reset", [%type: unit => unit]),
   ];
 
-  let dom_event_target = [%type: Js.t({..} as 'eventTarget)];
-
   let update_fns =
     scheme
     |> List.fold_left(
@@ -38,16 +36,13 @@ let ast = (~scheme: Scheme.t, ~target: Target.t, ~async: bool, ~loc) => {
            | Field(field) => [
                f(
                  FieldPrinter.update_fn(~field=field.name),
-                 switch (target) {
-                 | ReactDom => [%type:
-                     (
-                       (~target: [%t dom_event_target], input) => input,
-                       ReactEvent.Form.t
-                     ) =>
-                     unit
-                   ]
-                 | ReactNative => [%type: (input => input) => unit]
-                 },
+                 [%type:
+                   (
+                     (input, [%t field.input_type |> ItemType.unpack]) => input,
+                     [%t field.input_type |> ItemType.unpack]
+                   ) =>
+                   unit
+                 ],
                ),
                ...acc,
              ]
@@ -61,19 +56,18 @@ let ast = (~scheme: Scheme.t, ~target: Target.t, ~async: bool, ~loc) => {
                           ~collection,
                           ~field=field.name,
                         ),
-                        switch (target) {
-                        | ReactDom => [%type:
+                        [%type:
+                          (
+                            ~at: index,
                             (
-                              ~at: index,
-                              (~target: [%t dom_event_target], input) => input,
-                              ReactEvent.Form.t
+                              input,
+                              [%t field.input_type |> ItemType.unpack]
                             ) =>
-                            unit
-                          ]
-                        | ReactNative => [%type:
-                            (~at: index, input => input) => unit
-                          ]
-                        },
+                            input,
+                            [%t field.input_type |> ItemType.unpack]
+                          ) =>
+                          unit
+                        ],
                       ),
                       ...acc,
                     ],
@@ -91,10 +85,7 @@ let ast = (~scheme: Scheme.t, ~target: Target.t, ~async: bool, ~loc) => {
            | Field(field) => [
                f(
                  FieldPrinter.blur_fn(~field=field.name),
-                 switch (target) {
-                 | ReactDom => [%type: ReactEvent.Focus.t => unit]
-                 | ReactNative => [%type: unit => unit]
-                 },
+                 [%type: unit => unit],
                ),
                ...acc,
              ]
@@ -108,12 +99,7 @@ let ast = (~scheme: Scheme.t, ~target: Target.t, ~async: bool, ~loc) => {
                           ~collection,
                           ~field=field.name,
                         ),
-                        switch (target) {
-                        | ReactDom => [%type:
-                            (~at: index, ReactEvent.Focus.t) => unit
-                          ]
-                        | ReactNative => [%type: (~at: index) => unit]
-                        },
+                        [%type: (~at: index) => unit],
                       ),
                       ...acc,
                     ],
@@ -242,11 +228,6 @@ let ast = (~scheme: Scheme.t, ~target: Target.t, ~async: bool, ~loc) => {
       "interface"
       |> str(~loc)
       |> Type.mk(
-           ~params=?
-             switch (target) {
-             | ReactDom => Some([([%type: 'eventTarget], Invariant)])
-             | ReactNative => None
-             },
            ~kind=
              Ptype_record(
                base

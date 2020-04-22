@@ -19,32 +19,6 @@ Under the hood, `re-formality` implemented as PPX. So you need to add it to both
 ],
 ```
 
-## Targets
-Library supports 2 targets:
-- `ReactDom`
-- `ReactNative`
-
-By default, it's set to `ReactDom`. But you can configure it in quite flexible ways:
-1. If you want to apply specific target to all modules in the build, set environment variable `FORMALITY_TARGET` to chosen target:
-
-```shell
-FORMALITY_TARGET=ReactNative bsb -clean-world -make-world
-```
-
-2. If you want to set specific target on per module basis, do this in your form module:
-
-```reason
-module MyForm = [%form
-  {target: ReactNative};
-
-  type input = ...;
-  type output = ...;
-  ...
-];
-```
-
----
-
 Before proceeding with actual code, we will elaborate on some core concepts that this library implements.
 
 ---
