@@ -159,13 +159,18 @@ Let's start with the `<form />` tag:
 let make = () => {
   let form = LoginForm.useForm(...);
 
-  <form onSubmit={_ => form.submit()}>
+  <form
+    onSubmit={event => {
+      event->ReactEvent.Form.preventDefault;
+      form.submit();
+    }}
+  >
     ...
   </form>
 };
 ```
 
-To trigger submission, you need to call `form.submit` function. The best place to do this is `onSubmit` prop of a `<form />` tag. For clarity's sake, we skipped some DOM-related steps, but you can inspect [`Form`](../examples/src/Form.re) component from examples which includes those.
+To trigger submission, you need to call `form.submit` function. The best place to do this is `onSubmit` prop of a `<form />` tag. Don't forget to `preventDefault` behavior to prevent page refresh on submission.
 
 ### Text input field
 Next thing to render is a text input for `email` field:
