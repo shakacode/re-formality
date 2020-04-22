@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "start": "parcel src/index.html",
+    "prestart": "yarn run clean && yarn run bs:build",
     "build": "parcel build src/index.html",
     "prebuild": "yarn run clean && yarn run bs:build",
     "clean": "yarn run dist:clean && yarn run bs:clean",

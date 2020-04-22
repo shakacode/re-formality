@@ -5,7 +5,7 @@ open AstHelpers;
 open Ppxlib;
 open Ast_helper;
 
-let ast = (~scheme: Scheme.t, ~target: Target.t, ~async: bool, ~loc) => [%stri
+let ast = (~scheme: Scheme.t, ~async: bool, ~loc) => [%stri
   let useForm =
       (
         ~initialInput: input,
@@ -38,7 +38,7 @@ let ast = (~scheme: Scheme.t, ~target: Target.t, ~async: bool, ~loc) => [%stri
 
     %e
     {
-      Form_UseFormFn_Interface.ast(~scheme, ~target, ~async, ~loc);
+      Form_UseFormFn_Interface.ast(~scheme, ~async, ~loc);
     };
   }
 ];

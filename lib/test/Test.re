@@ -41,18 +41,13 @@ let () =
             "Ok__CollectionWithNoCollectionValidatorAndTwoFieldsOfCollectionWithSyncValidator",
             "Ok__Message",
             "Ok__SubmissionError",
-            "Ok__Target",
             "Ok__Include",
           ]
           |> List.map(ok),
         ),
         (
           "errors",
-          [
-            "Error__InputNotFound",
-            "Error__InputNotRecord",
-            "Error__InvalidTarget",
-          ]
+          ["Error__InputNotFound", "Error__InputNotRecord"]
           |> List.map(error),
         ),
       ],

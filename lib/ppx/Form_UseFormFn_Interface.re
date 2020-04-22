@@ -50,7 +50,7 @@ let dirty_collection_guard = (~loc, {collection, fields}: Scheme.collection) => 
   })
 ];
 
-let ast = (~scheme: Scheme.t, ~target: Target.t, ~async: bool, ~loc) => {
+let ast = (~scheme: Scheme.t, ~async: bool, ~loc) => {
   let collections = scheme |> Scheme.collections;
 
   let base = [
@@ -188,41 +188,22 @@ let ast = (~scheme: Scheme.t, ~target: Target.t, ~async: bool, ~loc) => {
            | Field(field) => [
                (
                  FieldPrinter.update_fn(~field=field.name),
-                 switch (target) {
-                 | ReactDom =>
-                   %expr
+                 [%expr
                    (
-                     (nextInputFn, event) => {
-                       let target = event->ReactEvent.Form.target;
+                     (nextInputFn, nextValue) => {
                        [%e
                          Exp.construct(
                            Lident(
                              FieldPrinter.update_action(~field=field.name),
                            )
                            |> lid(~loc),
-                           Some([%expr nextInputFn(~target)]),
+                           Some([%expr nextInputFn(_, nextValue)]),
                          )
                        ]
                        ->dispatch;
                      }
                    )
-                 | ReactNative =>
-                   %expr
-                   (
-                     nextInputFn => {
-                       [%e
-                         Exp.construct(
-                           Lident(
-                             FieldPrinter.update_action(~field=field.name),
-                           )
-                           |> lid(~loc),
-                           Some([%expr nextInputFn]),
-                         )
-                       ]
-                       ->dispatch;
-                     }
-                   )
-                 },
+                 ],
                ),
                ...acc,
              ]
@@ -236,49 +217,25 @@ let ast = (~scheme: Scheme.t, ~target: Target.t, ~async: bool, ~loc) => {
                           ~collection,
                           ~field=field.name,
                         ),
-                        switch (target) {
-                        | ReactDom =>
-                          %expr
-                          (
-                            (~at as index, nextInputFn, event) => {
-                              let target = event->ReactEvent.Form.target;
-                              [%e
-                                Exp.construct(
-                                  Lident(
-                                    FieldOfCollectionPrinter.update_action(
-                                      ~collection,
-                                      ~field=field.name,
-                                    ),
-                                  )
-                                  |> lid(~loc),
-                                  Some(
-                                    [%expr (nextInputFn(~target), index)],
+                        [%expr
+                          (~at as index, nextInputFn, nextValue) => {
+                            [%e
+                              Exp.construct(
+                                Lident(
+                                  FieldOfCollectionPrinter.update_action(
+                                    ~collection,
+                                    ~field=field.name,
                                   ),
                                 )
-                              ]
-                              ->dispatch;
-                            }
-                          )
-                        | ReactNative =>
-                          %expr
-                          (
-                            (~at as index, nextInputFn) => {
-                              [%e
-                                Exp.construct(
-                                  Lident(
-                                    FieldOfCollectionPrinter.update_action(
-                                      ~collection,
-                                      ~field=field.name,
-                                    ),
-                                  )
-                                  |> lid(~loc),
-                                  Some([%expr (nextInputFn, index)]),
-                                )
-                              ]
-                              ->dispatch;
-                            }
-                          )
-                        },
+                                |> lid(~loc),
+                                Some(
+                                  [%expr (nextInputFn(_, nextValue), index)],
+                                ),
+                              )
+                            ]
+                            ->dispatch;
+                          }
+                        ],
                       ),
                       ...acc,
                     ],
@@ -296,22 +253,21 @@ let ast = (~scheme: Scheme.t, ~target: Target.t, ~async: bool, ~loc) => {
            | Field(field) => [
                (
                  FieldPrinter.blur_fn(~field=field.name),
-                 {
-                   let action =
-                     Exp.construct(
-                       Lident(FieldPrinter.blur_action(~field=field.name))
-                       |> lid(~loc),
-                       None,
-                     );
-                   switch (target) {
-                   | ReactDom =>
-                     %expr
-                     ((_event: ReactEvent.Focus.t) => [%e action]->dispatch)
-                   | ReactNative =>
-                     %expr
-                     (() => [%e action]->dispatch)
-                   };
-                 },
+                 [%expr
+                   (
+                     () =>
+                       [%e
+                         Exp.construct(
+                           Lident(
+                             FieldPrinter.blur_action(~field=field.name),
+                           )
+                           |> lid(~loc),
+                           None,
+                         )
+                       ]
+                       ->dispatch
+                   )
+                 ],
                ),
                ...acc,
              ]
@@ -325,30 +281,22 @@ let ast = (~scheme: Scheme.t, ~target: Target.t, ~async: bool, ~loc) => {
                           ~collection,
                           ~field=field.name,
                         ),
-                        {
-                          let action =
-                            Exp.construct(
-                              Lident(
-                                FieldOfCollectionPrinter.blur_action(
-                                  ~collection,
-                                  ~field=field.name,
-                                ),
+                        [%expr
+                          (~at as index) =>
+                            [%e
+                              Exp.construct(
+                                Lident(
+                                  FieldOfCollectionPrinter.blur_action(
+                                    ~collection,
+                                    ~field=field.name,
+                                  ),
+                                )
+                                |> lid(~loc),
+                                Some([%expr index]),
                               )
-                              |> lid(~loc),
-                              Some([%expr index]),
-                            );
-                          switch (target) {
-                          | ReactDom =>
-                            %expr
-                            (
-                              (~at as index, _event: ReactEvent.Focus.t) =>
-                                [%e action]->dispatch
-                            )
-                          | ReactNative =>
-                            %expr
-                            ((~at as index) => [%e action]->dispatch)
-                          };
-                        },
+                            ]
+                            ->dispatch
+                        ],
                       ),
                       ...acc,
                     ],

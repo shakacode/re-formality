@@ -86,8 +86,8 @@ Getting the input and results, as well as handling addition, removal and field u
 
 - `form.addAuthor({name: ""})`: adds `author` entry to collection
 - `form.removeAuthor(~at: index)`: removes `author` entry from collection
-- `form.blurAuthorName(~at: index, ReactEvent.Focus.t)`: triggers blur in `author.name` field at index
-- `form.updateAuthorName(~at: index, (~target: Js.t({..}), input) => input, ReactEvent.Form.t)`: updates `author.name` field at index
+- `form.blurAuthorName(~at: index)`: triggers blur in `author.name` field at index
+- `form.updateAuthorName(~at: index, (input, 'inputValue) => input, 'inputValue)`: updates `author.name` field at index
 - `form.authorNameResult(~at=index)`: returns validation result for `author.name` field at index
 - `form.authorsResult`: returns result of the whole collection validation, if validator exists
 
@@ -104,22 +104,25 @@ let form = MyForm.useForm(...);
           <input
             value={author.name}
             disabled={form.submitting}
-            onBlur={form.blurAuthorName(~at=index)}
+            onBlur={_ => form.blurAuthorName(~at=index)}
             onChange={
-              form.updateAuthorName(~at=index, (~target, input) =>
-                {
-                  ...input,
-                  authors:
-                    input.authors
-                    ->Array.mapWithIndex((idx, author) =>
-                        if (idx != index) {
-                          author;
-                        } else {
-                          {name: target##value};
-                        }
-                      ),
-                }
-              )
+              event =>
+                form.updateAuthorName(
+                  ~at=index,
+                  (input, value) => {
+                    ...input,
+                    authors:
+                      input.authors
+                      ->Array.mapWithIndex((idx, author) =>
+                          if (idx != index) {
+                            author;
+                          } else {
+                            {name: value};
+                          }
+                        ),
+                  },
+                  event->ReactEvent.Form.target##value,
+                )
             }
           />
           <button

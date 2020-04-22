@@ -66,10 +66,11 @@ let make = () => {
           type_="text"
           value={form.input.email}
           disabled={form.submitting}
-          onBlur={form.blurEmail}
-          onChange={
-            form.updateEmail((~target, input) =>
-              {...input, email: target##value}
+          onBlur={_ => form.blurEmail()}
+          onChange={event =>
+            form.updateEmail(
+              (input, value) => {...input, email: value},
+              event->ReactEvent.Form.target##value,
             )
           }
         />
@@ -104,10 +105,11 @@ let make = () => {
           type_="text"
           value={form.input.password}
           disabled={form.submitting}
-          onBlur={form.blurPassword}
-          onChange={
-            form.updatePassword((~target, input) =>
-              {...input, password: target##value}
+          onBlur={_ => form.blurPassword()}
+          onChange={event =>
+            form.updatePassword(
+              (input, value) => {...input, password: value},
+              event->ReactEvent.Form.target##value,
             )
           }
         />
@@ -140,10 +142,11 @@ let make = () => {
           checked={form.input.rememberMe}
           disabled={form.submitting}
           className="push-lg"
-          onBlur={form.blurRememberMe}
-          onChange={
-            form.updateRememberMe((~target, input) =>
-              {...input, rememberMe: target##checked}
+          onBlur={_ => form.blurRememberMe()}
+          onChange={event =>
+            form.updateRememberMe(
+              (input, value) => {...input, rememberMe: value},
+              event->ReactEvent.Form.target##checked,
             )
           }
         />

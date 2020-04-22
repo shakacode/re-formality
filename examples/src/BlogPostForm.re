@@ -78,10 +78,11 @@ let make = () => {
           type_="text"
           value={form.input.title}
           disabled={form.submitting}
-          onBlur={form.blurTitle}
-          onChange={
-            form.updateTitle((~target, input) =>
-              {...input, title: target##value}
+          onBlur={_ => form.blurTitle()}
+          onChange={event =>
+            form.updateTitle(
+              (input, value) => {...input, title: value},
+              event->ReactEvent.Form.target##value,
             )
           }
         />
@@ -137,21 +138,24 @@ let make = () => {
                type_="text"
                value={author.name}
                disabled={form.submitting}
-               onBlur={form.blurAuthorName(~at=index)}
-               onChange={
-                 form.updateAuthorName(~at=index, (~target, input) =>
-                   {
-                     ...input,
-                     authors:
-                       input.authors
-                       ->Array.mapWithIndex((idx, author) =>
-                           if (idx != index) {
-                             author;
-                           } else {
-                             {name: target##value};
-                           }
-                         ),
-                   }
+               onBlur={_ => form.blurAuthorName(~at=index)}
+               onChange={event =>
+                 form.updateAuthorName(
+                   ~at=index,
+                   (input, value) =>
+                     {
+                       ...input,
+                       authors:
+                         input.authors
+                         ->Array.mapWithIndex((idx, author) =>
+                             if (idx != index) {
+                               author;
+                             } else {
+                               {name: value};
+                             }
+                           ),
+                     },
+                   event->ReactEvent.Form.target##value,
                  )
                }
              />

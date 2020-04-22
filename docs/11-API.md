@@ -268,18 +268,18 @@ type interface = {
   valid: unit => option(bool),
 
   // General field
-  update[Field]: ((~target: Js.t({..}), input) => input, ReactEvent.Form.t) => unit,
-  blur[Field]: ReactEvent.Focus.t => unit,
+  update[Field]: ((input, 'inputValue) => input, 'inputValue) => unit,
+  blur[Field]: unit => unit,
   [field]Result: option(result('outputValue, message)),
 
   // Async field
-  update[Field]: ((~target: Js.t({..}), input) => input, ReactEvent.Form.t) => unit,
-  blur[Field]: ReactEvent.Focus.t => unit,
+  update[Field]: ((input, 'inputValue) => input, 'inputValue) => unit,
+  blur[Field]: unit => unit,
   [field]Result: option(Formality.Async.exposedFieldStatus('outputValue, message)),
 
   // Field of collection
-  update[CollectionEntry][Field]: (~at: index, (~target: Js.t({..}), input) => input, ReactEvent.Form.t) => unit,
-  blur[CollectionEntry][Field]: (~at: index, ReactEvent.Focus.t) => unit,
+  update[CollectionEntry][Field]: (~at: index, (input, 'inputValue) => input, 'inputValue) => unit,
+  blur[CollectionEntry][Field]: (~at: index) => unit,
   [collectionEntry][Field]Result: (~at: index) => option(result('outputValue, message)),
 
   // Collection
@@ -292,41 +292,17 @@ type interface = {
 #### Update handlers
 Used to update form input for a specific field.
 
-**Target: `ReactDom`**
-
 ```reason
 // Field
-update[Field]: ((~target: Js.t({..}), input) => input, ReactEvent.Form.t) => unit
+update[Field]: ((input, 'inputValue) => input, 'inputValue) => unit
 
 // Field of collection
-update[CollectionEntry][Field]: (~at: index, (~target: Js.t({..}), input) => input, ReactEvent.Form.t) => unit,
-```
-
-**Target: `ReactNative`**
-
-```reason
-// Field
-update[Field]: (input => input) => unit
-
-// Field of collection
-update[CollectionEntry][Field]: (~at: index, input => input) => unit,
+update[CollectionEntry][Field]: (~at: index, (input, 'inputValue) => input, 'inputValue) => unit,
 ```
 <br>
 
 #### Blur handlers
 Used to notify hook on blur event for a specific field.
-
-**Target: `ReactDom`**
-
-```reason
-// Field
-blur[Field]: ReactEvent.Focus.t => unit
-
-// Field of collection
-blur[CollectionEntry][Field]: (~at: index, ReactEvent.Focus.t) => unit,
-```
-
-**Target: `ReactNative`**
 
 ```reason
 // Field
