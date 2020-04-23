@@ -1,5 +1,8 @@
 # History
 
+## 4.0.0-beta.5
+* Make all fold calls in PPX tail-recursive.
+
 ## 4.0.0-beta.4
 * Removed targets and changed update handlers API. See: [#68](https://github.com/MinimaHQ/re-formality/issues/68) & [#78](https://github.com/MinimaHQ/re-formality/pull/78).
 
