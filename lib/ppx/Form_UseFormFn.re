@@ -23,14 +23,18 @@ let ast = (~scheme: Scheme.t, ~async: bool, ~loc) => [%stri
             Exp.match(
               [%expr action],
               Form_UseFormFn_RestActions.ast(~loc, ~async)
-              |> List.append(
+              |> List.rev_append(
                    Form_UseFormFn_CollectionsActions.ast(~loc, scheme),
                  )
-              |> List.append(
+              |> List.rev_append(
                    Form_UseFormFn_ApplyAsyncResultActions.ast(~loc, scheme),
                  )
-              |> List.append(Form_UseFormFn_BlurActions.ast(~loc, scheme))
-              |> List.append(Form_UseFormFn_UpdateActions.ast(~loc, scheme)),
+              |> List.rev_append(
+                   Form_UseFormFn_BlurActions.ast(~loc, scheme),
+                 )
+              |> List.rev_append(
+                   Form_UseFormFn_UpdateActions.ast(~loc, scheme),
+                 ),
             );
           }
         })

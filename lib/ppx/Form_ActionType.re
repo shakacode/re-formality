@@ -134,11 +134,11 @@ let ast = (~scheme: Scheme.t, ~loc) => {
            | Field(_) => acc
            | Collection({collection, input_type}) => [
                collection
-               |> CollectionPrinter.add_action
-               |> T.constructor(~args=[input_type |> ItemType.unpack], ~loc),
-               collection
                |> CollectionPrinter.remove_action
                |> T.constructor(~args=[[%type: index]], ~loc),
+               collection
+               |> CollectionPrinter.add_action
+               |> T.constructor(~args=[input_type |> ItemType.unpack], ~loc),
                ...acc,
              ]
            },
@@ -171,10 +171,10 @@ let ast = (~scheme: Scheme.t, ~loc) => {
            ~kind=
              Ptype_variant(
                rest_actions
-               |> List.append(collections_actions)
-               |> List.append(apply_async_result_actions)
-               |> List.append(blur_actions)
-               |> List.append(update_actions),
+               |> List.rev_append(collections_actions)
+               |> List.rev_append(apply_async_result_actions)
+               |> List.rev_append(blur_actions)
+               |> List.rev_append(update_actions),
              ),
          ),
     ],

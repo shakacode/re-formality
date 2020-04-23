@@ -441,12 +441,12 @@ let ast = (~scheme: Scheme.t, ~async: bool, ~loc) => {
 
              switch (result_value) {
              | Some(result_value) => [
-                 add_fn,
-                 remove_fn,
                  result_value,
+                 remove_fn,
+                 add_fn,
                  ...acc,
                ]
-             | None => [add_fn, remove_fn, ...acc]
+             | None => [remove_fn, add_fn, ...acc]
              };
            },
          [],
@@ -455,9 +455,9 @@ let ast = (~scheme: Scheme.t, ~async: bool, ~loc) => {
   E.record(
     ~loc,
     base
-    |> List.append(collection_entries)
-    |> List.append(result_entries)
-    |> List.append(blur_fns)
-    |> List.append(update_fns),
+    |> List.rev_append(collection_entries)
+    |> List.rev_append(result_entries)
+    |> List.rev_append(blur_fns)
+    |> List.rev_append(update_fns),
   );
 };

@@ -130,8 +130,8 @@ let ext =
                    switch (search_result) {
                    | `NotFound => [structure_item, ...acc]
                    | `Found =>
-                     List.append(
-                       List.append(types, values),
+                     List.rev_append(
+                       types |> List.rev |> List.rev_append(values),
                        [structure_item, ...acc],
                      )
                    };
@@ -140,7 +140,9 @@ let ext =
                funcs,
              );
 
-        Mod.mk(Pmod_structure(List.append(head, structure)));
+        Mod.mk(
+          Pmod_structure(structure |> List.rev_append(head |> List.rev)),
+        );
 
       | Error(InputTypeParseError(NotFound)) =>
         Location.raise_errorf(~loc, "`input` type not found")
