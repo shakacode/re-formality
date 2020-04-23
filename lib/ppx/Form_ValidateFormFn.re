@@ -422,7 +422,8 @@ let collections_statuses_record =
     (~loc, collections: list(Scheme.collection)) =>
   Exp.record(
     collections
-    |> List.map(({collection, validator}: Scheme.collection) =>
+    |> List.rev
+    |> List.rev_map(({collection, validator}: Scheme.collection) =>
          (
            Lident(collection.plural) |> lid(~loc),
            switch (validator) {
@@ -457,7 +458,8 @@ let validate_fields_of_collection_in_sync_form =
     Exp.tuple([
       [%expr output],
       ...fields
-         |> List.map((field: Scheme.field) =>
+         |> List.rev
+         |> List.rev_map((field: Scheme.field) =>
               switch (field.validator) {
               | SyncValidator(Ok(Required | Optional(Some(_))) | Error ()) =>
                 validate_field_of_collection_with_sync_validator(
@@ -487,7 +489,7 @@ let validate_fields_of_collection_in_sync_form =
           Lident("Ok") |> lid(~loc),
           Some(Pat.tuple([Pat.var("output" |> str(~loc))])),
         ),
-        ...fields |> List.map(ok_pat_for_sync_field(~loc)),
+        ...fields |> List.rev |> List.rev_map(ok_pat_for_sync_field(~loc)),
       ]),
       [%expr
         {
@@ -496,7 +498,9 @@ let validate_fields_of_collection_in_sync_form =
               output,
               [%e
                 Exp.record(
-                  fields |> List.map(output_field_record_field(~loc)),
+                  fields
+                  |> List.rev
+                  |> List.rev_map(output_field_record_field(~loc)),
                   None,
                 )
               ],
@@ -507,7 +511,9 @@ let validate_fields_of_collection_in_sync_form =
               statuses,
               [%e
                 Exp.record(
-                  fields |> List.map(field_dirty_status_record_field(~loc)),
+                  fields
+                  |> List.rev
+                  |> List.rev_map(field_dirty_status_record_field(~loc)),
                   None,
                 )
               ],
@@ -522,7 +528,9 @@ let validate_fields_of_collection_in_sync_form =
     Exp.case(
       Pat.tuple([
         [%pat? Ok(_) | Error(_)],
-        ...fields |> List.map(result_and_visibility_pat_for_field(~loc)),
+        ...fields
+           |> List.rev
+           |> List.rev_map(result_and_visibility_pat_for_field(~loc)),
       ]),
       [%expr
         {
@@ -531,7 +539,9 @@ let validate_fields_of_collection_in_sync_form =
               statuses,
               [%e
                 Exp.record(
-                  fields |> List.map(field_dirty_status_record_field(~loc)),
+                  fields
+                  |> List.rev
+                  |> List.rev_map(field_dirty_status_record_field(~loc)),
                   None,
                 )
               ],
@@ -588,7 +598,8 @@ let validate_fields_of_collection_in_async_form =
     Exp.tuple([
       [%expr result],
       ...fields
-         |> List.map((field: Scheme.field) =>
+         |> List.rev
+         |> List.rev_map((field: Scheme.field) =>
               switch (field.validator) {
               | SyncValidator(Ok(Required | Optional(Some(_))) | Error ()) =>
                 validate_field_of_collection_with_sync_validator(
@@ -618,14 +629,17 @@ let validate_fields_of_collection_in_async_form =
         ~pat=
           Pat.tuple([
             [%pat? `ValidatingFieldsOfCollection(statuses)],
-            ...fields |> List.map(result_and_visibility_pat_for_field(~loc)),
+            ...fields
+               |> List.rev
+               |> List.rev_map(result_and_visibility_pat_for_field(~loc)),
           ]),
         ~make=
           (field: Scheme.field) =>
             Pat.tuple([
               [%pat? `FieldsOfCollectionResult(Ok(_) | Error(_), statuses)],
               ...fields
-                 |> List.map((field': Scheme.field) =>
+                 |> List.rev
+                 |> List.rev_map((field': Scheme.field) =>
                       if (field'.name == field.name) {
                         Pat.tuple([
                           Pat.alias(
@@ -658,7 +672,8 @@ let validate_fields_of_collection_in_async_form =
               [%e
                 Exp.record(
                   fields
-                  |> List.map((field: Scheme.field) =>
+                  |> List.rev
+                  |> List.rev_map((field: Scheme.field) =>
                        switch (field.validator) {
                        | SyncValidator(_) =>
                          field |> field_dirty_status_record_field(~loc)
@@ -684,7 +699,8 @@ let validate_fields_of_collection_in_async_form =
       Pat.tuple([
         [%pat? `FieldsOfCollectionResult(Ok(output), statuses)],
         ...fields
-           |> List.map((field: Scheme.field) =>
+           |> List.rev
+           |> List.rev_map((field: Scheme.field) =>
                 switch (field.validator) {
                 | SyncValidator(_) => field |> ok_pat_for_sync_field(~loc)
                 | AsyncValidator(_) => field |> ok_pat_for_async_field(~loc)
@@ -698,7 +714,9 @@ let validate_fields_of_collection_in_async_form =
               output,
               [%e
                 Exp.record(
-                  fields |> List.map(output_field_record_field(~loc)),
+                  fields
+                  |> List.rev
+                  |> List.rev_map(output_field_record_field(~loc)),
                   None,
                 )
               ],
@@ -709,7 +727,9 @@ let validate_fields_of_collection_in_async_form =
               statuses,
               [%e
                 Exp.record(
-                  fields |> List.map(field_dirty_status_record_field(~loc)),
+                  fields
+                  |> List.rev
+                  |> List.rev_map(field_dirty_status_record_field(~loc)),
                   None,
                 )
               ],
@@ -724,7 +744,9 @@ let validate_fields_of_collection_in_async_form =
     Exp.case(
       Pat.tuple([
         [%pat? `FieldsOfCollectionResult(Ok(_) | Error(_), statuses)],
-        ...fields |> List.map(result_and_visibility_pat_for_field(~loc)),
+        ...fields
+           |> List.rev
+           |> List.rev_map(result_and_visibility_pat_for_field(~loc)),
       ]),
       [%expr
         {
@@ -734,7 +756,8 @@ let validate_fields_of_collection_in_async_form =
               [%e
                 Exp.record(
                   fields
-                  |> List.map((field: Scheme.field) =>
+                  |> List.rev
+                  |> List.rev_map((field: Scheme.field) =>
                        switch (field.validator) {
                        | SyncValidator(_) =>
                          field |> field_dirty_status_record_field(~loc)
@@ -904,7 +927,11 @@ module Sync = {
                              };
                            switch (scheme) {
                            | [x] => x |> value
-                           | _ => scheme |> List.map(value) |> Exp.tuple
+                           | _ =>
+                             scheme
+                             |> List.rev
+                             |> List.rev_map(value)
+                             |> Exp.tuple
                            };
                          };
 
@@ -938,14 +965,19 @@ module Sync = {
                                };
                              switch (scheme) {
                              | [x] => x |> entry
-                             | _ => scheme |> List.map(entry) |> Pat.tuple
+                             | _ =>
+                               scheme
+                               |> List.rev
+                               |> List.rev_map(entry)
+                               |> Pat.tuple
                              };
                            };
                            let expr = {
                              let output =
                                Exp.record(
                                  scheme
-                                 |> List.map((entry: Scheme.entry) =>
+                                 |> List.rev
+                                 |> List.rev_map((entry: Scheme.entry) =>
                                       switch (entry) {
                                       | Field(field) =>
                                         field
@@ -962,7 +994,8 @@ module Sync = {
                              let fields_statuses =
                                Exp.record(
                                  scheme
-                                 |> List.map((entry: Scheme.entry) =>
+                                 |> List.rev
+                                 |> List.rev_map((entry: Scheme.entry) =>
                                       switch (entry) {
                                       | Field(field) =>
                                         field
@@ -1069,14 +1102,18 @@ module Sync = {
                              switch (scheme) {
                              | [x] => x |> entry_of_one
                              | _ =>
-                               scheme |> List.map(entry_of_many) |> Pat.tuple
+                               scheme
+                               |> List.rev
+                               |> List.rev_map(entry_of_many)
+                               |> Pat.tuple
                              };
                            };
                            let expr = {
                              let fields_statuses =
                                Exp.record(
                                  scheme
-                                 |> List.map((entry: Scheme.entry) =>
+                                 |> List.rev
+                                 |> List.rev_map((entry: Scheme.entry) =>
                                       switch (entry) {
                                       | Field(field) =>
                                         field
@@ -1195,7 +1232,7 @@ module Async = {
               };
             switch (scheme) {
             | [x] => x |> value
-            | _ => scheme |> List.map(value) |> Exp.tuple
+            | _ => scheme |> List.rev |> List.rev_map(value) |> Exp.tuple
             };
           };
 
@@ -1258,7 +1295,8 @@ module Async = {
                     };
                   switch (scheme) {
                   | [x] => x |> entry
-                  | _ => scheme |> List.map(entry) |> Pat.tuple
+                  | _ =>
+                    scheme |> List.rev |> List.rev_map(entry) |> Pat.tuple
                   };
                 | `Collection(current_collection) =>
                   let entry = (entry: Scheme.entry) =>
@@ -1315,7 +1353,8 @@ module Async = {
                     };
                   switch (scheme) {
                   | [x] => x |> entry
-                  | _ => scheme |> List.map(entry) |> Pat.tuple
+                  | _ =>
+                    scheme |> List.rev |> List.rev_map(entry) |> Pat.tuple
                   };
                 };
               switch (entries_might_be_in_validating_state) {
@@ -1331,7 +1370,8 @@ module Async = {
               let fields_statuses =
                 Exp.record(
                   scheme
-                  |> List.map((entry: Scheme.entry) =>
+                  |> List.rev
+                  |> List.rev_map((entry: Scheme.entry) =>
                        switch (entry) {
                        | Field({validator: SyncValidator(_)} as field) =>
                          field |> field_dirty_status_record_field(~loc)
@@ -1399,14 +1439,15 @@ module Async = {
                 };
               switch (scheme) {
               | [x] => x |> entry
-              | _ => scheme |> List.map(entry) |> Pat.tuple
+              | _ => scheme |> List.rev |> List.rev_map(entry) |> Pat.tuple
               };
             };
             let expr = {
               let output =
                 Exp.record(
                   scheme
-                  |> List.map((entry: Scheme.entry) =>
+                  |> List.rev
+                  |> List.rev_map((entry: Scheme.entry) =>
                        switch (entry) {
                        | Field(field) =>
                          field |> output_field_record_field(~loc)
@@ -1419,7 +1460,8 @@ module Async = {
               let fields_statuses =
                 Exp.record(
                   scheme
-                  |> List.map((entry: Scheme.entry) =>
+                  |> List.rev
+                  |> List.rev_map((entry: Scheme.entry) =>
                        switch (entry) {
                        | Field(field) =>
                          field |> field_dirty_status_record_field(~loc)
@@ -1506,14 +1548,16 @@ module Async = {
                 };
               switch (scheme) {
               | [x] => x |> entry_of_one
-              | _ => scheme |> List.map(entry_of_many) |> Pat.tuple
+              | _ =>
+                scheme |> List.rev |> List.rev_map(entry_of_many) |> Pat.tuple
               };
             };
             let expr = {
               let fields_statuses =
                 Exp.record(
                   scheme
-                  |> List.map((entry: Scheme.entry) =>
+                  |> List.rev
+                  |> List.rev_map((entry: Scheme.entry) =>
                        switch (entry) {
                        | Field(field) =>
                          field |> field_dirty_status_record_field(~loc)

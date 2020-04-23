@@ -16,7 +16,8 @@ let dirty_collection_guard = (~loc, {collection, fields}: Scheme.collection) => 
         Exp.case(
           Pat.record(
             fields
-            |> List.map((field: Scheme.field) =>
+            |> List.rev
+            |> List.rev_map((field: Scheme.field) =>
                  (Lident(field.name) |> lid(~loc), [%pat? Pristine])
                ),
             Closed,
@@ -26,7 +27,8 @@ let dirty_collection_guard = (~loc, {collection, fields}: Scheme.collection) => 
         Exp.case(
           Pat.record(
             fields
-            |> List.map((field: Scheme.field) =>
+            |> List.rev
+            |> List.rev_map((field: Scheme.field) =>
                  (
                    Lident(field.name) |> lid(~loc),
                    switch (fields, field.validator) {
@@ -66,7 +68,8 @@ let ast = (~scheme: Scheme.t, ~async: bool, ~loc) => {
               Exp.case(
                 Pat.record(
                   scheme
-                  |> List.map((entry: Scheme.entry) =>
+                  |> List.rev
+                  |> List.rev_map((entry: Scheme.entry) =>
                        switch (entry) {
                        | Field(field) => (
                            Lident(field.name) |> lid(~loc),
@@ -101,7 +104,8 @@ let ast = (~scheme: Scheme.t, ~async: bool, ~loc) => {
               Exp.case(
                 Pat.record(
                   scheme
-                  |> List.map((entry: Scheme.entry) =>
+                  |> List.rev
+                  |> List.rev_map((entry: Scheme.entry) =>
                        switch (entry) {
                        | Field(field) => (
                            Lident(field.name) |> lid(~loc),

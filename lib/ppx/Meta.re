@@ -1311,7 +1311,8 @@ module OutputTypeParser = {
                              },
                              fields:
                                fields
-                               |> List.map((field: label_declaration) =>
+                               |> List.rev
+                               |> List.rev_map((field: label_declaration) =>
                                     OutputFieldData.{
                                       name: field.pld_name.txt,
                                       typ: field.pld_type |> ItemType.make,

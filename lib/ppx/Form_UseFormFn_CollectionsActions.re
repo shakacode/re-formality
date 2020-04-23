@@ -56,7 +56,8 @@ let ast = (~loc, scheme: Scheme.t) => {
                       [%e
                         Exp.record(
                           fields
-                          |> List.map((field: Scheme.field) =>
+                          |> List.rev
+                          |> List.rev_map((field: Scheme.field) =>
                                (
                                  Lident(field.name) |> lid(~loc),
                                  [%expr Pristine],

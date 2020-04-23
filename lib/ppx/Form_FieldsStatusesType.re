@@ -43,7 +43,8 @@ let ast = (~scheme: Scheme.t, ~loc) => {
          ~kind=
            Ptype_record(
              scheme
-             |> List.map((entry: Scheme.entry) =>
+             |> List.rev
+             |> List.rev_map((entry: Scheme.entry) =>
                   switch (entry) {
                   | Field(field) => field |> field_type(~loc)
                   | Collection({collection}) =>
@@ -65,7 +66,9 @@ let ast = (~scheme: Scheme.t, ~loc) => {
                |> str(~loc)
                |> Type.mk(
                     ~kind=
-                      Ptype_record(fields |> List.map(field_type(~loc))),
+                      Ptype_record(
+                        fields |> List.rev |> List.rev_map(field_type(~loc)),
+                      ),
                   ),
                ...acc,
              ]

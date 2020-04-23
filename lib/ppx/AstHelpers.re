@@ -70,7 +70,9 @@ module E = {
 
   let record = (~loc, xs: list((string, expression))) =>
     Exp.record(
-      xs |> List.map(((name, expr)) => (Lident(name) |> lid(~loc), expr)),
+      xs
+      |> List.rev
+      |> List.rev_map(((name, expr)) => (Lident(name) |> lid(~loc), expr)),
       None,
     );
 

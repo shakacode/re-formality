@@ -419,7 +419,8 @@ let ext =
             ~loc,
             "Some `input` fields don't exist in `output` type: %s",
             fields
-            |> List.map((field: InputField.validated) =>
+            |> List.rev
+            |> List.rev_map((field: InputField.validated) =>
                  switch (field) {
                  | ValidatedInputField(field) => field.name
                  | ValidatedInputFieldOfCollection({collection, field}) =>

@@ -29,7 +29,8 @@ let update_async_validator_of_field =
     ) =>
   fields
   |> ensure_eq(~loc=validator_loc)
-  |> List.map(((v_lid, {pexp_loc: loc} as expr)) =>
+  |> List.rev
+  |> List.rev_map(((v_lid, {pexp_loc: loc} as expr)) =>
        switch (v_lid) {
        | {txt: Lident("validateAsync")} =>
          let fn = [%expr
@@ -85,7 +86,8 @@ let update_async_validator_of_field_of_collection =
     ) =>
   fields
   |> ensure_eq(~loc=validator_loc)
-  |> List.map(((v_lid, {pexp_loc: loc} as expr)) =>
+  |> List.rev
+  |> List.rev_map(((v_lid, {pexp_loc: loc} as expr)) =>
        switch (v_lid) {
        | {txt: Lident("validateAsync")} =>
          let fn = [%expr
@@ -149,7 +151,8 @@ let ast =
     ) => {
   let fields =
     validators_record.fields
-    |> List.map(((f_lid, expr)) =>
+    |> List.rev
+    |> List.rev_map(((f_lid, expr)) =>
          switch (f_lid) {
          | {txt: Lident(key)} =>
            let entry =
@@ -215,7 +218,8 @@ let ast =
                  } =>
                  let fields =
                    collection_validator_fields
-                   |> List.map(((c_lid, expr)) =>
+                   |> List.rev
+                   |> List.rev_map(((c_lid, expr)) =>
                         switch (c_lid) {
                         | {txt: Lident("collection")} => (
                             c_lid,
@@ -240,7 +244,8 @@ let ast =
                               } =>
                               let fields =
                                 field_validator_fields
-                                |> List.map(((f_lid, expr)) =>
+                                |> List.rev
+                                |> List.rev_map(((f_lid, expr)) =>
                                      switch (f_lid) {
                                      | {txt: Lident(key)} =>
                                        let field =
