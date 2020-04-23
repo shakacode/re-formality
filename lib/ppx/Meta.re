@@ -603,37 +603,38 @@ module InputTypeParser = {
 
   let parse = (~decl, ~structure, ~loc, fields) => {
     let entries =
-      List.fold_right(
-        (field, res) =>
-          switch (res, field |> FieldAttributesParser.parse(~structure)) {
-          | (
-              Ok(entries),
-              Ok(Some(Collection({collection, fields, input_type}))),
-            ) =>
-            Ok([
-              UnvalidatedInputCollection({collection, fields, input_type}),
-              ...entries,
-            ])
-          | (Ok(entries), Ok(Some(AsyncDeps({async, deps})))) =>
-            Ok([
-              UnvalidatedInputField(
-                field |> InputFieldData.unvalidated(~async, ~deps),
-              ),
-              ...entries,
-            ])
-          | (Ok(entries), Ok(None)) =>
-            Ok([
-              UnvalidatedInputField(
-                field |> InputFieldData.unvalidated(~async=None, ~deps=[]),
-              ),
-              ...entries,
-            ])
-          | (Error(error), _) => Error(error)
-          | (_, Error(error)) => Error(InvalidAttributes(error))
-          },
-        fields,
-        Ok([]),
-      );
+      fields
+      |> List.rev
+      |> List.fold_left(
+           (res, field) =>
+             switch (res, field |> FieldAttributesParser.parse(~structure)) {
+             | (
+                 Ok(entries),
+                 Ok(Some(Collection({collection, fields, input_type}))),
+               ) =>
+               Ok([
+                 UnvalidatedInputCollection({collection, fields, input_type}),
+                 ...entries,
+               ])
+             | (Ok(entries), Ok(Some(AsyncDeps({async, deps})))) =>
+               Ok([
+                 UnvalidatedInputField(
+                   field |> InputFieldData.unvalidated(~async, ~deps),
+                 ),
+                 ...entries,
+               ])
+             | (Ok(entries), Ok(None)) =>
+               Ok([
+                 UnvalidatedInputField(
+                   field |> InputFieldData.unvalidated(~async=None, ~deps=[]),
+                 ),
+                 ...entries,
+               ])
+             | (Error(error), _) => Error(error)
+             | (_, Error(error)) => Error(InvalidAttributes(error))
+             },
+           Ok([]),
+         );
     switch (entries) {
     | Error(error) => Error(error)
     | Ok(entries) => Ok({entries, type_declaration: decl |> InputType.make})
@@ -1178,24 +1179,26 @@ module OutputTypeParser = {
     | CollectionOutputNotArray(Location.t);
 
   let flatten = (entries: list(entry)): list(OutputField.t) =>
-    List.fold_right(
-      (entry, acc) =>
-        switch (entry) {
-        | OutputField(field) => [OutputField.OutputField(field), ...acc]
-        | OutputCollection({collection, fields}) =>
-          List.fold_right(
-            (field, acc) =>
-              [
-                OutputField.OutputFieldOfCollection({collection, field}),
-                ...acc,
-              ],
-            fields,
-            acc,
-          )
-        },
-      entries,
-      [],
-    );
+    entries
+    |> List.rev
+    |> List.fold_left(
+         (acc, entry) =>
+           switch (entry) {
+           | OutputField(field) => [OutputField.OutputField(field), ...acc]
+           | OutputCollection({collection, fields}) =>
+             fields
+             |> List.rev
+             |> List.fold_left(
+                  (acc, field) =>
+                    [
+                      OutputField.OutputFieldOfCollection({collection, field}),
+                      ...acc,
+                    ],
+                  acc,
+                )
+           },
+         [],
+       );
 
   let parse =
       (
@@ -1210,119 +1213,125 @@ module OutputTypeParser = {
         Record({
           loc,
           entries:
-            List.fold_right(
-              (field, acc) =>
-                [
-                  OutputField({
-                    name: field.pld_name.txt,
-                    typ: field.pld_type |> ItemType.make,
-                    loc: field.pld_loc,
-                  }),
-                  ...acc,
-                ],
-              fields,
-              [],
-            ),
+            fields
+            |> List.rev
+            |> List.fold_left(
+                 (acc, field) =>
+                   [
+                     OutputField({
+                       name: field.pld_name.txt,
+                       typ: field.pld_type |> ItemType.make,
+                       loc: field.pld_loc,
+                     }),
+                     ...acc,
+                   ],
+                 [],
+               ),
         }),
       )
     | _ =>
       let entries =
-        List.fold_right(
-          (field, acc) =>
-            switch (acc) {
-            | Error(error) => Error(error)
-            | Ok(entries) =>
-              let field_name = field.pld_name.txt;
-              switch (
-                input_collections
-                |> List.find_opt((collection: Collection.t) =>
-                     collection.plural == field_name
-                   )
-              ) {
-              | None =>
-                Ok([
-                  OutputField({
-                    name: field_name,
-                    typ: field.pld_type |> ItemType.make,
-                    loc: field.pld_loc,
-                  }),
-                  ...entries,
-                ])
-              | Some(input_collection) =>
-                switch (field.pld_type.ptyp_desc) {
-                | Ptyp_constr({txt: Lident("array"), loc: arr_loc}, payload) =>
-                  switch (payload) {
-                  | [] => Error(InvalidCollectionTypeRef(arr_loc))
-                  | [
-                      {
-                        ptyp_desc: Ptyp_constr({txt: Lident(type_name)}, []),
-                        ptyp_loc,
-                      } as output_type,
-                      ..._,
-                    ] =>
-                    let record_type = ref(None);
-                    structure
-                    |> List.iter((item: structure_item) =>
-                         switch (item) {
-                         | {pstr_desc: Pstr_type(rec_flag, decls)} =>
-                           decls
-                           |> List.iter((decl: type_declaration) =>
-                                switch (decl) {
-                                | {ptype_name: {txt: name}}
-                                    when name == type_name =>
-                                  switch (decl.ptype_kind) {
-                                  | Ptype_record(fields) =>
-                                    record_type := Some(Ok(fields))
-                                  | _ =>
-                                    record_type :=
-                                      Some(
-                                        Error(
-                                          CollectionTypeNotRecord(
-                                            decl.ptype_loc,
-                                          ),
-                                        ),
-                                      )
-                                  }
-                                | _ => ()
-                                }
-                              )
-                         | _ => ()
-                         }
-                       );
-                    switch (record_type^) {
-                    | None => Error(CollectionTypeNotFound(ptyp_loc))
-                    | Some(Error(error)) => Error(error)
-                    | Some(Ok(fields)) =>
-                      Ok([
-                        OutputCollection({
-                          collection: {
-                            plural: field_name,
-                            singular: type_name,
-                          },
-                          fields:
-                            fields
-                            |> List.map((field: label_declaration) =>
-                                 OutputFieldData.{
-                                   name: field.pld_name.txt,
-                                   typ: field.pld_type |> ItemType.make,
-                                   loc: field.pld_loc,
-                                 }
-                               ),
-                          output_type: output_type |> ItemType.make,
-                        }),
-                        ...entries,
-                      ])
-                    };
-                  | [{ptyp_loc}, ..._] =>
-                    Error(InvalidCollectionTypeRef(ptyp_loc))
-                  }
-                | _ => Error(CollectionOutputNotArray(field.pld_loc))
-                }
-              };
-            },
-          fields,
-          Ok([]),
-        );
+        fields
+        |> List.rev
+        |> List.fold_left(
+             (acc, field) =>
+               switch (acc) {
+               | Error(error) => Error(error)
+               | Ok(entries) =>
+                 let field_name = field.pld_name.txt;
+                 switch (
+                   input_collections
+                   |> List.find_opt((collection: Collection.t) =>
+                        collection.plural == field_name
+                      )
+                 ) {
+                 | None =>
+                   Ok([
+                     OutputField({
+                       name: field_name,
+                       typ: field.pld_type |> ItemType.make,
+                       loc: field.pld_loc,
+                     }),
+                     ...entries,
+                   ])
+                 | Some(input_collection) =>
+                   switch (field.pld_type.ptyp_desc) {
+                   | Ptyp_constr(
+                       {txt: Lident("array"), loc: arr_loc},
+                       payload,
+                     ) =>
+                     switch (payload) {
+                     | [] => Error(InvalidCollectionTypeRef(arr_loc))
+                     | [
+                         {
+                           ptyp_desc:
+                             Ptyp_constr({txt: Lident(type_name)}, []),
+                           ptyp_loc,
+                         } as output_type,
+                         ..._,
+                       ] =>
+                       let record_type = ref(None);
+                       structure
+                       |> List.iter((item: structure_item) =>
+                            switch (item) {
+                            | {pstr_desc: Pstr_type(rec_flag, decls)} =>
+                              decls
+                              |> List.iter((decl: type_declaration) =>
+                                   switch (decl) {
+                                   | {ptype_name: {txt: name}}
+                                       when name == type_name =>
+                                     switch (decl.ptype_kind) {
+                                     | Ptype_record(fields) =>
+                                       record_type := Some(Ok(fields))
+                                     | _ =>
+                                       record_type :=
+                                         Some(
+                                           Error(
+                                             CollectionTypeNotRecord(
+                                               decl.ptype_loc,
+                                             ),
+                                           ),
+                                         )
+                                     }
+                                   | _ => ()
+                                   }
+                                 )
+                            | _ => ()
+                            }
+                          );
+                       switch (record_type^) {
+                       | None => Error(CollectionTypeNotFound(ptyp_loc))
+                       | Some(Error(error)) => Error(error)
+                       | Some(Ok(fields)) =>
+                         Ok([
+                           OutputCollection({
+                             collection: {
+                               plural: field_name,
+                               singular: type_name,
+                             },
+                             fields:
+                               fields
+                               |> List.map((field: label_declaration) =>
+                                    OutputFieldData.{
+                                      name: field.pld_name.txt,
+                                      typ: field.pld_type |> ItemType.make,
+                                      loc: field.pld_loc,
+                                    }
+                                  ),
+                             output_type: output_type |> ItemType.make,
+                           }),
+                           ...entries,
+                         ])
+                       };
+                     | [{ptyp_loc}, ..._] =>
+                       Error(InvalidCollectionTypeRef(ptyp_loc))
+                     }
+                   | _ => Error(CollectionOutputNotArray(field.pld_loc))
+                   }
+                 };
+               },
+             Ok([]),
+           );
       switch (entries) {
       | Ok(entries) => Ok(Record({loc, entries}))
       | Error(error) => Error(InvalidCollection(error))
@@ -2027,299 +2036,310 @@ module Metadata = {
               input_fields_not_in_output,
               output_fields_not_in_input,
             ) =
-              List.fold_right(
-                (
-                  input_entry: InputTypeParser.validated_entry,
-                  (
-                    result: result(Scheme.t, error),
-                    input_fields_not_in_output: list(InputField.validated),
-                    output_fields_not_in_input: list(OutputField.t),
-                  ),
-                ) =>
-                  switch (input_entry) {
-                  | ValidatedInputField(input_field_data) =>
-                    let output_field_data =
-                      output_entries
-                      |> List.fold_left(
-                           (res, output_entry: OutputTypeParser.entry) =>
-                             switch (res, output_entry) {
-                             | (Some(_), _) => res
-                             | (None, OutputField(output_field_data)) =>
-                               input_field_data.name == output_field_data.name
-                                 ? Some(output_field_data) : None
-                             | (None, OutputCollection(_)) => None
-                             },
-                           None,
+              validated_input_entries
+              |> List.rev
+              |> List.fold_left(
+                   (
+                     (
+                       result: result(Scheme.t, error),
+                       input_fields_not_in_output: list(InputField.validated),
+                       output_fields_not_in_input: list(OutputField.t),
+                     ),
+                     input_entry: InputTypeParser.validated_entry,
+                   ) =>
+                     switch (input_entry) {
+                     | ValidatedInputField(input_field_data) =>
+                       let output_field_data =
+                         output_entries
+                         |> List.fold_left(
+                              (res, output_entry: OutputTypeParser.entry) =>
+                                switch (res, output_entry) {
+                                | (Some(_), _) => res
+                                | (None, OutputField(output_field_data)) =>
+                                  input_field_data.name
+                                  == output_field_data.name
+                                    ? Some(output_field_data) : None
+                                | (None, OutputCollection(_)) => None
+                                },
+                              None,
+                            );
+                       switch (result, output_field_data) {
+                       | (_, None) => (
+                           result,
+                           [
+                             ValidatedInputField(input_field_data),
+                             ...input_fields_not_in_output,
+                           ],
+                           output_fields_not_in_input,
+                         )
+
+                       | (Error(error), Some(output_field_data)) => (
+                           Error(error),
+                           input_fields_not_in_output,
+                           output_fields_not_in_input
+                           |> List.filter((output_field: OutputField.t) =>
+                                switch (output_field) {
+                                | OutputField(output_field_data) =>
+                                  output_field_data.name
+                                  != input_field_data.name
+                                | OutputFieldOfCollection(_) => true
+                                }
+                              ),
+                         )
+
+                       | (Ok(scheme), Some(output_field_data)) =>
+                         let validator =
+                           validator(
+                             ~input_field=
+                               ValidatedInputField(input_field_data),
+                             ~input_field_data,
+                             ~output_field_data,
+                             ~input_entries=validated_input_entries,
+                             ~validators_record,
+                           );
+                         (
+                           switch (validator) {
+                           | Error(error) => Error(error)
+                           | Ok(validator) =>
+                             Ok([
+                               Scheme.Field({
+                                 name: input_field_data.name,
+                                 input_type: input_field_data.typ,
+                                 output_type: output_field_data.typ,
+                                 validator,
+                                 deps: input_field_data.deps,
+                               }),
+                               ...scheme,
+                             ])
+                           },
+                           input_fields_not_in_output,
+                           output_fields_not_in_input
+                           |> List.filter((output_field: OutputField.t) =>
+                                switch (output_field) {
+                                | OutputField(output_field_data) =>
+                                  output_field_data.name
+                                  != input_field_data.name
+                                | OutputFieldOfCollection(_) => true
+                                }
+                              ),
                          );
-                    switch (result, output_field_data) {
-                    | (_, None) => (
-                        result,
-                        [
-                          ValidatedInputField(input_field_data),
-                          ...input_fields_not_in_output,
-                        ],
-                        output_fields_not_in_input,
-                      )
+                       };
 
-                    | (Error(error), Some(output_field_data)) => (
-                        Error(error),
-                        input_fields_not_in_output,
-                        output_fields_not_in_input
-                        |> List.filter((output_field: OutputField.t) =>
-                             switch (output_field) {
-                             | OutputField(output_field_data) =>
-                               output_field_data.name != input_field_data.name
-                             | OutputFieldOfCollection(_) => true
-                             }
+                     | ValidatedInputCollection({
+                         collection: input_collection,
+                         fields: input_fields,
+                         input_type: input_collection_type,
+                       }) =>
+                       let output_collection =
+                         output_entries
+                         |> List.fold_left(
+                              (res, output_entry: OutputTypeParser.entry) =>
+                                switch (res, output_entry) {
+                                | (Some(_), _) => res
+                                | (None, OutputField(_)) => res
+                                | (
+                                    None,
+                                    OutputCollection({
+                                      collection: output_collection,
+                                      fields,
+                                      output_type,
+                                    }),
+                                  ) =>
+                                  if (output_collection.plural
+                                      == input_collection.plural) {
+                                    Some((
+                                      output_collection,
+                                      fields,
+                                      output_type,
+                                    ));
+                                  } else {
+                                    None;
+                                  }
+                                },
+                              None,
+                            );
+                       switch (output_collection) {
+                       | None => (
+                           Error(
+                             OutputTypeParseError(
+                               OutputCollectionNotFound({
+                                 input_collection,
+                                 loc: output_loc,
+                               }),
+                             ),
                            ),
-                      )
-
-                    | (Ok(scheme), Some(output_field_data)) =>
-                      let validator =
-                        validator(
-                          ~input_field=ValidatedInputField(input_field_data),
-                          ~input_field_data,
-                          ~output_field_data,
-                          ~input_entries=validated_input_entries,
-                          ~validators_record,
-                        );
-                      (
-                        switch (validator) {
-                        | Error(error) => Error(error)
-                        | Ok(validator) =>
-                          Ok([
-                            Scheme.Field({
-                              name: input_field_data.name,
-                              input_type: input_field_data.typ,
-                              output_type: output_field_data.typ,
-                              validator,
-                              deps: input_field_data.deps,
-                            }),
-                            ...scheme,
-                          ])
-                        },
-                        input_fields_not_in_output,
-                        output_fields_not_in_input
-                        |> List.filter((output_field: OutputField.t) =>
-                             switch (output_field) {
-                             | OutputField(output_field_data) =>
-                               output_field_data.name != input_field_data.name
-                             | OutputFieldOfCollection(_) => true
-                             }
-                           ),
-                      );
-                    };
-
-                  | ValidatedInputCollection({
-                      collection: input_collection,
-                      fields: input_fields,
-                      input_type: input_collection_type,
-                    }) =>
-                    let output_collection =
-                      output_entries
-                      |> List.fold_left(
-                           (res, output_entry: OutputTypeParser.entry) =>
-                             switch (res, output_entry) {
-                             | (Some(_), _) => res
-                             | (None, OutputField(_)) => res
-                             | (
-                                 None,
-                                 OutputCollection({
-                                   collection: output_collection,
-                                   fields,
-                                   output_type,
-                                 }),
-                               ) =>
-                               if (output_collection.plural
-                                   == input_collection.plural) {
-                                 Some((
-                                   output_collection,
-                                   fields,
-                                   output_type,
-                                 ));
-                               } else {
-                                 None;
-                               }
-                             },
-                           None,
-                         );
-                    switch (output_collection) {
-                    | None => (
-                        Error(
-                          OutputTypeParseError(
-                            OutputCollectionNotFound({
-                              input_collection,
-                              loc: output_loc,
-                            }),
-                          ),
-                        ),
-                        input_fields
-                        |> List.fold_left(
-                             (acc: list(InputField.validated), field) =>
-                               [
-                                 ValidatedInputFieldOfCollection({
-                                   collection: input_collection,
-                                   field,
-                                 }),
-                                 ...acc,
-                               ],
-                             input_fields_not_in_output,
-                           ),
-                        output_fields_not_in_input,
-                      )
-                    | Some((output_collection, output_fields, output_type)) =>
-                      let (
-                        fields,
-                        input_fields_not_in_output,
-                        output_fields_not_in_input,
-                      ) =
-                        List.fold_right(
-                          (
-                            input_field_data: InputFieldData.validated,
-                            (
-                              res: result(list(Scheme.field), error),
-                              input_fields_not_in_output:
-                                list(InputField.validated),
-                              output_fields_not_in_input: list(OutputField.t),
-                            ),
-                          ) => {
-                            let output_field_data =
-                              output_fields
-                              |> List.find_opt(
-                                   (output_field_data: OutputFieldData.t) =>
-                                   output_field_data.name
-                                   == input_field_data.name
-                                 );
-
-                            switch (res, output_field_data) {
-                            | (_, None) => (
-                                res,
-                                [
-                                  ValidatedInputFieldOfCollection({
-                                    collection: input_collection,
-                                    field: input_field_data,
-                                  }),
-                                  ...input_fields_not_in_output,
-                                ],
-                                output_fields_not_in_input,
-                              )
-
-                            | (Error(error), Some(output_field_data)) => (
-                                Error(error),
-                                input_fields_not_in_output,
-                                output_fields_not_in_input
-                                |> List.filter((output_field: OutputField.t) =>
-                                     switch (output_field) {
-                                     | OutputField(_) => true
-                                     | OutputFieldOfCollection({
-                                         collection,
-                                         field,
-                                       }) =>
-                                       !(
-                                         input_collection.plural
-                                         == collection.plural
-                                         && output_field_data.name
-                                         == field.name
-                                       )
-                                     }
-                                   ),
-                              )
-                            | (Ok(fields), Some(output_field_data)) =>
-                              let validator =
-                                validator(
-                                  ~input_field=
+                           input_fields
+                           |> List.fold_left(
+                                (acc: list(InputField.validated), field) =>
+                                  [
                                     ValidatedInputFieldOfCollection({
                                       collection: input_collection,
-                                      field: input_field_data,
+                                      field,
                                     }),
-                                  ~input_field_data,
-                                  ~output_field_data,
-                                  ~input_entries=validated_input_entries,
-                                  ~validators_record,
-                                );
-                              (
-                                switch (validator) {
-                                | Error(error) => Error(error)
-                                | Ok(validator) =>
-                                  Ok([
-                                    {
-                                      name: input_field_data.name,
-                                      input_type: input_field_data.typ,
-                                      output_type: output_field_data.typ,
-                                      validator,
-                                      deps: input_field_data.deps,
-                                    },
-                                    ...fields,
-                                  ])
-                                },
+                                    ...acc,
+                                  ],
                                 input_fields_not_in_output,
-                                output_fields_not_in_input
-                                |> List.filter((output_field: OutputField.t) =>
-                                     switch (output_field) {
-                                     | OutputField(_) => true
-                                     | OutputFieldOfCollection({
-                                         collection,
-                                         field,
-                                       }) =>
-                                       !(
-                                         input_collection.plural
-                                         == collection.plural
-                                         && output_field_data.name
-                                         == field.name
-                                       )
-                                     }
-                                   ),
-                              );
-                            };
-                          },
-                          input_fields,
-                          (
-                            Ok([]),
-                            input_fields_not_in_output,
-                            output_fields_not_in_input,
-                          ),
-                        );
+                              ),
+                           output_fields_not_in_input,
+                         )
+                       | Some((output_collection, output_fields, output_type)) =>
+                         let (
+                           fields,
+                           input_fields_not_in_output,
+                           output_fields_not_in_input,
+                         ) =
+                           input_fields
+                           |> List.rev
+                           |> List.fold_left(
+                                (
+                                  (
+                                    res: result(list(Scheme.field), error),
+                                    input_fields_not_in_output:
+                                      list(InputField.validated),
+                                    output_fields_not_in_input:
+                                      list(OutputField.t),
+                                  ),
+                                  input_field_data: InputFieldData.validated,
+                                ) => {
+                                  let output_field_data =
+                                    output_fields
+                                    |> List.find_opt(
+                                         (
+                                           output_field_data: OutputFieldData.t,
+                                         ) =>
+                                         output_field_data.name
+                                         == input_field_data.name
+                                       );
 
-                      switch (result, fields) {
-                      | (Error(error), _) => (
-                          result,
-                          input_fields_not_in_output,
-                          output_fields_not_in_input,
-                        )
-                      | (Ok(_), Error(error)) => (
-                          Error(error),
-                          input_fields_not_in_output,
-                          output_fields_not_in_input,
-                        )
-                      | (Ok(scheme), Ok(fields)) => (
-                          Ok([
-                            Scheme.Collection({
-                              collection: input_collection,
-                              fields,
-                              input_type: input_collection_type,
-                              output_type,
-                              validator:
-                                switch (
-                                  validators_record.fields
-                                  |> ValidatorsRecordParser.collection(
-                                       input_collection,
-                                     )
-                                ) {
-                                | Ok(res) => Ok(res)
-                                | Error(_) => Error()
+                                  switch (res, output_field_data) {
+                                  | (_, None) => (
+                                      res,
+                                      [
+                                        ValidatedInputFieldOfCollection({
+                                          collection: input_collection,
+                                          field: input_field_data,
+                                        }),
+                                        ...input_fields_not_in_output,
+                                      ],
+                                      output_fields_not_in_input,
+                                    )
+
+                                  | (Error(error), Some(output_field_data)) => (
+                                      Error(error),
+                                      input_fields_not_in_output,
+                                      output_fields_not_in_input
+                                      |> List.filter(
+                                           (output_field: OutputField.t) =>
+                                           switch (output_field) {
+                                           | OutputField(_) => true
+                                           | OutputFieldOfCollection({
+                                               collection,
+                                               field,
+                                             }) =>
+                                             !(
+                                               input_collection.plural
+                                               == collection.plural
+                                               && output_field_data.name
+                                               == field.name
+                                             )
+                                           }
+                                         ),
+                                    )
+                                  | (Ok(fields), Some(output_field_data)) =>
+                                    let validator =
+                                      validator(
+                                        ~input_field=
+                                          ValidatedInputFieldOfCollection({
+                                            collection: input_collection,
+                                            field: input_field_data,
+                                          }),
+                                        ~input_field_data,
+                                        ~output_field_data,
+                                        ~input_entries=validated_input_entries,
+                                        ~validators_record,
+                                      );
+                                    (
+                                      switch (validator) {
+                                      | Error(error) => Error(error)
+                                      | Ok(validator) =>
+                                        Ok([
+                                          {
+                                            name: input_field_data.name,
+                                            input_type: input_field_data.typ,
+                                            output_type: output_field_data.typ,
+                                            validator,
+                                            deps: input_field_data.deps,
+                                          },
+                                          ...fields,
+                                        ])
+                                      },
+                                      input_fields_not_in_output,
+                                      output_fields_not_in_input
+                                      |> List.filter(
+                                           (output_field: OutputField.t) =>
+                                           switch (output_field) {
+                                           | OutputField(_) => true
+                                           | OutputFieldOfCollection({
+                                               collection,
+                                               field,
+                                             }) =>
+                                             !(
+                                               input_collection.plural
+                                               == collection.plural
+                                               && output_field_data.name
+                                               == field.name
+                                             )
+                                           }
+                                         ),
+                                    );
+                                  };
                                 },
-                            }),
-                            ...scheme,
-                          ]),
-                          input_fields_not_in_output,
-                          output_fields_not_in_input,
-                        )
-                      };
-                    };
-                  },
-                validated_input_entries,
-                (Ok([]), [], output_entries |> OutputTypeParser.flatten),
-              );
+                                (
+                                  Ok([]),
+                                  input_fields_not_in_output,
+                                  output_fields_not_in_input,
+                                ),
+                              );
+
+                         switch (result, fields) {
+                         | (Error(error), _) => (
+                             result,
+                             input_fields_not_in_output,
+                             output_fields_not_in_input,
+                           )
+                         | (Ok(_), Error(error)) => (
+                             Error(error),
+                             input_fields_not_in_output,
+                             output_fields_not_in_input,
+                           )
+                         | (Ok(scheme), Ok(fields)) => (
+                             Ok([
+                               Scheme.Collection({
+                                 collection: input_collection,
+                                 fields,
+                                 input_type: input_collection_type,
+                                 output_type,
+                                 validator:
+                                   switch (
+                                     validators_record.fields
+                                     |> ValidatorsRecordParser.collection(
+                                          input_collection,
+                                        )
+                                   ) {
+                                   | Ok(res) => Ok(res)
+                                   | Error(_) => Error()
+                                   },
+                               }),
+                               ...scheme,
+                             ]),
+                             input_fields_not_in_output,
+                             output_fields_not_in_input,
+                           )
+                         };
+                       };
+                     },
+                   (Ok([]), [], output_entries |> OutputTypeParser.flatten),
+                 );
             switch (input_fields_not_in_output, output_fields_not_in_input) {
             | ([], []) => result
             | (input_fields_not_in_output, []) =>

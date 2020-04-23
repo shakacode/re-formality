@@ -49,19 +49,19 @@ let ast = (~scheme: Scheme.t, ~loc) => {
                ...acc,
              ]
            | Collection({collection, fields}) =>
-             List.fold_right(
-               (field: Scheme.field, acc) =>
-                 [
-                   FieldOfCollectionPrinter.blur_action(
-                     ~collection,
-                     ~field=field.name,
-                   )
-                   |> T.constructor(~args=[[%type: index]], ~loc),
-                   ...acc,
-                 ],
-               fields,
-               acc,
-             )
+             fields
+             |> List.fold_left(
+                  (acc, field: Scheme.field) =>
+                    [
+                      FieldOfCollectionPrinter.blur_action(
+                        ~collection,
+                        ~field=field.name,
+                      )
+                      |> T.constructor(~args=[[%type: index]], ~loc),
+                      ...acc,
+                    ],
+                  acc,
+                )
            },
          [],
        );
