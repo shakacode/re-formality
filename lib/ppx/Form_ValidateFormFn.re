@@ -27,7 +27,7 @@ let validate_field_of_collection_without_validator =
       [%e
         Exp.field(
           [%expr
-            Array.getUnsafe(
+            Belt.Array.getUnsafe(
               [%e collection.plural |> E.field(~in_="input", ~loc)],
               index,
             )

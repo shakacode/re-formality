@@ -6,32 +6,136 @@ open Printer;
 open Ppxlib;
 open Ast_helper;
 
-let dirty_collection_guard = (~loc, {collection, fields}: Scheme.collection) => [%expr
-  Belt.Array.every(
-    [%e Exp.ident(Lident(collection.plural) |> lid(~loc))], item => {
-    %e
-    Exp.match(
-      [%expr item],
-      [
-        Exp.case(
-          Pat.record(
-            fields
-            |> List.rev
-            |> List.rev_map((field: Scheme.field) =>
-                 (Lident(field.name) |> lid(~loc), [%pat? Pristine])
-               ),
-            Closed,
+module Dirty = {
+  type context =
+    | FieldsOnly
+    | CollectionsOnly({collections_cond: expression})
+    | FieldsAndCollections({collections_cond: expression});
+
+  let collection_cond = (~loc, {collection, fields}: Scheme.collection) => [%expr
+    Belt.Array.every(
+      [%e
+        E.field2(~in_=("state", "fieldsStatuses"), ~loc, collection.plural)
+      ],
+      item => {
+      %e
+      Exp.match(
+        [%expr item],
+        [
+          Exp.case(
+            Pat.record(
+              fields
+              |> List.rev_map((field: Scheme.field) =>
+                   (Lident(field.name) |> lid(~loc), [%pat? Pristine])
+                 ),
+              Closed,
+            ),
+            [%expr false],
           ),
-          [%expr true],
-        ),
-        Exp.case(
-          Pat.record(
-            fields
-            |> List.rev
-            |> List.rev_map((field: Scheme.field) =>
-                 (
+          Exp.case(
+            Pat.record(
+              fields
+              |> List.rev_map((field: Scheme.field) =>
+                   (
+                     Lident(field.name) |> lid(~loc),
+                     switch (fields, field.validator) {
+                     | ([_x], SyncValidator(_)) => [%pat? Dirty(_)]
+                     | ([_x], AsyncValidator(_)) => [%pat?
+                         Dirty(_) | Validating(_)
+                       ]
+                     | (_, SyncValidator(_)) => [%pat? Pristine | Dirty(_)]
+                     | (_, AsyncValidator(_)) => [%pat?
+                         Pristine | Dirty(_) | Validating(_)
+                       ]
+                     },
+                   )
+                 ),
+              Closed,
+            ),
+            [%expr true],
+          ),
+        ],
+      )
+    })
+  ];
+};
+
+let ast = (~scheme: Scheme.t, ~async: bool, ~loc) => {
+  let dirty = {
+    let fields = scheme |> Scheme.fields;
+    let collections = scheme |> Scheme.collections;
+
+    let context =
+      switch (fields, collections) {
+      | ([_fields, ..._], []) => Dirty.FieldsOnly
+      | ([], [collection, ...collections]) =>
+        Dirty.CollectionsOnly({
+          collections_cond:
+            collections
+            |> E.conj(
+                 ~loc,
+                 ~exp=Dirty.collection_cond(~loc, collection),
+                 ~make=Dirty.collection_cond,
+               ),
+        })
+      | ([_fields, ..._], [collection, ...collections]) =>
+        Dirty.FieldsAndCollections({
+          collections_cond:
+            collections
+            |> E.conj(
+                 ~loc,
+                 ~exp=Dirty.collection_cond(~loc, collection),
+                 ~make=Dirty.collection_cond,
+               ),
+        })
+      | ([], []) =>
+        failwith(
+          "No fields and no collections in the schema. Please, file an issue with your use-case.",
+        )
+      };
+
+    let no_case = {
+      Exp.case(
+        Pat.record(
+          scheme
+          |> List.rev
+          |> List.rev_map((entry: Scheme.entry) =>
+               switch (entry) {
+               | Field(field) => (
                    Lident(field.name) |> lid(~loc),
-                   switch (fields, field.validator) {
+                   [%pat? Pristine],
+                 )
+               | Collection({collection}) => (
+                   Lident(collection.plural) |> lid(~loc),
+                   [%pat? _],
+                 )
+               }
+             ),
+          Closed,
+        ),
+        [%expr false],
+      );
+    };
+
+    let yes_case = {
+      Exp.case(
+        Pat.record(
+          scheme
+          |> List.rev
+          |> List.rev_map((entry: Scheme.entry) =>
+               switch (entry) {
+               | Field(field) => (
+                   Lident(field.name) |> lid(~loc),
+                   switch (
+                     scheme
+                     |> List.filter((entry: Scheme.entry) =>
+                          switch (entry) {
+                          | Field(_) => true
+                          | Collection(_) => false
+                          }
+                        ),
+                     field.validator,
+                   ) {
                    | ([_x], SyncValidator(_)) => [%pat? Dirty(_)]
                    | ([_x], AsyncValidator(_)) => [%pat?
                        Dirty(_) | Validating(_)
@@ -42,126 +146,65 @@ let dirty_collection_guard = (~loc, {collection, fields}: Scheme.collection) => 
                      ]
                    },
                  )
-               ),
-            Closed,
-          ),
-          [%expr false],
+               | Collection({collection}) => (
+                   Lident(collection.plural) |> lid(~loc),
+                   [%pat? _],
+                 )
+               }
+             ),
+          Closed,
         ),
-      ],
-    )
-  })
-];
+        [%expr true],
+      );
+    };
 
-let ast = (~scheme: Scheme.t, ~async: bool, ~loc) => {
-  let collections = scheme |> Scheme.collections;
+    let match_exp =
+      Exp.match([%expr state.fieldsStatuses], [no_case, yes_case]);
+
+    %expr
+    () =>
+      switch%e (context) {
+      | FieldsOnly => match_exp
+      | CollectionsOnly({collections_cond}) => collections_cond
+      | FieldsAndCollections({collections_cond}) =>
+        if%expr ([%e collections_cond]) {
+          true;
+        } else {
+          %e
+          match_exp;
+        }
+      };
+  };
+
+  let valid =
+    if (async) {
+      %expr
+      () =>
+        switch (
+          state.input
+          ->validateForm(~validators, ~fieldsStatuses=state.fieldsStatuses)
+        ) {
+        | Validating(_) => None
+        | Valid(_) => Some(true)
+        | Invalid(_) => Some(false)
+        };
+    } else {
+      %expr
+      () =>
+        switch (
+          state.input
+          ->validateForm(~validators, ~fieldsStatuses=state.fieldsStatuses)
+        ) {
+        | Valid(_) => true
+        | Invalid(_) => false
+        };
+    };
 
   let base = [
     ("input", [%expr state.input]),
     ("status", [%expr state.formStatus]),
-    (
-      "dirty",
-      [%expr
-        () => [%e
-          Exp.match(
-            [%expr state.fieldsStatuses],
-            [
-              Exp.case(
-                Pat.record(
-                  scheme
-                  |> List.rev
-                  |> List.rev_map((entry: Scheme.entry) =>
-                       switch (entry) {
-                       | Field(field) => (
-                           Lident(field.name) |> lid(~loc),
-                           [%pat? Pristine],
-                         )
-                       | Collection({collection}) => (
-                           Lident(collection.plural) |> lid(~loc),
-                           Pat.var(collection.plural |> str(~loc)),
-                         )
-                       }
-                     ),
-                  Closed,
-                ),
-                ~guard=?{
-                  switch (collections) {
-                  | [] => None
-                  | [collection] =>
-                    Some(dirty_collection_guard(~loc, collection))
-                  | [collection, ...collections] =>
-                    Some(
-                      collections
-                      |> E.conj(
-                           ~loc,
-                           ~exp=dirty_collection_guard(~loc, collection),
-                           ~make=dirty_collection_guard,
-                         ),
-                    )
-                  };
-                },
-                [%expr false],
-              ),
-              Exp.case(
-                Pat.record(
-                  scheme
-                  |> List.rev
-                  |> List.rev_map((entry: Scheme.entry) =>
-                       switch (entry) {
-                       | Field(field) => (
-                           Lident(field.name) |> lid(~loc),
-                           switch (scheme, field.validator) {
-                           | ([_x], SyncValidator(_)) => [%pat? Dirty(_)]
-                           | ([_x], AsyncValidator(_)) => [%pat?
-                               Dirty(_) | Validating(_)
-                             ]
-                           | (_, SyncValidator(_)) => [%pat?
-                               Pristine | Dirty(_)
-                             ]
-                           | (_, AsyncValidator(_)) => [%pat?
-                               Pristine | Dirty(_) | Validating(_)
-                             ]
-                           },
-                         )
-                       | Collection({collection}) => (
-                           Lident(collection.plural) |> lid(~loc),
-                           [%pat? _],
-                         )
-                       }
-                     ),
-                  Closed,
-                ),
-                [%expr true],
-              ),
-            ],
-          )
-        ]
-      ],
-    ),
-    (
-      "valid",
-      if (async) {
-        %expr
-        () =>
-          switch (
-            state.input
-            ->validateForm(~validators, ~fieldsStatuses=state.fieldsStatuses)
-          ) {
-          | Validating(_) => None
-          | Valid(_) => Some(true)
-          | Invalid(_) => Some(false)
-          };
-      } else {
-        %expr
-        () =>
-          switch (
-            state.input
-            ->validateForm(~validators, ~fieldsStatuses=state.fieldsStatuses)
-          ) {
-          | Valid(_) => true
-          | Invalid(_) => false
-          };
-      },
-    ),
+    ("dirty", dirty),
+    ("valid", valid),
     (
       "submitting",
       switch%expr (state.formStatus) {

@@ -132,6 +132,17 @@ module Scheme = {
     output_type: ItemType.t,
   };
 
+  let fields = (scheme: t) =>
+    scheme
+    |> List.fold_left(
+         (acc, entry) =>
+           switch (entry) {
+           | Field(field) => [field, ...acc]
+           | Collection(_) => acc
+           },
+         [],
+       );
+
   let collections = (scheme: t) =>
     scheme
     |> List.fold_left(
