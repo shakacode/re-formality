@@ -375,6 +375,9 @@ submitting: bool
 <br>
 
 #### `dirty`
+
+**⚠️ This function is temporary disabled due to the BuckleScript issue**
+
 The function would return `true` if any form field was touched, `false` otherwise.
 
 ```reason
