@@ -89,51 +89,60 @@ let ext =
         ];
 
         let structure: structure =
-          List.fold_right(
-            (structure_item: structure_item, acc) =>
-              switch (structure_item) {
-              | {pstr_desc: Pstr_value(rec_flag, value_bindings), pstr_loc} =>
-                let (value_bindings, search_result) =
-                  List.fold_right(
-                    (value, (acc, res: [ | `Found | `NotFound])) =>
-                      switch (value) {
-                      | {
-                          pvb_pat: {ppat_desc: Ppat_var({txt: "validators"})},
-                        } as value => (
-                          [
-                            value
-                            |> Form_ValidatorsRecord.ast(
-                                 scheme,
-                                 validators_record,
-                               ),
-                            ...acc,
-                          ],
-                          `Found,
-                        )
-                      | _ as value => ([value, ...acc], res)
-                      },
-                    value_bindings,
-                    ([], `NotFound),
-                  );
-                let structure_item = {
-                  pstr_desc: Pstr_value(rec_flag, value_bindings),
-                  pstr_loc,
-                };
-                switch (search_result) {
-                | `NotFound => [structure_item, ...acc]
-                | `Found =>
-                  List.append(
-                    List.append(types, values),
-                    [structure_item, ...acc],
-                  )
-                };
-              | _ => [structure_item, ...acc]
-              },
-            structure,
-            funcs,
-          );
+          structure
+          |> List.rev
+          |> List.fold_left(
+               (acc, structure_item: structure_item) =>
+                 switch (structure_item) {
+                 | {
+                     pstr_desc: Pstr_value(rec_flag, value_bindings),
+                     pstr_loc,
+                   } =>
+                   let (value_bindings, search_result) =
+                     value_bindings
+                     |> List.rev
+                     |> List.fold_left(
+                          ((acc, res: [ | `Found | `NotFound]), value) =>
+                            switch (value) {
+                            | {
+                                pvb_pat: {
+                                  ppat_desc: Ppat_var({txt: "validators"}),
+                                },
+                              } as value => (
+                                [
+                                  value
+                                  |> Form_ValidatorsRecord.ast(
+                                       scheme,
+                                       validators_record,
+                                     ),
+                                  ...acc,
+                                ],
+                                `Found,
+                              )
+                            | _ as value => ([value, ...acc], res)
+                            },
+                          ([], `NotFound),
+                        );
+                   let structure_item = {
+                     pstr_desc: Pstr_value(rec_flag, value_bindings),
+                     pstr_loc,
+                   };
+                   switch (search_result) {
+                   | `NotFound => [structure_item, ...acc]
+                   | `Found =>
+                     List.rev_append(
+                       types |> List.rev |> List.rev_append(values),
+                       [structure_item, ...acc],
+                     )
+                   };
+                 | _ => [structure_item, ...acc]
+                 },
+               funcs,
+             );
 
-        Mod.mk(Pmod_structure(List.append(head, structure)));
+        Mod.mk(
+          Pmod_structure(structure |> List.rev_append(head |> List.rev)),
+        );
 
       | Error(InputTypeParseError(NotFound)) =>
         Location.raise_errorf(~loc, "`input` type not found")
@@ -410,7 +419,8 @@ let ext =
             ~loc,
             "Some `input` fields don't exist in `output` type: %s",
             fields
-            |> List.map((field: InputField.validated) =>
+            |> List.rev
+            |> List.rev_map((field: InputField.validated) =>
                  switch (field) {
                  | ValidatedInputField(field) => field.name
                  | ValidatedInputFieldOfCollection({collection, field}) =>

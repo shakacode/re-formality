@@ -20,7 +20,8 @@ let ast = (~scheme: Scheme.t, ~loc) => {
         : fieldsStatuses => [%e
       Exp.record(
         scheme
-        |> List.map((entry: Scheme.entry) =>
+        |> List.rev
+        |> List.rev_map((entry: Scheme.entry) =>
              switch (entry) {
              | Field(field) => (
                  Lident(field.name) |> lid(~loc),
@@ -37,7 +38,8 @@ let ast = (~scheme: Scheme.t, ~loc) => {
                        Exp.constraint_(
                          Exp.record(
                            fields
-                           |> List.map((field: Scheme.field) =>
+                           |> List.rev
+                           |> List.rev_map((field: Scheme.field) =>
                                 (
                                   Lident(field.name) |> lid(~loc),
                                   [%expr Pristine],

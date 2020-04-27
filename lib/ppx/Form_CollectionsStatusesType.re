@@ -20,7 +20,9 @@ let ast = (~scheme: Scheme.t, ~loc) => {
              ~kind=
                Ptype_record(
                  collections
-                 |> List.map(({collection, validator}: Scheme.collection) =>
+                 |> List.rev
+                 |> List.rev_map(
+                      ({collection, validator}: Scheme.collection) =>
                       Type.field(
                         collection.plural |> str(~loc),
                         switch (validator) {

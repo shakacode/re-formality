@@ -14,7 +14,8 @@ let ast = (~loc, scheme: Scheme.t) => {
          let deps =
            fields
            |> List.fold_left(
-                (acc, field: Scheme.field) => acc |> List.append(field.deps),
+                (acc, field: Scheme.field) =>
+                  acc |> List.rev_append(field.deps |> List.rev),
                 [],
               );
 
@@ -55,7 +56,8 @@ let ast = (~loc, scheme: Scheme.t) => {
                       [%e
                         Exp.record(
                           fields
-                          |> List.map((field: Scheme.field) =>
+                          |> List.rev
+                          |> List.rev_map((field: Scheme.field) =>
                                (
                                  Lident(field.name) |> lid(~loc),
                                  [%expr Pristine],
@@ -140,74 +142,6 @@ let ast = (~loc, scheme: Scheme.t) => {
 
          [
            Exp.case(
-             add_action_pat,
-             switch (deps) {
-             | [] =>
-               %expr
-               {
-                 let nextInput = [%e add_entry_to_input_exp];
-                 let nextFieldsStatuses = [%e
-                   add_entry_to_fields_statuses_exp
-                 ];
-                 switch%e (validator) {
-                 | Ok(Some ())
-                 | Error () =>
-                   %expr
-                   Update({
-                     ...state,
-                     input: nextInput,
-                     fieldsStatuses: nextFieldsStatuses,
-                     collectionsStatuses: [%e update_collections_statuses],
-                   })
-                 | Ok(None) =>
-                   %expr
-                   Update({
-                     ...state,
-                     input: nextInput,
-                     fieldsStatuses: nextFieldsStatuses,
-                   })
-                 };
-               }
-             | [dep, ...deps] =>
-               %expr
-               {
-                 let nextInput = [%e add_entry_to_input_exp];
-                 let nextFieldsStatuses =
-                   ref([%e add_entry_to_fields_statuses_exp]);
-
-                 %e
-                 {
-                   scheme
-                   |> Form_UseFormFn_DependentFields.ast(
-                        ~loc,
-                        ~dep,
-                        ~deps,
-                        ~trigger=`Collection(collection),
-                      );
-                 };
-
-                 switch%e (validator) {
-                 | Ok(Some ())
-                 | Error () =>
-                   %expr
-                   Update({
-                     ...state,
-                     input: nextInput,
-                     fieldsStatuses: nextFieldsStatuses^,
-                     collectionsStatuses: [%e update_collections_statuses],
-                   })
-                 | Ok(None) =>
-                   %expr
-                   Update({
-                     ...state,
-                     input: nextInput,
-                     fieldsStatuses: nextFieldsStatuses^,
-                   })
-                 };
-               }
-             },
-           ),
-           Exp.case(
              remove_action_pat,
              switch (deps) {
              | [] =>
@@ -242,6 +176,74 @@ let ast = (~loc, scheme: Scheme.t) => {
                  let nextInput = [%e remove_entry_from_input_exp];
                  let nextFieldsStatuses =
                    ref([%e remove_entry_from_fields_statuses_exp]);
+
+                 %e
+                 {
+                   scheme
+                   |> Form_UseFormFn_DependentFields.ast(
+                        ~loc,
+                        ~dep,
+                        ~deps,
+                        ~trigger=`Collection(collection),
+                      );
+                 };
+
+                 switch%e (validator) {
+                 | Ok(Some ())
+                 | Error () =>
+                   %expr
+                   Update({
+                     ...state,
+                     input: nextInput,
+                     fieldsStatuses: nextFieldsStatuses^,
+                     collectionsStatuses: [%e update_collections_statuses],
+                   })
+                 | Ok(None) =>
+                   %expr
+                   Update({
+                     ...state,
+                     input: nextInput,
+                     fieldsStatuses: nextFieldsStatuses^,
+                   })
+                 };
+               }
+             },
+           ),
+           Exp.case(
+             add_action_pat,
+             switch (deps) {
+             | [] =>
+               %expr
+               {
+                 let nextInput = [%e add_entry_to_input_exp];
+                 let nextFieldsStatuses = [%e
+                   add_entry_to_fields_statuses_exp
+                 ];
+                 switch%e (validator) {
+                 | Ok(Some ())
+                 | Error () =>
+                   %expr
+                   Update({
+                     ...state,
+                     input: nextInput,
+                     fieldsStatuses: nextFieldsStatuses,
+                     collectionsStatuses: [%e update_collections_statuses],
+                   })
+                 | Ok(None) =>
+                   %expr
+                   Update({
+                     ...state,
+                     input: nextInput,
+                     fieldsStatuses: nextFieldsStatuses,
+                   })
+                 };
+               }
+             | [dep, ...deps] =>
+               %expr
+               {
+                 let nextInput = [%e add_entry_to_input_exp];
+                 let nextFieldsStatuses =
+                   ref([%e add_entry_to_fields_statuses_exp]);
 
                  %e
                  {

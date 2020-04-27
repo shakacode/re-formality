@@ -17,12 +17,12 @@ module T = {
 };
 
 module P = {
-  let rec or_ = (~pat, ~make, list) =>
+  let rec or_ = (~pat, ~make, list) => {
     switch (list) {
     | [] => pat
-    | [x] => x |> make |> Pat.or_(pat)
-    | [x, ...rest] => rest |> or_(~pat=x |> make |> Pat.or_(pat), ~make)
+    | [x, ...list] => or_(~pat=x |> make |> Pat.or_(pat), ~make, list)
     };
+  };
 };
 
 module E = {
@@ -33,34 +33,29 @@ module E = {
       Some(Exp.tuple([x])),
     );
 
-  let rec seq = (~exp, ~make, list) =>
+  let rec seq = (~exp, ~make, list) => {
     switch (list) {
     | [] => exp
-    | [x] => x |> make |> Exp.sequence(exp)
-    | [x, ...rest] =>
-      rest |> seq(~exp=x |> make |> Exp.sequence(exp), ~make)
+    | [x, ...list] => seq(~exp=x |> make |> Exp.sequence(exp), ~make, list)
     };
+  };
 
-  let rec conj = (~exp, ~make, ~loc, list) =>
+  let rec conj = (~exp, ~make, ~loc, list) => {
     switch (list) {
     | [] => exp
-    | [x] =>
-      Exp.apply(
-        Exp.ident(Lident("&&") |> lid(~loc)),
-        [(Nolabel, exp), (Nolabel, x |> make(~loc))],
+    | [x, ...list] =>
+      conj(
+        ~exp=
+          Exp.apply(
+            Exp.ident(Lident("&&") |> lid(~loc)),
+            [(Nolabel, exp), (Nolabel, x |> make(~loc))],
+          ),
+        ~make,
+        ~loc,
+        list,
       )
-    | [x, ...rest] =>
-      rest
-      |> conj(
-           ~exp=
-             Exp.apply(
-               Exp.ident(Lident("&&") |> lid(~loc)),
-               [(Nolabel, exp), (Nolabel, x |> make(~loc))],
-             ),
-           ~make,
-           ~loc,
-         )
     };
+  };
 
   let ref_ = (~loc, x) =>
     Exp.apply(
@@ -70,7 +65,9 @@ module E = {
 
   let record = (~loc, xs: list((string, expression))) =>
     Exp.record(
-      xs |> List.map(((name, expr)) => (Lident(name) |> lid(~loc), expr)),
+      xs
+      |> List.rev
+      |> List.rev_map(((name, expr)) => (Lident(name) |> lid(~loc), expr)),
       None,
     );
 

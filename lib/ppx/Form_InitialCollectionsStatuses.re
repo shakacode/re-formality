@@ -16,7 +16,8 @@ let ast = (~scheme: Scheme.t, ~loc) => {
       | collections =>
         Exp.record(
           collections
-          |> List.map(({collection, validator}: Scheme.collection) =>
+          |> List.rev
+          |> List.rev_map(({collection, validator}: Scheme.collection) =>
                (
                  Lident(collection.plural) |> lid(~loc),
                  switch (validator) {

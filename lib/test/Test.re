@@ -43,12 +43,14 @@ let () =
             "Ok__SubmissionError",
             "Ok__Include",
           ]
-          |> List.map(ok),
+          |> List.rev
+          |> List.rev_map(ok),
         ),
         (
           "errors",
           ["Error__InputNotFound", "Error__InputNotRecord"]
-          |> List.map(error),
+          |> List.rev
+          |> List.rev_map(error),
         ),
       ],
     )
