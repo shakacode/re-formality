@@ -1,5 +1,8 @@
 # History
 
+## 4.0.0-beta.7
+* Re-enable `dirty` function in interface.
+
 ## 4.0.0-beta.6
 * Make all List calls in PPX tail-recursive.
 * Temporary disable `dirty` function in interface due to [the BuckleScript issue](https://github.com/BuckleScript/bucklescript/issues/4327).
