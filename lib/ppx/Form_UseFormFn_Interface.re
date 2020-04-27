@@ -12,6 +12,11 @@ module Dirty = {
     | CollectionsOnly({collections_cond: expression})
     | FieldsAndCollections({collections_cond: expression});
 
+  // Disables warning 4 to prevent stack overflow
+  // Details: https://github.com/BuckleScript/bucklescript/issues/4327
+  let warning_4_disable = (~loc) =>
+    Attr.mk("warning" |> str(~loc), PStr([[%stri "-4"]]));
+
   let collection_cond = (~loc, {collection, fields}: Scheme.collection) => [%expr
     Belt.Array.every(
       [%e
@@ -20,6 +25,7 @@ module Dirty = {
       item => {
       %e
       Exp.match(
+        ~attrs=[warning_4_disable(~loc)],
         [%expr item],
         [
           Exp.case(
@@ -61,121 +67,124 @@ module Dirty = {
 };
 
 let ast = (~scheme: Scheme.t, ~async: bool, ~loc) => {
-  // NOTE: Temporary disabled due to bug in compiler
-  // let dirty = {
-  //   let fields = scheme |> Scheme.fields;
-  //   let collections = scheme |> Scheme.collections;
-  //
-  //   let context =
-  //     switch (fields, collections) {
-  //     | ([_fields, ..._], []) => Dirty.FieldsOnly
-  //     | ([], [collection, ...collections]) =>
-  //       Dirty.CollectionsOnly({
-  //         collections_cond:
-  //           collections
-  //           |> E.conj(
-  //                ~loc,
-  //                ~exp=Dirty.collection_cond(~loc, collection),
-  //                ~make=Dirty.collection_cond,
-  //              ),
-  //       })
-  //     | ([_fields, ..._], [collection, ...collections]) =>
-  //       Dirty.FieldsAndCollections({
-  //         collections_cond:
-  //           collections
-  //           |> E.conj(
-  //                ~loc,
-  //                ~exp=Dirty.collection_cond(~loc, collection),
-  //                ~make=Dirty.collection_cond,
-  //              ),
-  //       })
-  //     | ([], []) =>
-  //       failwith(
-  //         "No fields and no collections in the schema. Please, file an issue with your use-case.",
-  //       )
-  //     };
-  //
-  //   let no_case = {
-  //     Exp.case(
-  //       Pat.record(
-  //         scheme
-  //         |> List.rev
-  //         |> List.rev_map((entry: Scheme.entry) =>
-  //              switch (entry) {
-  //              | Field(field) => (
-  //                  Lident(field.name) |> lid(~loc),
-  //                  [%pat? Pristine],
-  //                )
-  //              | Collection({collection}) => (
-  //                  Lident(collection.plural) |> lid(~loc),
-  //                  [%pat? _],
-  //                )
-  //              }
-  //            ),
-  //         Closed,
-  //       ),
-  //       [%expr false],
-  //     );
-  //   };
-  //
-  //   let yes_case = {
-  //     Exp.case(
-  //       Pat.record(
-  //         scheme
-  //         |> List.rev
-  //         |> List.rev_map((entry: Scheme.entry) =>
-  //              switch (entry) {
-  //              | Field(field) => (
-  //                  Lident(field.name) |> lid(~loc),
-  //                  switch (
-  //                    scheme
-  //                    |> List.filter((entry: Scheme.entry) =>
-  //                         switch (entry) {
-  //                         | Field(_) => true
-  //                         | Collection(_) => false
-  //                         }
-  //                       ),
-  //                    field.validator,
-  //                  ) {
-  //                  | ([_x], SyncValidator(_)) => [%pat? Dirty(_)]
-  //                  | ([_x], AsyncValidator(_)) => [%pat?
-  //                      Dirty(_) | Validating(_)
-  //                    ]
-  //                  | (_, SyncValidator(_)) => [%pat? Pristine | Dirty(_)]
-  //                  | (_, AsyncValidator(_)) => [%pat?
-  //                      Pristine | Dirty(_) | Validating(_)
-  //                    ]
-  //                  },
-  //                )
-  //              | Collection({collection}) => (
-  //                  Lident(collection.plural) |> lid(~loc),
-  //                  [%pat? _],
-  //                )
-  //              }
-  //            ),
-  //         Closed,
-  //       ),
-  //       [%expr true],
-  //     );
-  //   };
-  //
-  //   let match_exp =
-  //     Exp.match([%expr state.fieldsStatuses], [no_case, yes_case]);
-  //
-  //   %expr
-  //   () =>
-  //     switch%e (context) {
-  //     | FieldsOnly => match_exp
-  //     | CollectionsOnly({collections_cond}) => collections_cond
-  //     | FieldsAndCollections({collections_cond}) =>
-  //       if%expr ([%e collections_cond]) {
-  //         true;
-  //       } else {
-  //         %e
-  //         match_exp;
-  //       }
-  //     };
-  // };
+  let dirty = {
+    let fields = scheme |> Scheme.fields;
+    let collections = scheme |> Scheme.collections;
+
+    let context =
+      switch (fields, collections) {
+      | ([_fields, ..._], []) => Dirty.FieldsOnly
+      | ([], [collection, ...collections]) =>
+        Dirty.CollectionsOnly({
+          collections_cond:
+            collections
+            |> E.conj(
+                 ~loc,
+                 ~exp=Dirty.collection_cond(~loc, collection),
+                 ~make=Dirty.collection_cond,
+               ),
+        })
+      | ([_fields, ..._], [collection, ...collections]) =>
+        Dirty.FieldsAndCollections({
+          collections_cond:
+            collections
+            |> E.conj(
+                 ~loc,
+                 ~exp=Dirty.collection_cond(~loc, collection),
+                 ~make=Dirty.collection_cond,
+               ),
+        })
+      | ([], []) =>
+        failwith(
+          "No fields and no collections in the schema. Please, file an issue with your use-case.",
+        )
+      };
+
+    let no_case = {
+      Exp.case(
+        Pat.record(
+          scheme
+          |> List.rev
+          |> List.rev_map((entry: Scheme.entry) =>
+               switch (entry) {
+               | Field(field) => (
+                   Lident(field.name) |> lid(~loc),
+                   [%pat? Pristine],
+                 )
+               | Collection({collection}) => (
+                   Lident(collection.plural) |> lid(~loc),
+                   [%pat? _],
+                 )
+               }
+             ),
+          Closed,
+        ),
+        [%expr false],
+      );
+    };
+
+    let yes_case = {
+      Exp.case(
+        Pat.record(
+          scheme
+          |> List.rev
+          |> List.rev_map((entry: Scheme.entry) =>
+               switch (entry) {
+               | Field(field) => (
+                   Lident(field.name) |> lid(~loc),
+                   switch (
+                     scheme
+                     |> List.filter((entry: Scheme.entry) =>
+                          switch (entry) {
+                          | Field(_) => true
+                          | Collection(_) => false
+                          }
+                        ),
+                     field.validator,
+                   ) {
+                   | ([_x], SyncValidator(_)) => [%pat? Dirty(_)]
+                   | ([_x], AsyncValidator(_)) => [%pat?
+                       Dirty(_) | Validating(_)
+                     ]
+                   | (_, SyncValidator(_)) => [%pat? Pristine | Dirty(_)]
+                   | (_, AsyncValidator(_)) => [%pat?
+                       Pristine | Dirty(_) | Validating(_)
+                     ]
+                   },
+                 )
+               | Collection({collection}) => (
+                   Lident(collection.plural) |> lid(~loc),
+                   [%pat? _],
+                 )
+               }
+             ),
+          Closed,
+        ),
+        [%expr true],
+      );
+    };
+
+    let match_exp =
+      Exp.match(
+        ~attrs=[Dirty.warning_4_disable(~loc)],
+        [%expr state.fieldsStatuses],
+        [no_case, yes_case],
+      );
+
+    %expr
+    () =>
+      switch%e (context) {
+      | FieldsOnly => match_exp
+      | CollectionsOnly({collections_cond}) => collections_cond
+      | FieldsAndCollections({collections_cond}) =>
+        if%expr ([%e collections_cond]) {
+          true;
+        } else {
+          %e
+          match_exp;
+        }
+      };
+  };
 
   let valid =
     if (async) {
@@ -204,7 +213,7 @@ let ast = (~scheme: Scheme.t, ~async: bool, ~loc) => {
   let base = [
     ("input", [%expr state.input]),
     ("status", [%expr state.formStatus]),
-    // ("dirty", dirty),
+    ("dirty", dirty),
     ("valid", valid),
     (
       "submitting",

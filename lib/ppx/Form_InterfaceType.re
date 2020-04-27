@@ -12,8 +12,7 @@ let ast = (~scheme: Scheme.t, ~async: bool, ~loc) => {
   let base = [
     f("input", [%type: input]),
     f("status", [%type: formStatus(submissionError)]),
-    // NOTE: Temporary disabled due to bug in compiler
-    // f("dirty", [%type: unit => bool]),
+    f("dirty", [%type: unit => bool]),
     f(
       "valid",
       async ? [%type: unit => option(bool)] : [%type: unit => bool],
