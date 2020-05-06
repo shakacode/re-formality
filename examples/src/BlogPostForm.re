@@ -1,6 +1,7 @@
 module BlogPostForm = [%form
   type input = {
     title: string,
+    category: string,
     authors: [@field.collection] array(author),
   }
   and author = {name: [@field.deps author.name] string};
@@ -11,6 +12,15 @@ module BlogPostForm = [%form
         switch (title) {
         | "" => Error("Title is required")
         | _ => Ok(title)
+        };
+      },
+    },
+    category: {
+      strategy: OnFirstChange,
+      validate: ({category}) => {
+        switch (category) {
+        | "" => Error("Category is required")
+        | _ => Ok(category)
         };
       },
     },
@@ -45,7 +55,13 @@ module BlogPostForm = [%form
   }
 ];
 
-let initialInput: BlogPostForm.input = {title: "", authors: [|{name: ""}|]};
+let initialInput: BlogPostForm.input = {
+  title: "",
+  category: "",
+  authors: [|{name: ""}|],
+};
+
+let categories = [|"Design", "Tech", "Marketing", "Productivity"|];
 
 [@react.component]
 let make = () => {
@@ -87,6 +103,55 @@ let make = () => {
           }
         />
         {switch (form.titleResult) {
+         | Some(Error(message)) =>
+           <div
+             className={Cn.make([
+               "form-message",
+               "form-message-for-field",
+               "failure",
+             ])}>
+             message->React.string
+           </div>
+         | Some(Ok(_)) =>
+           <div
+             className={Cn.make([
+               "form-message",
+               "form-message-for-field",
+               "success",
+             ])}>
+             {j|✓|j}->React.string
+           </div>
+         | None => React.null
+         }}
+      </div>
+      <div className="form-row">
+        <label htmlFor="blog-post--category" className="label-lg">
+          "Category"->React.string
+        </label>
+        <select
+          id="blog-post--category"
+          type_=""
+          value={form.input.category}
+          disabled={form.submitting}
+          onBlur={_ => form.blurCategory()}
+          onChange={event =>
+            form.updateCategory(
+              (input, value) => {...input, category: value},
+              event->ReactEvent.Form.target##value,
+            )
+          }>
+          <option value="" default=true disabled=true hidden=true>
+            "Select category..."->React.string
+          </option>
+          {categories
+           ->Array.map(category =>
+               <option key=category value=category>
+                 category->React.string
+               </option>
+             )
+           ->React.array}
+        </select>
+        {switch (form.categoryResult) {
          | Some(Error(message)) =>
            <div
              className={Cn.make([

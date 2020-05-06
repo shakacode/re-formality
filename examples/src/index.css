@@ -3,11 +3,11 @@
 :root {
   --font-family: "Source Sans Pro", sans-serif;
   --font-size: 20px;
-  
+
   --bg-color: #eaeaea;
   --active-color: #29d;
   --border-color: #ccc;
-  
+
   --container-width: 900px;
   --form-padding-top: 30px;
   --form-padding-bottom: 40px;
@@ -183,7 +183,8 @@ label {
   margin-right: var(--label-margin-right);
 }
 
-input {
+input,
+select {
   margin-right: var(--input-margin-right);
 }
 
@@ -215,7 +216,20 @@ button.control {
   width: var(--control-width);
 }
 
+select {
+  display: flex;
+  appearance: none;
+  background-color: transparent;
+  width: var(--input-width);
+  border: 1px solid var(--border-color);
+  font-size: calc(var(--font-size) - 4px);
+  font-variant: normal;
+  font-stretch: normal;
+  font-style: normal;
+}
+
 input:focus,
+select:focus,
 button.primary:focus,
 button.secondary:focus,
 button.primary:hover,
@@ -234,6 +248,7 @@ button:active {
 }
 
 input:disabled,
+select:disabled,
 button:disabled {
   pointer-events: none;
 }
