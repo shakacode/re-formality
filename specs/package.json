@@ -15,10 +15,12 @@
   "dependencies": {
     "bs-platform": "7.2.2",
     "bsb-js": "1.1.7",
-    "cypress": "4.4.1",
+    "cypress": "4.5.0",
     "parcel-bundler": "1.12.4",
     "re-formality": "*",
-    "reason-react": "0.7.0",
-    "start-server-and-test": "1.10.10"
+    "react": "16.13.1",
+    "react-dom": "16.13.1",
+    "reason-react": "0.8.0",
+    "start-server-and-test": "1.11.0"
   }
 }
