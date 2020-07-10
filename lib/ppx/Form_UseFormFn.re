@@ -21,6 +21,7 @@ let ast = (~scheme: Scheme.t, ~async: bool, ~loc) => [%stri
           %e
           {
             Exp.match(
+              ~attrs=[warning_4_disable(~loc)],
               [%expr action],
               Form_UseFormFn_RestActions.ast(~loc, ~async)
               |> List.rev_append(

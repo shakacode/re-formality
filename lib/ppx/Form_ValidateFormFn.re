@@ -575,7 +575,11 @@ let validate_fields_of_collection_in_sync_form =
         index,
       ) => {
       %e
-      Exp.match(match_values, [ok_case, error_case])
+      Exp.match(
+        ~attrs=[warning_4_disable(~loc)],
+        match_values,
+        [ok_case, error_case],
+      )
     });
   };
 };
@@ -795,7 +799,11 @@ let validate_fields_of_collection_in_async_form =
         index,
       ) => {
       %e
-      Exp.match(match_values, [validating_case, ok_case, error_case])
+      Exp.match(
+        ~attrs=[warning_4_disable(~loc)],
+        match_values,
+        [validating_case, ok_case, error_case],
+      )
     });
   };
 };
@@ -1151,7 +1159,11 @@ module Sync = {
                            Exp.case(pat, expr);
                          };
 
-                         Exp.match(match_values, [ok_case, error_case]);
+                         Exp.match(
+                           ~attrs=[warning_4_disable(~loc)],
+                           match_values,
+                           [ok_case, error_case],
+                         );
                        };
                      }
                    ],
@@ -1588,7 +1600,11 @@ module Async = {
             Exp.case(pat, expr);
           };
 
-          Exp.match(match_values, [validating_case, ok_case, error_case]);
+          Exp.match(
+            ~attrs=[warning_4_disable(~loc)],
+            match_values,
+            [validating_case, ok_case, error_case],
+          );
         };
       }
     ];
