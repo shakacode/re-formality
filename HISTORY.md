@@ -1,5 +1,8 @@
 # History
 
+## 4.0.0-beta.8
+* Fix stack overflow in large forms.
+
 ## 4.0.0-beta.7
 * Re-enable `dirty` function in interface.
 
