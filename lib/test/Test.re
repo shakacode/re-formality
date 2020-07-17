@@ -42,6 +42,7 @@ let () =
             "Ok__Message",
             "Ok__SubmissionError",
             "Ok__Include",
+            "Ok__LargeFormWithValidators",
           ]
           |> List.rev
           |> List.rev_map(ok),

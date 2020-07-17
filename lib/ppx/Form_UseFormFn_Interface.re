@@ -166,7 +166,7 @@ let ast = (~scheme: Scheme.t, ~async: bool, ~loc) => {
 
     let match_exp =
       Exp.match(
-        ~attrs=[Dirty.warning_4_disable(~loc)],
+        ~attrs=[warning_4_disable(~loc)],
         [%expr state.fieldsStatuses],
         [no_case, yes_case],
       );

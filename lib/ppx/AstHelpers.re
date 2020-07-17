@@ -344,3 +344,8 @@ module E = {
       (~validators, ~collection: Collection.t, ~loc, field) =>
     field |> field3(~in_=(validators, collection.plural, "fields"), ~loc);
 };
+
+// Disables warning 4 to prevent stack overflow
+// Details: https://github.com/BuckleScript/bucklescript/issues/4327
+let warning_4_disable = (~loc) =>
+  Attr.mk("warning" |> str(~loc), PStr([[%stri "-4"]]));
