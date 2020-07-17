@@ -1,6 +1,6 @@
 {
   "name": "re-formality",
-  "version": "4.0.0-beta.7",
+  "version": "4.0.0-beta.8",
   "description": "Form validation tool for reason-react",
   "author": "Alex Fedoseev <alex.fedoseev@gmail.com>",
   "license": "MIT",
