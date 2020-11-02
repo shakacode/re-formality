@@ -32,16 +32,14 @@ if (!supported) {
 
 }
 
-if (platform === "win") {
-  if (!fs.existsSync("ppx.exe")) {
-    copyFileSync(filename, "ppx.exe");
-    fs.chmodSync("ppx.exe", 0755);
-  }
-} else {
-  if (!fs.existsSync("ppx")) {
-    copyFileSync(filename, "ppx");
-    fs.chmodSync("ppx", 0755);
-  }
+if (!fs.existsSync("ppx.exe")) {
+  copyFileSync(filename, "ppx.exe");
+  fs.chmodSync("ppx.exe", 0755);
+}
+
+if (!fs.existsSync("ppx")) {
+  copyFileSync(filename, "ppx");
+  fs.chmodSync("ppx", 0755);
 }
 
 function copyFileSync(source, dest) {
