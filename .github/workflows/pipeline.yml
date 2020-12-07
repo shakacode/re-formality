@@ -58,15 +58,7 @@ jobs:
           path: ${{ steps.print-esy-cache.outputs.esy-cache }}
           key: ${{ matrix.os }}-esy-${{ hashFiles('**/index.json') }}
 
-      - name: Build macOS ppx
-        if: matrix.os == 'macOS-latest'
-        run: |
-          cd lib
-          sudo xcode-select -s "/Applications/Xcode_11.7.app"
-          esy build
-
-      - name: Build non-macOS ppx
-        if: matrix.os != 'macOS-latest'
+      - name: Build ppx
         run: |
           cd lib
           esy build
