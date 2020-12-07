@@ -1,5 +1,11 @@
 # History
 
+## 4.0.0-beta.10
+* Add `metadata`.
+
+## 4.0.0-beta.9
+* Fix Windows build.
+
 ## 4.0.0-beta.8
 * Fix stack overflow in large forms.
 
