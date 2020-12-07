@@ -15,6 +15,7 @@ let ast =
          | `Collection(Collection.t)
          | `FieldOfCollection(Collection.t, string)
        ],
+      ~metadata: option(unit),
       scheme: Scheme.t,
     ) => {
   let validate_dep = (dep: FieldDep.t) => {
@@ -72,12 +73,25 @@ let ast =
       switch (field.validator) {
       | SyncValidator(Ok(Required | Optional(Some(_))) | Error ()) =>
         switch%expr (
-          validateDependentFieldOnChange(
-            ~input=nextInput,
-            ~fieldStatus=[%e field_status_expr],
-            ~validator=[%e validator_expr],
-            ~setStatus=[%e [%expr status => [%e set_status_expr]]],
-          )
+          switch%e (metadata) {
+          | None =>
+            %expr
+            validateDependentFieldOnChange(
+              ~input=nextInput,
+              ~fieldStatus=[%e field_status_expr],
+              ~validator=[%e validator_expr],
+              ~setStatus=[%e [%expr status => [%e set_status_expr]]],
+            )
+          | Some () =>
+            %expr
+            validateDependentFieldOnChangeWithMetadata(
+              ~input=nextInput,
+              ~fieldStatus=[%e field_status_expr],
+              ~validator=[%e validator_expr],
+              ~metadata,
+              ~setStatus=[%e [%expr status => [%e set_status_expr]]],
+            )
+          }
         ) {
         | Some(result) => nextFieldsStatuses := result
         | None => ()
@@ -88,12 +102,25 @@ let ast =
       // Should we trigger async validator of dependency?
       | AsyncValidator({mode: OnChange | OnBlur}) =>
         switch%expr (
-          Async.validateDependentFieldOnChange(
-            ~input=nextInput,
-            ~fieldStatus=[%e field_status_expr],
-            ~validator=[%e validator_expr],
-            ~setStatus=[%e [%expr status => [%e set_status_expr]]],
-          )
+          switch%e (metadata) {
+          | None =>
+            %expr
+            Async.validateDependentFieldOnChange(
+              ~input=nextInput,
+              ~fieldStatus=[%e field_status_expr],
+              ~validator=[%e validator_expr],
+              ~setStatus=[%e [%expr status => [%e set_status_expr]]],
+            )
+          | Some () =>
+            %expr
+            Async.validateDependentFieldOnChangeWithMetadata(
+              ~input=nextInput,
+              ~fieldStatus=[%e field_status_expr],
+              ~validator=[%e validator_expr],
+              ~metadata,
+              ~setStatus=[%e [%expr status => [%e set_status_expr]]],
+            )
+          }
         ) {
         | Some(result) => nextFieldsStatuses := result
         | None => ()
@@ -131,13 +158,27 @@ let ast =
               [%e collection_statuses_expr], (index', item) =>
               if (index != index') {
                 switch (
-                  validateDependentFieldOfCollectionOnChange(
-                    ~input=nextInput,
-                    ~index=index',
-                    ~fieldStatus=[%e field_status_expr],
-                    ~validator=[%e validator_expr],
-                    ~setStatus=[%e [%expr status => [%e set_status_expr]]],
-                  )
+                  switch%e (metadata) {
+                  | None =>
+                    %expr
+                    validateDependentFieldOfCollectionOnChange(
+                      ~input=nextInput,
+                      ~index=index',
+                      ~fieldStatus=[%e field_status_expr],
+                      ~validator=[%e validator_expr],
+                      ~setStatus=[%e [%expr status => [%e set_status_expr]]],
+                    )
+                  | Some () =>
+                    %expr
+                    validateDependentFieldOfCollectionOnChangeWithMetadata(
+                      ~input=nextInput,
+                      ~index=index',
+                      ~fieldStatus=[%e field_status_expr],
+                      ~validator=[%e validator_expr],
+                      ~metadata,
+                      ~setStatus=[%e [%expr status => [%e set_status_expr]]],
+                    )
+                  }
                 ) {
                 | Some(result) => nextFieldsStatuses := result
                 | None => ()
@@ -159,13 +200,27 @@ let ast =
               [%e collection_statuses_expr], (index', item) =>
               if (index != index') {
                 switch (
-                  Async.validateDependentFieldOfCollectionOnChange(
-                    ~input=nextInput,
-                    ~index=index',
-                    ~fieldStatus=[%e field_status_expr],
-                    ~validator=[%e validator_expr],
-                    ~setStatus=[%e [%expr status => [%e set_status_expr]]],
-                  )
+                  switch%e (metadata) {
+                  | None =>
+                    %expr
+                    Async.validateDependentFieldOfCollectionOnChange(
+                      ~input=nextInput,
+                      ~index=index',
+                      ~fieldStatus=[%e field_status_expr],
+                      ~validator=[%e validator_expr],
+                      ~setStatus=[%e [%expr status => [%e set_status_expr]]],
+                    )
+                  | Some () =>
+                    %expr
+                    Async.validateDependentFieldOfCollectionOnChangeWithMetadata(
+                      ~input=nextInput,
+                      ~index=index',
+                      ~fieldStatus=[%e field_status_expr],
+                      ~validator=[%e validator_expr],
+                      ~metadata,
+                      ~setStatus=[%e [%expr status => [%e set_status_expr]]],
+                    )
+                  }
                 ) {
                 | Some(result) => nextFieldsStatuses := result
                 | None => ()
@@ -186,13 +241,27 @@ let ast =
             Belt.Array.forEachWithIndex(
               [%e collection_statuses_expr], (index', item) =>
               switch (
-                validateDependentFieldOfCollectionOnChange(
-                  ~input=nextInput,
-                  ~index=index',
-                  ~fieldStatus=[%e field_status_expr],
-                  ~validator=[%e validator_expr],
-                  ~setStatus=[%e [%expr status => [%e set_status_expr]]],
-                )
+                switch%e (metadata) {
+                | None =>
+                  %expr
+                  validateDependentFieldOfCollectionOnChange(
+                    ~input=nextInput,
+                    ~index=index',
+                    ~fieldStatus=[%e field_status_expr],
+                    ~validator=[%e validator_expr],
+                    ~setStatus=[%e [%expr status => [%e set_status_expr]]],
+                  )
+                | Some () =>
+                  %expr
+                  validateDependentFieldOfCollectionOnChangeWithMetadata(
+                    ~input=nextInput,
+                    ~index=index',
+                    ~fieldStatus=[%e field_status_expr],
+                    ~validator=[%e validator_expr],
+                    ~metadata,
+                    ~setStatus=[%e [%expr status => [%e set_status_expr]]],
+                  )
+                }
               ) {
               | Some(result) => nextFieldsStatuses := result
               | None => ()
@@ -209,13 +278,27 @@ let ast =
             Belt.Array.forEachWithIndex(
               [%e collection_statuses_expr], (index', item) =>
               switch (
-                Async.validateDependentFieldOfCollectionOnChange(
-                  ~input=nextInput,
-                  ~index=index',
-                  ~fieldStatus=[%e field_status_expr],
-                  ~validator=[%e validator_expr],
-                  ~setStatus=[%e [%expr status => [%e set_status_expr]]],
-                )
+                switch%e (metadata) {
+                | None =>
+                  %expr
+                  Async.validateDependentFieldOfCollectionOnChange(
+                    ~input=nextInput,
+                    ~index=index',
+                    ~fieldStatus=[%e field_status_expr],
+                    ~validator=[%e validator_expr],
+                    ~setStatus=[%e [%expr status => [%e set_status_expr]]],
+                  )
+                | Some() =>
+                  %expr
+                  Async.validateDependentFieldOfCollectionOnChangeWithMetadata(
+                    ~input=nextInput,
+                    ~index=index',
+                    ~fieldStatus=[%e field_status_expr],
+                    ~validator=[%e validator_expr],
+                    ~metadata,
+                    ~setStatus=[%e [%expr status => [%e set_status_expr]]],
+                  )
+                }
               ) {
               | Some(result) => nextFieldsStatuses := result
               | None => ()

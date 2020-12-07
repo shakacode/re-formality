@@ -9,6 +9,7 @@ let ast =
     (
       ~loc,
       ~validator: result(FieldValidator.sync, unit),
+      ~metadata: option(unit),
       ~field_status_expr: expression,
       ~field_input_expr: expression,
       ~validator_expr: expression,
@@ -20,13 +21,26 @@ let ast =
       switch%e (validator) {
       | Ok(Required | Optional(Some(_)))
       | Error () =>
-        %expr
-        validateFieldOnBlurWithValidator(
-          ~input=state.input,
-          ~fieldStatus=[%e field_status_expr],
-          ~validator=[%e validator_expr],
-          ~setStatus=[%e [%expr status => [%e set_status_expr]]],
-        )
+        switch (metadata) {
+        | None =>
+          %expr
+          validateFieldOnBlurWithValidator(
+            ~input=state.input,
+            ~fieldStatus=[%e field_status_expr],
+            ~validator=[%e validator_expr],
+            ~setStatus=[%e [%expr status => [%e set_status_expr]]],
+          )
+        | Some () =>
+          %expr
+          validateFieldOnBlurWithValidatorAndMetadata(
+            ~input=state.input,
+            ~metadata,
+            ~fieldStatus=[%e field_status_expr],
+            ~validator=[%e validator_expr],
+            ~setStatus=[%e [%expr status => [%e set_status_expr]]],
+          )
+        }
+
       | Ok(Optional(None)) =>
         %expr
         validateFieldOnBlurWithoutValidator(

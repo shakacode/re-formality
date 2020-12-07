@@ -6,7 +6,7 @@ open Printer;
 open Ppxlib;
 open Ast_helper;
 
-let ast = (~loc, scheme: Scheme.t) => {
+let ast = (~loc, ~metadata: option(unit), scheme: Scheme.t) => {
   let collections = scheme |> Scheme.collections;
   collections
   |> List.fold_left(
@@ -125,7 +125,14 @@ let ast = (~loc, scheme: Scheme.t) => {
                        E.apply_field2(
                          ~in_=("validators", collection.plural),
                          ~fn="collection",
-                         ~args=[(Nolabel, [%expr nextInput])],
+                         ~args=
+                           switch (metadata) {
+                           | None => [(Nolabel, [%expr nextInput])]
+                           | Some () => [
+                               (Nolabel, [%expr nextInput]),
+                               (Nolabel, [%expr metadata]),
+                             ]
+                           },
                          ~loc,
                        )
                      ],
@@ -185,6 +192,7 @@ let ast = (~loc, scheme: Scheme.t) => {
                         ~dep,
                         ~deps,
                         ~trigger=`Collection(collection),
+                        ~metadata,
                       );
                  };
 
@@ -253,6 +261,7 @@ let ast = (~loc, scheme: Scheme.t) => {
                         ~dep,
                         ~deps,
                         ~trigger=`Collection(collection),
+                        ~metadata,
                       );
                  };
 

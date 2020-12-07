@@ -5,7 +5,7 @@ open AstHelpers;
 open Ppxlib;
 open Ast_helper;
 
-let ast = (~loc, ~async) => [
+let ast = (~loc, ~async, ~metadata) => [
   if (async) {
     Exp.case(
       [%pat? Submit],
@@ -15,8 +15,20 @@ let ast = (~loc, ~async) => [
       | Submitted
       | SubmissionFailed(_) =>
         switch (
-          state.input
-          ->validateForm(~validators, ~fieldsStatuses=state.fieldsStatuses)
+          switch%e (metadata) {
+          | None =>
+            %expr
+            state.input
+            ->validateForm(~validators, ~fieldsStatuses=state.fieldsStatuses)
+          | Some () =>
+            %expr
+            state.input
+            ->validateForm(
+                ~validators,
+                ~fieldsStatuses=state.fieldsStatuses,
+                ~metadata,
+              )
+          }
         ) {
         | Validating({fieldsStatuses, collectionsStatuses}) =>
           Update({...state, fieldsStatuses, collectionsStatuses})
@@ -67,8 +79,20 @@ let ast = (~loc, ~async) => [
       | Submitted
       | SubmissionFailed(_) =>
         switch (
-          state.input
-          ->validateForm(~validators, ~fieldsStatuses=state.fieldsStatuses)
+          switch%e (metadata) {
+          | None =>
+            %expr
+            state.input
+            ->validateForm(~validators, ~fieldsStatuses=state.fieldsStatuses)
+          | Some () =>
+            %expr
+            state.input
+            ->validateForm(
+                ~validators,
+                ~fieldsStatuses=state.fieldsStatuses,
+                ~metadata,
+              )
+          }
         ) {
         | Valid({output, fieldsStatuses, collectionsStatuses}) =>
           UpdateWithSideEffects(

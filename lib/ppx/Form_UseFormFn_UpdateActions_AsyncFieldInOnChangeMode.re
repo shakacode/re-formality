@@ -9,6 +9,7 @@ let ast =
     (
       ~loc,
       ~field: Scheme.field,
+      ~metadata: option(unit),
       ~optionality: option(FieldOptionality.t),
       ~field_status_expr: expression,
       ~validator_expr: expression,
@@ -17,8 +18,8 @@ let ast =
   %expr
   {
     let nextFieldsStatuses =
-      switch%e (optionality) {
-      | None =>
+      switch%e (metadata, optionality) {
+      | (None, None) =>
         %expr
         {
           Async.validateFieldOnChangeInOnChangeMode(
@@ -29,7 +30,7 @@ let ast =
             ~setStatus=[%e [%expr status => [%e set_status_expr]]],
           );
         }
-      | Some(OptionType) =>
+      | (None, Some(OptionType)) =>
         %expr
         {
           Async.validateFieldOfOptionTypeOnChangeInOnChangeMode(
@@ -40,7 +41,7 @@ let ast =
             ~setStatus=[%e [%expr status => [%e set_status_expr]]],
           );
         }
-      | Some(StringType) =>
+      | (None, Some(StringType)) =>
         %expr
         {
           Async.validateFieldOfStringTypeOnChangeInOnChangeMode(
@@ -51,7 +52,7 @@ let ast =
             ~setStatus=[%e [%expr status => [%e set_status_expr]]],
           );
         }
-      | Some(OptionStringType) =>
+      | (None, Some(OptionStringType)) =>
         %expr
         {
           Async.validateFieldOfOptionStringTypeOnChangeInOnChangeMode(
@@ -59,6 +60,54 @@ let ast =
             ~fieldStatus=[%e field_status_expr],
             ~submissionStatus=state.submissionStatus,
             ~validator=[%e validator_expr],
+            ~setStatus=[%e [%expr status => [%e set_status_expr]]],
+          );
+        }
+      | (Some (), None) =>
+        %expr
+        {
+          Async.validateFieldOnChangeInOnChangeModeWithMetadata(
+            ~input=nextInput,
+            ~fieldStatus=[%e field_status_expr],
+            ~submissionStatus=state.submissionStatus,
+            ~validator=[%e validator_expr],
+            ~metadata,
+            ~setStatus=[%e [%expr status => [%e set_status_expr]]],
+          );
+        }
+      | (Some (), Some(OptionType)) =>
+        %expr
+        {
+          Async.validateFieldOfOptionTypeOnChangeInOnChangeModeWithMetadata(
+            ~input=nextInput,
+            ~fieldStatus=[%e field_status_expr],
+            ~submissionStatus=state.submissionStatus,
+            ~validator=[%e validator_expr],
+            ~metadata,
+            ~setStatus=[%e [%expr status => [%e set_status_expr]]],
+          );
+        }
+      | (Some (), Some(StringType)) =>
+        %expr
+        {
+          Async.validateFieldOfStringTypeOnChangeInOnChangeModeWithMetadata(
+            ~input=nextInput,
+            ~fieldStatus=[%e field_status_expr],
+            ~submissionStatus=state.submissionStatus,
+            ~validator=[%e validator_expr],
+            ~metadata,
+            ~setStatus=[%e [%expr status => [%e set_status_expr]]],
+          );
+        }
+      | (Some (), Some(OptionStringType)) =>
+        %expr
+        {
+          Async.validateFieldOfOptionStringTypeOnChangeInOnChangeModeWithMetadata(
+            ~input=nextInput,
+            ~fieldStatus=[%e field_status_expr],
+            ~submissionStatus=state.submissionStatus,
+            ~validator=[%e validator_expr],
+            ~metadata,
             ~setStatus=[%e [%expr status => [%e set_status_expr]]],
           );
         }
@@ -72,7 +121,19 @@ let ast =
           E.apply_field2(
             ~in_=("validators", field.name),
             ~fn="validateAsync",
-            ~args=[(Nolabel, [%expr (value, dispatch)])],
+            ~args=[
+              (
+                Nolabel,
+                switch (metadata) {
+                | None =>
+                  %expr
+                  (value, dispatch)
+                | Some () =>
+                  %expr
+                  (value, metadata, dispatch)
+                },
+              ),
+            ],
             ~loc,
           )
         },

@@ -41,6 +41,7 @@ let () =
             "Ok__CollectionWithNoCollectionValidatorAndTwoFieldsOfCollectionWithSyncValidator",
             "Ok__Message",
             "Ok__SubmissionError",
+            "Ok__Metadata",
             "Ok__Include",
             "Ok__LargeFormWithValidators",
           ]

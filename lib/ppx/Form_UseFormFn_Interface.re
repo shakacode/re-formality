@@ -66,7 +66,7 @@ module Dirty = {
   ];
 };
 
-let ast = (~scheme: Scheme.t, ~async: bool, ~loc) => {
+let ast = (~scheme: Scheme.t, ~async: bool, ~metadata: option(unit), ~loc) => {
   let dirty = {
     let fields = scheme |> Scheme.fields;
     let collections = scheme |> Scheme.collections;
@@ -191,8 +191,20 @@ let ast = (~scheme: Scheme.t, ~async: bool, ~loc) => {
       %expr
       () =>
         switch (
-          state.input
-          ->validateForm(~validators, ~fieldsStatuses=state.fieldsStatuses)
+          switch%e (metadata) {
+          | None =>
+            %expr
+            state.input
+            ->validateForm(~validators, ~fieldsStatuses=state.fieldsStatuses)
+          | Some () =>
+            %expr
+            state.input
+            ->validateForm(
+                ~validators,
+                ~fieldsStatuses=state.fieldsStatuses,
+                ~metadata,
+              )
+          }
         ) {
         | Validating(_) => None
         | Valid(_) => Some(true)
@@ -202,8 +214,20 @@ let ast = (~scheme: Scheme.t, ~async: bool, ~loc) => {
       %expr
       () =>
         switch (
-          state.input
-          ->validateForm(~validators, ~fieldsStatuses=state.fieldsStatuses)
+          switch%e (metadata) {
+          | None =>
+            %expr
+            state.input
+            ->validateForm(~validators, ~fieldsStatuses=state.fieldsStatuses)
+          | Some () =>
+            %expr
+            state.input
+            ->validateForm(
+                ~validators,
+                ~fieldsStatuses=state.fieldsStatuses,
+                ~metadata,
+              )
+          }
         ) {
         | Valid(_) => true
         | Invalid(_) => false

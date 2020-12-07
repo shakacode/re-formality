@@ -18,6 +18,7 @@
   --label-margin-right: 15px;
   --input-margin-right: 15px;
   --input-width: 350px;
+  --input-padding: 8px;
   --control-width: 20px;
   --message-margin-left: 20px;
 }
@@ -174,7 +175,7 @@ button {
 input[type="text"] {
   display: inline-flex;
   border: 1px solid var(--border-color);
-  padding: 8px;
+  padding: var(--input-padding);
   font-size: var(--font-size);
   width: var(--input-width);
 }
@@ -214,14 +215,14 @@ button.control {
   border: 0;
   padding: 0;
   width: var(--control-width);
+  background-color: transparent;
 }
 
 select {
   display: flex;
-  appearance: none;
-  background-color: transparent;
   width: var(--input-width);
   border: 1px solid var(--border-color);
+  padding: var(--input-padding);
   font-size: calc(var(--font-size) - 4px);
   font-variant: normal;
   font-stretch: normal;

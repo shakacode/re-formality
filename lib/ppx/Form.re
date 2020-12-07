@@ -21,6 +21,7 @@ let ext =
           message_type,
           submission_error_type,
           validators_record,
+          metadata,
           debounce_interval,
         }) =>
         // Once all required metadata is gathered and ensured that requirements are met
@@ -48,7 +49,7 @@ let ext =
               Form_CollectionsStatusesType.ast(~scheme, ~loc),
               Form_StateType.ast(~loc),
               Form_ActionType.ast(~scheme, ~loc),
-              Form_ValidatorsType.ast(~scheme, ~loc),
+              Form_ValidatorsType.ast(~scheme, ~metadata, ~loc),
               Form_InterfaceType.ast(~scheme, ~async, ~loc),
             ]);
           switch (submission_error_type) {
@@ -83,9 +84,9 @@ let ext =
           Form_InitialCollectionsStatuses.ast(~scheme, ~loc),
           Form_InitialStateFn.ast(~loc),
           async
-            ? Form_ValidateFormFn.Async.ast(~scheme, ~loc)
-            : Form_ValidateFormFn.Sync.ast(~scheme, ~loc),
-          Form_UseFormFn.ast(~scheme, ~async, ~loc),
+            ? Form_ValidateFormFn.Async.ast(~scheme, ~metadata, ~loc)
+            : Form_ValidateFormFn.Sync.ast(~scheme, ~metadata, ~loc),
+          Form_UseFormFn.ast(~scheme, ~async, ~metadata, ~loc),
         ];
 
         let structure: structure =
@@ -112,8 +113,9 @@ let ext =
                                 [
                                   value
                                   |> Form_ValidatorsRecord.ast(
-                                       scheme,
-                                       validators_record,
+                                       ~scheme,
+                                       ~metadata,
+                                       ~validators=validators_record,
                                      ),
                                   ...acc,
                                 ],
