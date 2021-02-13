@@ -56,7 +56,7 @@ Another important detail regarding the `output` type is that you can't use exter
 type output = LoginData.t;
 ```
 
-One more optional type that is involved here is `message`—the type of error messages that would be displayed in UI. If an app doesn't implement internalization, you can skip this type and it would be set to `string` (this is what we're going to do in the current example). Otherwise, feel free to use your own type here. See **[I18n](./09-I18n.md)** section for more details.
+One more optional type that is involved here is `message`—the type of error messages that would be displayed in UI. If an app doesn't implement internalization, you can skip this type and it would be set to `string` (this is what we're going to do in the current example). Otherwise, feel free to use your own type here. See **[I18n](./10-I18n.md)** section for more details.
 
 The next thing to implement is a `validators`: a record with the same set of fields as in `input`/`output`, each holds instructions on how to validate a field. Let's implement one for `email` field, assuming that somewhere in the app there is an `Email` module that defines `Email.t` type and `Email.validate` function which takes `string` and returns `result(Email.t, string)`.
 
@@ -245,7 +245,7 @@ In general, you would want to take the output and send it to your server asynchr
 - on success, reset the form
 - on error, show errors from the server, etc.
 
-In this example, we would stick with the simplest one. And elaborate on more advanced scenarios in **[Form Submission](./08-FormSubmission.md)** section.
+In this example, we would stick with the simplest one. And elaborate on more advanced scenarios in **[Form Submission](./09-FormSubmission.md)** section.
 
 So, the scenario is:
 - on success, store a user in the app state and redirect the user to another screen

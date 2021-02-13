@@ -21,10 +21,11 @@ Form validation tool for [`reason-react`](https://reasonml.github.io/reason-reac
 - [Async Validation](./docs/05-AsyncValidation.md)
 - [Collections](./docs/06-Collections.md)
 - [Dependent Fields](./docs/07-DependentFields.md)
-- [Form Submission](./docs/08-FormSubmission.md)
-- [I18n](./docs/09-I18n.md)
-- [Caveats](./docs/10-Caveats.md)
-- [API](./docs/11-API.md)
+- [Metadata](./docs/08-Metadata.md)
+- [Form Submission](./docs/09-FormSubmission.md)
+- [I18n](./docs/10-I18n.md)
+- [Caveats](./docs/11-Caveats.md)
+- [API](./docs/12-API.md)
 
 ## Examples
 * [Live demo](https://re-formality.now.sh)

@@ -7,6 +7,7 @@
     - [`[@field.deps]`](#fielddeps)
   - [`type output`](#type-output)
   - [`type message`](#type-message)
+  - [`type metadata`](#metadata)
   - [`type submissionError`](#type-submissionerror)
   - [`let debounceInterval`](#let-debounceinterval)
   - [`let validators`](#let-validators)
@@ -130,7 +131,20 @@ Type of error messages.
 type message = I18n.t;
 ```
 
-See **[Basic Usage](./04-BasicUsage.md)** & **[I18n](./09-I18n.md)**.
+See **[Basic Usage](./04-BasicUsage.md)** & **[I18n](./10-I18n.md)**.
+<br>
+<br>
+
+### `type metadata`
+**Requirements:** Optional.<br>
+
+Additional metadata.
+
+```reason
+type metadata = { items: array(Item.t) };
+```
+
+See **[Metadata](./08-Metadata.md)**.
 <br>
 <br>
 
@@ -146,7 +160,7 @@ type submissionError =
   | UnknownError;
 ```
 
-See **[Form Submission](./08-FormSubmission.md)**.
+See **[Form Submission](./09-FormSubmission.md)**.
 <br>
 <br>
 
@@ -187,6 +201,12 @@ let validators = {
     },
   },
 
+  // Validator with `metadata`
+  field: {
+    strategy: Strategy.t,
+    validate: (input, metadata) => result('outputValue, message),
+  },
+
   // Async field
   asyncField: {
     strategy: Strategy.t,
@@ -199,6 +219,13 @@ let validators = {
     strategy: Strategy.t,
     validate: (input, ~at: int) => result('outputValue, message),
     validateAsync: 'outputValue => Js.Promise.t(result('outputValue, message)),
+  },
+
+  // Async field with metadata
+  asyncFieldWithEq: {
+    strategy: Strategy.t,
+    validate: (input, metadata) => result('outputValue, message),
+    validateAsync: ('outputValue, metadata) => Js.Promise.t(result('outputValue, message)),
   },
 
   // Async field with eq function
@@ -225,8 +252,16 @@ Module created via `[%form]` extension exposes `useForm` React hook.
 React hook.
 
 ```reason
+// General
 MyForm.useForm(
   ~initialInput: MyForm.input,
+  ~onSubmit: (output: MyForm.output, cb: Formality.submissionCallbacks) => unit,
+) => MyForm.interface;
+
+// With `metadata`
+MyForm.useForm(
+  ~initialInput: MyForm.input,
+  ~metadata: MyForm.metadata,
   ~onSubmit: (output: MyForm.output, cb: Formality.submissionCallbacks) => unit,
 ) => MyForm.interface;
 ```
@@ -243,7 +278,7 @@ type submissionCallbacks = {
 };
 ```
 
-See **[Form Submission](./08-FormSubmission.md)**.
+See **[Form Submission](./09-FormSubmission.md)**.
 <br>
 <br>
 
