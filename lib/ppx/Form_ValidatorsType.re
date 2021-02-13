@@ -6,50 +6,96 @@ open Printer;
 open Ppxlib;
 open Ast_helper;
 
-let field_type = (~loc, field: Scheme.field) =>
+let field_type = (~loc, ~metadata, field: Scheme.field) =>
   Type.field(
     field.name |> str(~loc),
     switch (field.validator) {
     | SyncValidator(Ok(Required))
     | SyncValidator(Ok(Optional(Some(_))))
-    | SyncValidator(Error ()) => [%type:
-        singleValueValidator(
-          input,
-          [%t field.output_type |> ItemType.unpack],
-          message,
-        )
-      ]
+    | SyncValidator(Error ()) =>
+      switch (metadata) {
+      | None => [%type:
+          singleValueValidator(
+            input,
+            [%t field.output_type |> ItemType.unpack],
+            message,
+          )
+        ]
+      | Some () => [%type:
+          singleValueValidatorWithMetadata(
+            input,
+            [%t field.output_type |> ItemType.unpack],
+            message,
+            metadata,
+          )
+        ]
+      }
     | SyncValidator(Ok(Optional(None))) => [%type: unit]
-    | AsyncValidator(_) => [%type:
-        Async.singleValueValidator(
-          input,
-          [%t field.output_type |> ItemType.unpack],
-          message,
-          action,
-        )
-      ]
+    | AsyncValidator(_) =>
+      switch (metadata) {
+      | None => [%type:
+          Async.singleValueValidator(
+            input,
+            [%t field.output_type |> ItemType.unpack],
+            message,
+            action,
+          )
+        ]
+      | Some () => [%type:
+          Async.singleValueValidatorWithMetadata(
+            input,
+            [%t field.output_type |> ItemType.unpack],
+            message,
+            metadata,
+            action,
+          )
+        ]
+      }
     },
   );
 
 let collection_type =
-    (~loc, ~validator: CollectionValidator.t, collection: Collection.t) =>
+    (
+      ~loc,
+      ~validator: CollectionValidator.t,
+      ~metadata: option(unit),
+      collection: Collection.t,
+    ) =>
   Type.field(
     collection.plural |> str(~loc),
     switch (validator) {
     | Ok(Some ())
-    | Error () => [%type:
-        collectionValidatorWithWholeCollectionValidator(
-          input,
-          message,
-          [%t
-            Typ.constr(
-              Lident(collection |> CollectionPrinter.validator_type)
-              |> lid(~loc),
-              [],
-            )
-          ],
-        )
-      ]
+    | Error () =>
+      switch (metadata) {
+      | None => [%type:
+          collectionValidatorWithWholeCollectionValidator(
+            input,
+            message,
+            [%t
+              Typ.constr(
+                Lident(collection |> CollectionPrinter.validator_type)
+                |> lid(~loc),
+                [],
+              )
+            ],
+          )
+        ]
+      | Some () => [%type:
+          collectionValidatorWithWholeCollectionValidatorAndMetadata(
+            input,
+            message,
+            [%t
+              Typ.constr(
+                Lident(collection |> CollectionPrinter.validator_type)
+                |> lid(~loc),
+                [],
+              )
+            ],
+            metadata,
+          )
+        ]
+      }
+
     | Ok(None) => [%type:
         collectionValidatorWithoutWholeCollectionValidator(
           [%t
@@ -64,32 +110,57 @@ let collection_type =
     },
   );
 
-let field_of_collection_type = (~loc, field: Scheme.field) =>
+let field_of_collection_type =
+    (~loc, ~metadata: option(unit), field: Scheme.field) =>
   Type.field(
     field.name |> str(~loc),
     switch (field.validator) {
     | SyncValidator(Ok(Required))
     | SyncValidator(Ok(Optional(Some(_))))
-    | SyncValidator(Error ()) => [%type:
-        valueOfCollectionValidator(
-          input,
-          [%t field.output_type |> ItemType.unpack],
-          message,
-        )
-      ]
+    | SyncValidator(Error ()) =>
+      switch (metadata) {
+      | None => [%type:
+          valueOfCollectionValidator(
+            input,
+            [%t field.output_type |> ItemType.unpack],
+            message,
+          )
+        ]
+      | Some () => [%type:
+          valueOfCollectionValidatorWithMetadata(
+            input,
+            [%t field.output_type |> ItemType.unpack],
+            message,
+            metadata,
+          )
+        ]
+      }
+
     | SyncValidator(Ok(Optional(None))) => [%type: unit]
-    | AsyncValidator(_) => [%type:
-        Async.valueOfCollectionValidator(
-          input,
-          [%t field.output_type |> ItemType.unpack],
-          message,
-          action,
-        )
-      ]
+    | AsyncValidator(_) =>
+      switch (metadata) {
+      | None => [%type:
+          Async.valueOfCollectionValidator(
+            input,
+            [%t field.output_type |> ItemType.unpack],
+            message,
+            action,
+          )
+        ]
+      | Some () => [%type:
+          Async.valueOfCollectionValidatorWithMetadata(
+            input,
+            [%t field.output_type |> ItemType.unpack],
+            message,
+            metadata,
+            action,
+          )
+        ]
+      }
     },
   );
 
-let ast = (~scheme: Scheme.t, ~loc) => {
+let ast = (~scheme: Scheme.t, ~metadata: option(unit), ~loc) => {
   let main_decl =
     "validators"
     |> str(~loc)
@@ -100,9 +171,9 @@ let ast = (~scheme: Scheme.t, ~loc) => {
              |> List.rev
              |> List.rev_map((entry: Scheme.entry) =>
                   switch (entry) {
-                  | Field(field) => field |> field_type(~loc)
+                  | Field(field) => field |> field_type(~loc, ~metadata)
                   | Collection({collection, validator}) =>
-                    collection |> collection_type(~validator, ~loc)
+                    collection |> collection_type(~validator, ~metadata, ~loc)
                   }
                 ),
            ),
@@ -123,7 +194,9 @@ let ast = (~scheme: Scheme.t, ~loc) => {
                       Ptype_record(
                         fields
                         |> List.rev
-                        |> List.rev_map(field_of_collection_type(~loc)),
+                        |> List.rev_map(
+                             field_of_collection_type(~loc, ~metadata),
+                           ),
                       ),
                   ),
                ...acc,

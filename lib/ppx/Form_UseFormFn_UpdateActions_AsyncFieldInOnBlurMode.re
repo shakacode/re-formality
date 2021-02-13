@@ -8,6 +8,7 @@ open Ast_helper;
 let ast =
     (
       ~loc,
+      ~metadata: option(unit),
       ~optionality: option(FieldOptionality.t),
       ~field_status_expr: expression,
       ~validator_expr: expression,
@@ -17,8 +18,8 @@ let ast =
     ...state,
     input: nextInput,
     fieldsStatuses:
-      switch%e (optionality) {
-      | None =>
+      switch%e (metadata, optionality) {
+      | (None, None) =>
         %expr
         {
           Async.validateFieldOnChangeInOnBlurMode(
@@ -29,7 +30,7 @@ let ast =
             ~setStatus=[%e [%expr status => [%e set_status_expr]]],
           );
         }
-      | Some(OptionType) =>
+      | (None, Some(OptionType)) =>
         %expr
         {
           Async.validateFieldOfOptionTypeOnChangeInOnBlurMode(
@@ -40,7 +41,7 @@ let ast =
             ~setStatus=[%e [%expr status => [%e set_status_expr]]],
           );
         }
-      | Some(StringType) =>
+      | (None, Some(StringType)) =>
         %expr
         {
           Async.validateFieldOfStringTypeOnChangeInOnBlurMode(
@@ -51,7 +52,7 @@ let ast =
             ~setStatus=[%e [%expr status => [%e set_status_expr]]],
           );
         }
-      | Some(OptionStringType) =>
+      | (None, Some(OptionStringType)) =>
         %expr
         {
           Async.validateFieldOfOptionStringTypeOnChangeInOnBlurMode(
@@ -59,6 +60,54 @@ let ast =
             ~fieldStatus=[%e field_status_expr],
             ~submissionStatus=state.submissionStatus,
             ~validator=[%e validator_expr],
+            ~setStatus=[%e [%expr status => [%e set_status_expr]]],
+          );
+        }
+      | (Some (), None) =>
+        %expr
+        {
+          Async.validateFieldOnChangeInOnBlurModeWithMetadata(
+            ~input=nextInput,
+            ~fieldStatus=[%e field_status_expr],
+            ~submissionStatus=state.submissionStatus,
+            ~validator=[%e validator_expr],
+            ~metadata,
+            ~setStatus=[%e [%expr status => [%e set_status_expr]]],
+          );
+        }
+      | (Some (), Some(OptionType)) =>
+        %expr
+        {
+          Async.validateFieldOfOptionTypeOnChangeInOnBlurModeWithMetadata(
+            ~input=nextInput,
+            ~fieldStatus=[%e field_status_expr],
+            ~submissionStatus=state.submissionStatus,
+            ~validator=[%e validator_expr],
+            ~metadata,
+            ~setStatus=[%e [%expr status => [%e set_status_expr]]],
+          );
+        }
+      | (Some (), Some(StringType)) =>
+        %expr
+        {
+          Async.validateFieldOfStringTypeOnChangeInOnBlurModeWithMetadata(
+            ~input=nextInput,
+            ~fieldStatus=[%e field_status_expr],
+            ~submissionStatus=state.submissionStatus,
+            ~validator=[%e validator_expr],
+            ~metadata,
+            ~setStatus=[%e [%expr status => [%e set_status_expr]]],
+          );
+        }
+      | (Some (), Some(OptionStringType)) =>
+        %expr
+        {
+          Async.validateFieldOfOptionStringTypeOnChangeInOnBlurModeWithMetadata(
+            ~input=nextInput,
+            ~fieldStatus=[%e field_status_expr],
+            ~submissionStatus=state.submissionStatus,
+            ~validator=[%e validator_expr],
+            ~metadata,
             ~setStatus=[%e [%expr status => [%e set_status_expr]]],
           );
         }

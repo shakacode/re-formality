@@ -5,10 +5,11 @@ module BlogPostForm = [%form
     authors: [@field.collection] array(author),
   }
   and author = {name: [@field.deps author.name] string};
+  type metadata = {categories: array(string)};
   let validators = {
     title: {
       strategy: OnFirstSuccessOrFirstBlur,
-      validate: ({title}) => {
+      validate: ({title}, _metadata) => {
         switch (title) {
         | "" => Error("Title is required")
         | _ => Ok(title)
@@ -17,15 +18,17 @@ module BlogPostForm = [%form
     },
     category: {
       strategy: OnFirstChange,
-      validate: ({category}) => {
+      validate: ({category}, metadata) => {
         switch (category) {
         | "" => Error("Category is required")
+        | _ when !metadata.categories->Js.Array2.includes(category) =>
+          Error("Invalid category")
         | _ => Ok(category)
         };
       },
     },
     authors: {
-      collection: input =>
+      collection: (input, _metadata) =>
         switch (input.authors) {
         | [||] => Error("There must be at least one author")
         | _ => Ok()
@@ -33,7 +36,7 @@ module BlogPostForm = [%form
       fields: {
         name: {
           strategy: OnFirstSuccessOrFirstBlur,
-          validate: ({authors}, ~at) => {
+          validate: ({authors}, ~at, ~metadata as _) => {
             switch (authors->Array.getUnsafe(at)) {
             | {name: ""} => Error("Author name is required")
             | {name}
@@ -68,6 +71,7 @@ let make = () => {
   let form =
     BlogPostForm.useForm(
       ~initialInput,
+      ~metadata={categories: categories},
       ~onSubmit=(output, form) => {
         Js.log2("Submitted with:", output);
         Js.Global.setTimeout(

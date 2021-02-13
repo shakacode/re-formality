@@ -25,6 +25,7 @@ let update_async_validator_of_field =
       ~output_type: ItemType.t,
       ~async_mode: AsyncMode.t,
       ~validator_loc: Location.t,
+      ~metadata: option(unit),
       fields,
     ) =>
   fields
@@ -33,35 +34,74 @@ let update_async_validator_of_field =
   |> List.rev_map(((v_lid, {pexp_loc: loc} as expr)) =>
        switch (v_lid) {
        | {txt: Lident("validateAsync")} =>
-         let fn = [%expr
-           (
-             ((value, dispatch)) => {
-               let validate:
-                 Async.validateAsyncFn(
-                   [%t output_type |> ItemType.unpack],
-                   message,
-                 ) = [%e
-                 expr
-               ];
-               Async.validateAsync(~value, ~validate, ~andThen=res => {
-                 dispatch(
-                   [%e
-                     Exp.construct(
-                       Lident(FieldPrinter.apply_async_result_action(~field))
-                       |> lid(~loc),
-                       Some(
-                         Exp.tuple([
-                           Exp.ident(Lident("value") |> lid(~loc)),
-                           Exp.ident(Lident("res") |> lid(~loc)),
-                         ]),
-                       ),
-                     )
-                   ],
-                 )
-               });
-             }
-           )
-         ];
+         let fn =
+           switch (metadata) {
+           | None =>
+             %expr
+             (
+               ((value, dispatch)) => {
+                 let validate:
+                   Async.validateAsyncFn(
+                     [%t output_type |> ItemType.unpack],
+                     message,
+                   ) = [%e
+                   expr
+                 ];
+                 Async.validateAsync(~value, ~validate, ~andThen=res => {
+                   dispatch(
+                     [%e
+                       Exp.construct(
+                         Lident(
+                           FieldPrinter.apply_async_result_action(~field),
+                         )
+                         |> lid(~loc),
+                         Some(
+                           Exp.tuple([
+                             Exp.ident(Lident("value") |> lid(~loc)),
+                             Exp.ident(Lident("res") |> lid(~loc)),
+                           ]),
+                         ),
+                       )
+                     ],
+                   )
+                 });
+               }
+             )
+           | Some () =>
+             %expr
+             (
+               ((value, metadata, dispatch)) => {
+                 let validate:
+                   Async.validateAsyncFnWithMetadata(
+                     [%t output_type |> ItemType.unpack],
+                     message,
+                     metadata,
+                   ) = [%e
+                   expr
+                 ];
+                 Async.validateAsyncWithMetadata(
+                   ~value, ~validate, ~metadata, ~andThen=res => {
+                   dispatch(
+                     [%e
+                       Exp.construct(
+                         Lident(
+                           FieldPrinter.apply_async_result_action(~field),
+                         )
+                         |> lid(~loc),
+                         Some(
+                           Exp.tuple([
+                             Exp.ident(Lident("value") |> lid(~loc)),
+                             Exp.ident(Lident("res") |> lid(~loc)),
+                           ]),
+                         ),
+                       )
+                     ],
+                   )
+                 });
+               }
+             )
+           };
+
          (
            v_lid,
            switch (async_mode) {
@@ -82,6 +122,7 @@ let update_async_validator_of_field_of_collection =
       ~output_type: ItemType.t,
       ~async_mode: AsyncMode.t,
       ~validator_loc: Location.t,
+      ~metadata: option(unit),
       fields,
     ) =>
   fields
@@ -90,41 +131,81 @@ let update_async_validator_of_field_of_collection =
   |> List.rev_map(((v_lid, {pexp_loc: loc} as expr)) =>
        switch (v_lid) {
        | {txt: Lident("validateAsync")} =>
-         let fn = [%expr
-           (
-             ((value, index, dispatch)) => {
-               let validate:
-                 Async.validateAsyncFn(
-                   [%t output_type |> ItemType.unpack],
-                   message,
-                 ) = [%e
-                 expr
-               ];
-               Async.validateAsync(~value, ~validate, ~andThen=res => {
-                 dispatch(
-                   [%e
-                     Exp.construct(
-                       Lident(
-                         FieldOfCollectionPrinter.apply_async_result_action(
-                           ~collection,
-                           ~field,
+         let fn =
+           switch (metadata) {
+           | None =>
+             %expr
+             (
+               ((value, index, dispatch)) => {
+                 let validate:
+                   Async.validateAsyncFn(
+                     [%t output_type |> ItemType.unpack],
+                     message,
+                   ) = [%e
+                   expr
+                 ];
+                 Async.validateAsync(~value, ~validate, ~andThen=res => {
+                   dispatch(
+                     [%e
+                       Exp.construct(
+                         Lident(
+                           FieldOfCollectionPrinter.apply_async_result_action(
+                             ~collection,
+                             ~field,
+                           ),
+                         )
+                         |> lid(~loc),
+                         Some(
+                           Exp.tuple([
+                             Exp.ident(Lident("value") |> lid(~loc)),
+                             Exp.ident(Lident("index") |> lid(~loc)),
+                             Exp.ident(Lident("res") |> lid(~loc)),
+                           ]),
                          ),
                        )
-                       |> lid(~loc),
-                       Some(
-                         Exp.tuple([
-                           Exp.ident(Lident("value") |> lid(~loc)),
-                           Exp.ident(Lident("index") |> lid(~loc)),
-                           Exp.ident(Lident("res") |> lid(~loc)),
-                         ]),
-                       ),
-                     )
-                   ],
-                 )
-               });
-             }
-           )
-         ];
+                     ],
+                   )
+                 });
+               }
+             )
+           | Some () =>
+             %expr
+             (
+               ((value, index, metadata, dispatch)) => {
+                 let validate:
+                   Async.validateAsyncFnWithMetadata(
+                     [%t output_type |> ItemType.unpack],
+                     message,
+                     metadata,
+                   ) = [%e
+                   expr
+                 ];
+                 Async.validateAsyncWithMetadata(
+                   ~value, ~validate, ~metadata, ~andThen=res => {
+                   dispatch(
+                     [%e
+                       Exp.construct(
+                         Lident(
+                           FieldOfCollectionPrinter.apply_async_result_action(
+                             ~collection,
+                             ~field,
+                           ),
+                         )
+                         |> lid(~loc),
+                         Some(
+                           Exp.tuple([
+                             Exp.ident(Lident("value") |> lid(~loc)),
+                             Exp.ident(Lident("index") |> lid(~loc)),
+                             Exp.ident(Lident("res") |> lid(~loc)),
+                           ]),
+                         ),
+                       )
+                     ],
+                   )
+                 });
+               }
+             )
+           };
          (
            v_lid,
            switch (async_mode) {
@@ -145,12 +226,13 @@ let update_async_validator_of_field_of_collection =
 // 4. Don't touch unknown, let compiler do its job
 let ast =
     (
-      scheme: Scheme.t,
-      validators_record: ValidatorsRecord.t,
+      ~scheme: Scheme.t,
+      ~metadata: option(unit),
+      ~validators: ValidatorsRecord.t,
       value_binding: value_binding,
     ) => {
   let fields =
-    validators_record.fields
+    validators.fields
     |> List.rev
     |> List.rev_map(((f_lid, expr)) =>
          switch (f_lid) {
@@ -190,6 +272,7 @@ let ast =
                               ~output_type=field.output_type,
                               ~async_mode,
                               ~validator_loc=pexp_loc,
+                              ~metadata,
                             ),
                          None,
                        ),
@@ -313,6 +396,7 @@ let ast =
                                                           field.output_type,
                                                         ~async_mode,
                                                         ~validator_loc=pexp_loc,
+                                                        ~metadata,
                                                       ),
                                                    None,
                                                  ),
@@ -360,15 +444,15 @@ let ast =
         Pexp_constraint(
           {
             pexp_desc: Pexp_record(fields, None),
-            pexp_loc: validators_record.record_metadata.pexp_loc,
-            pexp_loc_stack: validators_record.record_metadata.pexp_loc_stack,
-            pexp_attributes: validators_record.record_metadata.pexp_attributes,
+            pexp_loc: validators.record_metadata.pexp_loc,
+            pexp_loc_stack: validators.record_metadata.pexp_loc_stack,
+            pexp_attributes: validators.record_metadata.pexp_attributes,
           },
-          validators_record.annotation,
+          validators.annotation,
         ),
-      pexp_loc: validators_record.constraint_metadata.pexp_loc,
-      pexp_loc_stack: validators_record.constraint_metadata.pexp_loc_stack,
-      pexp_attributes: validators_record.constraint_metadata.pexp_attributes,
+      pexp_loc: validators.constraint_metadata.pexp_loc,
+      pexp_loc_stack: validators.constraint_metadata.pexp_loc_stack,
+      pexp_attributes: validators.constraint_metadata.pexp_attributes,
     },
   };
 };

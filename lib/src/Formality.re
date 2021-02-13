@@ -44,12 +44,32 @@ type singleValueValidator('input, 'outputValue, 'message) = {
   validate: 'input => result('outputValue, 'message),
 };
 
+type singleValueValidatorWithMetadata(
+  'input,
+  'outputValue,
+  'message,
+  'metadata,
+) = {
+  strategy,
+  validate: ('input, 'metadata) => result('outputValue, 'message),
+};
+
 type collectionValidatorWithWholeCollectionValidator(
   'input,
   'message,
   'fieldsValidators,
 ) = {
   collection: 'input => result(unit, 'message),
+  fields: 'fieldsValidators,
+};
+
+type collectionValidatorWithWholeCollectionValidatorAndMetadata(
+  'input,
+  'message,
+  'fieldsValidators,
+  'metadata,
+) = {
+  collection: ('input, 'metadata) => result(unit, 'message),
   fields: 'fieldsValidators,
 };
 
@@ -61,6 +81,18 @@ type collectionValidatorWithoutWholeCollectionValidator('fieldsValidators) = {
 type valueOfCollectionValidator('input, 'outputValue, 'message) = {
   strategy,
   validate: ('input, ~at: index) => result('outputValue, 'message),
+};
+
+type valueOfCollectionValidatorWithMetadata(
+  'input,
+  'outputValue,
+  'message,
+  'metadata,
+) = {
+  strategy,
+  validate:
+    ('input, ~at: index, ~metadata: 'metadata) =>
+    result('outputValue, 'message),
 };
 
 type formValidationResult('output, 'fieldsStatuses, 'collectionsStatuses) =
@@ -114,6 +146,37 @@ let validateFieldOnChangeWithValidator =
   };
 };
 
+let validateFieldOnChangeWithValidatorAndMetadata =
+    (
+      ~input: 'input,
+      ~metadata: 'metadata,
+      ~fieldStatus: fieldStatus('outputValue, 'message),
+      ~submissionStatus: submissionStatus,
+      ~validator:
+         singleValueValidatorWithMetadata(
+           'input,
+           'outputValue,
+           'message,
+           'metadata,
+         ),
+      ~setStatus: fieldStatus('outputValue, 'message) => 'statuses,
+    )
+    : 'statuses => {
+  switch (validator.strategy, fieldStatus, submissionStatus) {
+  | (_, Dirty(_, Shown), _)
+  | (_, _, AttemptedToSubmit)
+  | (OnFirstChange, _, NeverSubmitted) =>
+    Dirty(validator.validate(input, metadata), Shown)->setStatus
+  | (OnFirstSuccess | OnFirstSuccessOrFirstBlur, _, NeverSubmitted) =>
+    switch (validator.validate(input, metadata)) {
+    | Ok(_) as result => Dirty(result, Shown)->setStatus
+    | Error(_) as result => Dirty(result, Hidden)->setStatus
+    }
+  | (OnFirstBlur | OnSubmit, _, NeverSubmitted) =>
+    Dirty(validator.validate(input, metadata), Hidden)->setStatus
+  };
+};
+
 let validateFieldOfCollectionOnChangeWithValidator =
     (
       ~input: 'input,
@@ -139,6 +202,38 @@ let validateFieldOfCollectionOnChangeWithValidator =
   };
 };
 
+let validateFieldOfCollectionOnChangeWithValidatorAndMetadata =
+    (
+      ~input: 'input,
+      ~index: index,
+      ~metadata: 'metadata,
+      ~fieldStatus: fieldStatus('outputValue, 'message),
+      ~submissionStatus: submissionStatus,
+      ~validator:
+         valueOfCollectionValidatorWithMetadata(
+           'input,
+           'outputValue,
+           'message,
+           'metadata,
+         ),
+      ~setStatus: fieldStatus('outputValue, 'message) => 'statuses,
+    )
+    : 'statuses => {
+  switch (validator.strategy, fieldStatus, submissionStatus) {
+  | (_, Dirty(_, Shown), _)
+  | (_, _, AttemptedToSubmit)
+  | (OnFirstChange, _, NeverSubmitted) =>
+    Dirty(validator.validate(input, ~at=index, ~metadata), Shown)->setStatus
+  | (OnFirstSuccess | OnFirstSuccessOrFirstBlur, _, NeverSubmitted) =>
+    switch (validator.validate(input, ~at=index, ~metadata)) {
+    | Ok(_) as result => Dirty(result, Shown)->setStatus
+    | Error(_) as result => Dirty(result, Hidden)->setStatus
+    }
+  | (OnFirstBlur | OnSubmit, _, NeverSubmitted) =>
+    Dirty(validator.validate(input, ~at=index, ~metadata), Hidden)->setStatus
+  };
+};
+
 let validateDependentFieldOnChange =
     (
       ~input: 'input,
@@ -152,6 +247,29 @@ let validateDependentFieldOnChange =
   | Dirty(_, Hidden) => None
   | Dirty(_, Shown) =>
     Dirty(validator.validate(input), Shown)->setStatus->Some
+  };
+};
+
+let validateDependentFieldOnChangeWithMetadata =
+    (
+      ~input: 'input,
+      ~metadata: 'metadata,
+      ~fieldStatus: fieldStatus('outputValue, 'message),
+      ~validator:
+         singleValueValidatorWithMetadata(
+           'input,
+           'outputValue,
+           'message,
+           'metadata,
+         ),
+      ~setStatus: fieldStatus('outputValue, 'message) => 'statuses,
+    )
+    : option('statuses) => {
+  switch (fieldStatus) {
+  | Pristine
+  | Dirty(_, Hidden) => None
+  | Dirty(_, Shown) =>
+    Dirty(validator.validate(input, metadata), Shown)->setStatus->Some
   };
 };
 
@@ -169,6 +287,32 @@ let validateDependentFieldOfCollectionOnChange =
   | Dirty(_, Hidden) => None
   | Dirty(_, Shown) =>
     Dirty(validator.validate(input, ~at=index), Shown)->setStatus->Some
+  };
+};
+
+let validateDependentFieldOfCollectionOnChangeWithMetadata =
+    (
+      ~input: 'input,
+      ~index: index,
+      ~metadata: 'metadata,
+      ~fieldStatus: fieldStatus('outputValue, 'message),
+      ~validator:
+         valueOfCollectionValidatorWithMetadata(
+           'input,
+           'outputValue,
+           'message,
+           'metadata,
+         ),
+      ~setStatus: fieldStatus('outputValue, 'message) => 'statuses,
+    )
+    : option('statuses) => {
+  switch (fieldStatus) {
+  | Pristine
+  | Dirty(_, Hidden) => None
+  | Dirty(_, Shown) =>
+    Dirty(validator.validate(input, ~at=index, ~metadata), Shown)
+    ->setStatus
+    ->Some
   };
 };
 
@@ -207,6 +351,37 @@ let validateFieldOnBlurWithValidator =
   };
 };
 
+let validateFieldOnBlurWithValidatorAndMetadata =
+    (
+      ~input: 'input,
+      ~metadata: 'metadata,
+      ~fieldStatus: fieldStatus('outputValue, 'message),
+      ~validator:
+         singleValueValidatorWithMetadata(
+           'input,
+           'outputValue,
+           'message,
+           'metadata,
+         ),
+      ~setStatus: fieldStatus('outputValue, 'message) => 'statuses,
+    )
+    : option('statuses) => {
+  switch (fieldStatus) {
+  | Dirty(_, Shown) => None
+  | Pristine
+  | Dirty(_, Hidden) =>
+    switch (validator.strategy) {
+    | OnFirstChange
+    | OnFirstSuccess
+    | OnSubmit =>
+      Dirty(validator.validate(input, metadata), Hidden)->setStatus->Some
+    | OnFirstBlur
+    | OnFirstSuccessOrFirstBlur =>
+      Dirty(validator.validate(input, metadata), Shown)->setStatus->Some
+    }
+  };
+};
+
 let validateFieldOfCollectionOnBlurWithValidator =
     (
       ~input: 'input,
@@ -232,6 +407,42 @@ let validateFieldOfCollectionOnBlurWithValidator =
   };
 };
 
+let validateFieldOfCollectionOnBlurWithValidatorAndMetadata =
+    (
+      ~input: 'input,
+      ~index: index,
+      ~metadata: 'metadata,
+      ~fieldStatus: fieldStatus('outputValue, 'message),
+      ~validator:
+         valueOfCollectionValidatorWithMetadata(
+           'input,
+           'outputValue,
+           'message,
+           'metadata,
+         ),
+      ~setStatus: fieldStatus('outputValue, 'message) => 'statuses,
+    )
+    : option('statuses) => {
+  switch (fieldStatus) {
+  | Dirty(_, Shown) => None
+  | Pristine
+  | Dirty(_, Hidden) =>
+    switch (validator.strategy) {
+    | OnFirstChange
+    | OnFirstSuccess
+    | OnSubmit =>
+      Dirty(validator.validate(input, ~at=index, ~metadata), Hidden)
+      ->setStatus
+      ->Some
+    | OnFirstBlur
+    | OnFirstSuccessOrFirstBlur =>
+      Dirty(validator.validate(input, ~at=index, ~metadata), Shown)
+      ->setStatus
+      ->Some
+    }
+  };
+};
+
 module Async = {
   type fieldStatus('outputValue, 'message) =
     | Pristine
@@ -249,6 +460,19 @@ module Async = {
     eq: ('outputValue, 'outputValue) => bool,
   };
 
+  type singleValueValidatorWithMetadata(
+    'input,
+    'outputValue,
+    'message,
+    'metadata,
+    'action,
+  ) = {
+    strategy,
+    validate: ('input, 'metadata) => result('outputValue, 'message),
+    validateAsync: (('outputValue, 'metadata, 'action => unit)) => unit,
+    eq: ('outputValue, 'outputValue) => bool,
+  };
+
   type valueOfCollectionValidator('input, 'outputValue, 'message, 'action) = {
     strategy,
     validate: ('input, ~at: index) => result('outputValue, 'message),
@@ -256,8 +480,27 @@ module Async = {
     eq: ('outputValue, 'outputValue) => bool,
   };
 
+  type valueOfCollectionValidatorWithMetadata(
+    'input,
+    'outputValue,
+    'message,
+    'metadata,
+    'action,
+  ) = {
+    strategy,
+    validate:
+      ('input, ~at: index, ~metadata: 'metadata) =>
+      result('outputValue, 'message),
+    validateAsync:
+      (('outputValue, index, 'metadata, 'action => unit)) => unit,
+    eq: ('outputValue, 'outputValue) => bool,
+  };
+
   type validateAsyncFn('outputValue, 'message) =
     'outputValue => Js.Promise.t(result('outputValue, 'message));
+
+  type validateAsyncFnWithMetadata('outputValue, 'message, 'metadata) =
+    ('outputValue, 'metadata) => Js.Promise.t(result('outputValue, 'message));
 
   let validateAsync =
       (
@@ -267,6 +510,19 @@ module Async = {
       )
       : unit =>
     validate(value)
+    ->Js.Promise.(then_(res => res->andThen->resolve, _))
+    ->ignore;
+
+  let validateAsyncWithMetadata =
+      (
+        ~value: 'outputValue,
+        ~metadata: 'metadata,
+        ~validate:
+           validateAsyncFnWithMetadata('outputValue, 'message, 'metadata),
+        ~andThen: result('outputValue, 'message) => unit,
+      )
+      : unit =>
+    validate(value, metadata)
     ->Js.Promise.(then_(res => res->andThen->resolve, _))
     ->ignore;
 
@@ -322,6 +578,40 @@ module Async = {
     };
   };
 
+  let validateFieldOnChangeInOnBlurModeWithMetadata =
+      (
+        ~input: 'input,
+        ~metadata: 'metadata,
+        ~fieldStatus: fieldStatus('outputValue, 'message),
+        ~submissionStatus: submissionStatus,
+        ~validator:
+           singleValueValidatorWithMetadata(
+             'input,
+             'outputValue,
+             'message,
+             'metadata,
+             'action,
+           ),
+        ~setStatus: fieldStatus('outputValue, 'message) => 'statuses,
+      )
+      : 'statuses => {
+    switch (validator.strategy, fieldStatus, submissionStatus) {
+    | (_, Dirty(_, Shown), _)
+    | (_, _, AttemptedToSubmit)
+    | (OnFirstChange, _, NeverSubmitted) =>
+      switch (validator.validate(input, metadata)) {
+      | Ok(_) as result => Dirty(result, Hidden)->setStatus
+      | Error(_) as result => Dirty(result, Shown)->setStatus
+      }
+    | (
+        OnFirstSuccess | OnFirstSuccessOrFirstBlur | OnFirstBlur | OnSubmit,
+        _,
+        NeverSubmitted,
+      ) =>
+      Dirty(validator.validate(input, metadata), Hidden)->setStatus
+    };
+  };
+
   let validateFieldOfCollectionOnChangeInOnBlurMode =
       (
         ~input: 'input,
@@ -355,6 +645,42 @@ module Async = {
     };
   };
 
+  let validateFieldOfCollectionOnChangeInOnBlurModeWithMetadata =
+      (
+        ~input: 'input,
+        ~index: index,
+        ~metadata: 'metadata,
+        ~fieldStatus: fieldStatus('outputValue, 'message),
+        ~submissionStatus: submissionStatus,
+        ~validator:
+           valueOfCollectionValidatorWithMetadata(
+             'input,
+             'outputValue,
+             'message,
+             'metadata,
+             'action,
+           ),
+        ~setStatus: fieldStatus('outputValue, 'message) => 'statuses,
+      )
+      : 'statuses => {
+    switch (validator.strategy, fieldStatus, submissionStatus) {
+    | (_, Dirty(_, Shown), _)
+    | (_, _, AttemptedToSubmit)
+    | (OnFirstChange, _, NeverSubmitted) =>
+      switch (validator.validate(input, ~at=index, ~metadata)) {
+      | Ok(_) as result => Dirty(result, Hidden)->setStatus
+      | Error(_) as result => Dirty(result, Shown)->setStatus
+      }
+    | (
+        OnFirstSuccess | OnFirstSuccessOrFirstBlur | OnFirstBlur | OnSubmit,
+        _,
+        NeverSubmitted,
+      ) =>
+      Dirty(validator.validate(input, ~at=index, ~metadata), Hidden)
+      ->setStatus
+    };
+  };
+
   let validateFieldOfOptionTypeOnChangeInOnBlurMode =
       (
         ~input: 'input,
@@ -382,6 +708,43 @@ module Async = {
       }
     | (OnFirstBlur | OnSubmit, _, NeverSubmitted) =>
       Dirty(validator.validate(input), Hidden)->setStatus
+    };
+  };
+
+  let validateFieldOfOptionTypeOnChangeInOnBlurModeWithMetadata =
+      (
+        ~input: 'input,
+        ~metadata: 'metadata,
+        ~fieldStatus: fieldStatus('outputValue, 'message),
+        ~submissionStatus: submissionStatus,
+        ~validator:
+           singleValueValidatorWithMetadata(
+             'input,
+             'outputValue,
+             'message,
+             'metadata,
+             'action,
+           ),
+        ~setStatus: fieldStatus('outputValue, 'message) => 'statuses,
+      )
+      : 'statuses => {
+    switch (validator.strategy, fieldStatus, submissionStatus) {
+    | (_, Dirty(_, Shown), _)
+    | (_, _, AttemptedToSubmit)
+    | (OnFirstChange, _, NeverSubmitted) =>
+      switch (validator.validate(input, metadata)) {
+      | Ok(Some(_)) as result => Dirty(result, Hidden)->setStatus
+      | Ok(None) as result
+      | Error(_) as result => Dirty(result, Shown)->setStatus
+      }
+    | (OnFirstSuccess | OnFirstSuccessOrFirstBlur, _, NeverSubmitted) =>
+      switch (validator.validate(input, metadata)) {
+      | Ok(None) as result => Dirty(result, Shown)->setStatus
+      | Ok(Some(_)) as result
+      | Error(_) as result => Dirty(result, Hidden)->setStatus
+      }
+    | (OnFirstBlur | OnSubmit, _, NeverSubmitted) =>
+      Dirty(validator.validate(input, metadata), Hidden)->setStatus
     };
   };
 
@@ -421,6 +784,45 @@ module Async = {
     };
   };
 
+  let validateFieldOfCollectionOfOptionTypeOnChangeInOnBlurModeWithMetadata =
+      (
+        ~input: 'input,
+        ~metadata: 'metadata,
+        ~index: index,
+        ~fieldStatus: fieldStatus('outputValue, 'message),
+        ~submissionStatus: submissionStatus,
+        ~validator:
+           valueOfCollectionValidatorWithMetadata(
+             'input,
+             'outputValue,
+             'message,
+             'metadata,
+             'action,
+           ),
+        ~setStatus: fieldStatus('outputValue, 'message) => 'statuses,
+      )
+      : 'statuses => {
+    switch (validator.strategy, fieldStatus, submissionStatus) {
+    | (_, Dirty(_, Shown), _)
+    | (_, _, AttemptedToSubmit)
+    | (OnFirstChange, _, NeverSubmitted) =>
+      switch (validator.validate(input, ~at=index, ~metadata)) {
+      | Ok(Some(_)) as result => Dirty(result, Hidden)->setStatus
+      | Ok(None) as result
+      | Error(_) as result => Dirty(result, Shown)->setStatus
+      }
+    | (OnFirstSuccess | OnFirstSuccessOrFirstBlur, _, NeverSubmitted) =>
+      switch (validator.validate(input, ~at=index, ~metadata)) {
+      | Ok(None) as result => Dirty(result, Shown)->setStatus
+      | Ok(Some(_)) as result
+      | Error(_) as result => Dirty(result, Hidden)->setStatus
+      }
+    | (OnFirstBlur | OnSubmit, _, NeverSubmitted) =>
+      Dirty(validator.validate(input, ~at=index, ~metadata), Hidden)
+      ->setStatus
+    };
+  };
+
   let validateFieldOfStringTypeOnChangeInOnBlurMode =
       (
         ~input: 'input,
@@ -447,6 +849,43 @@ module Async = {
       }
     | (OnFirstBlur | OnSubmit, _, NeverSubmitted) =>
       Dirty(validator.validate(input), Hidden)->setStatus
+    };
+  };
+
+  let validateFieldOfStringTypeOnChangeInOnBlurModeWithMetadata =
+      (
+        ~input: 'input,
+        ~metadata: 'metadata,
+        ~fieldStatus: fieldStatus(string, 'message),
+        ~submissionStatus: submissionStatus,
+        ~validator:
+           singleValueValidatorWithMetadata(
+             'input,
+             string,
+             'message,
+             'metadata,
+             'action,
+           ),
+        ~setStatus: fieldStatus(string, 'message) => 'statuses,
+      )
+      : 'statuses => {
+    switch (validator.strategy, fieldStatus, submissionStatus) {
+    | (_, Dirty(_, Shown), _)
+    | (_, _, AttemptedToSubmit)
+    | (OnFirstChange, _, NeverSubmitted) =>
+      switch (validator.validate(input, metadata)) {
+      | Ok("") as result
+      | Error(_) as result => Dirty(result, Shown)->setStatus
+      | Ok(_) as result => Dirty(result, Hidden)->setStatus
+      }
+    | (OnFirstSuccess | OnFirstSuccessOrFirstBlur, _, NeverSubmitted) =>
+      switch (validator.validate(input, metadata)) {
+      | Ok("") as result => Dirty(result, Shown)->setStatus
+      | Ok(_) as result
+      | Error(_) as result => Dirty(result, Hidden)->setStatus
+      }
+    | (OnFirstBlur | OnSubmit, _, NeverSubmitted) =>
+      Dirty(validator.validate(input, metadata), Hidden)->setStatus
     };
   };
 
@@ -481,6 +920,45 @@ module Async = {
     };
   };
 
+  let validateFieldOfCollectionOfStringTypeOnChangeInOnBlurModeWithMetadata =
+      (
+        ~input: 'input,
+        ~index: index,
+        ~metadata: 'metadata,
+        ~fieldStatus: fieldStatus(string, 'message),
+        ~submissionStatus: submissionStatus,
+        ~validator:
+           valueOfCollectionValidatorWithMetadata(
+             'input,
+             string,
+             'message,
+             'metadata,
+             'action,
+           ),
+        ~setStatus: fieldStatus(string, 'message) => 'statuses,
+      )
+      : 'statuses => {
+    switch (validator.strategy, fieldStatus, submissionStatus) {
+    | (_, Dirty(_, Shown), _)
+    | (_, _, AttemptedToSubmit)
+    | (OnFirstChange, _, NeverSubmitted) =>
+      switch (validator.validate(input, ~at=index, ~metadata)) {
+      | Ok("") as result
+      | Error(_) as result => Dirty(result, Shown)->setStatus
+      | Ok(_) as result => Dirty(result, Hidden)->setStatus
+      }
+    | (OnFirstSuccess | OnFirstSuccessOrFirstBlur, _, NeverSubmitted) =>
+      switch (validator.validate(input, ~at=index, ~metadata)) {
+      | Ok("") as result => Dirty(result, Shown)->setStatus
+      | Ok(_) as result
+      | Error(_) as result => Dirty(result, Hidden)->setStatus
+      }
+    | (OnFirstBlur | OnSubmit, _, NeverSubmitted) =>
+      Dirty(validator.validate(input, ~at=index, ~metadata), Hidden)
+      ->setStatus
+    };
+  };
+
   let validateFieldOfOptionStringTypeOnChangeInOnBlurMode =
       (
         ~input: 'input,
@@ -510,6 +988,45 @@ module Async = {
       }
     | (OnFirstBlur | OnSubmit, _, NeverSubmitted) =>
       Dirty(validator.validate(input), Hidden)->setStatus
+    };
+  };
+
+  let validateFieldOfOptionStringTypeOnChangeInOnBlurModeWithMetadata =
+      (
+        ~input: 'input,
+        ~metadata: 'metadata,
+        ~fieldStatus: fieldStatus(option(string), 'message),
+        ~submissionStatus: submissionStatus,
+        ~validator:
+           singleValueValidatorWithMetadata(
+             'input,
+             option(string),
+             'message,
+             'metadata,
+             'action,
+           ),
+        ~setStatus: fieldStatus(option(string), 'message) => 'statuses,
+      )
+      : 'statuses => {
+    switch (validator.strategy, fieldStatus, submissionStatus) {
+    | (_, Dirty(_, Shown), _)
+    | (_, _, AttemptedToSubmit)
+    | (OnFirstChange, _, NeverSubmitted) =>
+      switch (validator.validate(input, metadata)) {
+      | Ok(Some("")) as result
+      | Ok(None) as result
+      | Error(_) as result => Dirty(result, Shown)->setStatus
+      | Ok(Some(_)) as result => Dirty(result, Hidden)->setStatus
+      }
+    | (OnFirstSuccess | OnFirstSuccessOrFirstBlur, _, NeverSubmitted) =>
+      switch (validator.validate(input, metadata)) {
+      | Ok(Some("")) as result
+      | Ok(None) as result => Dirty(result, Shown)->setStatus
+      | Ok(Some(_)) as result
+      | Error(_) as result => Dirty(result, Hidden)->setStatus
+      }
+    | (OnFirstBlur | OnSubmit, _, NeverSubmitted) =>
+      Dirty(validator.validate(input, metadata), Hidden)->setStatus
     };
   };
 
@@ -551,6 +1068,47 @@ module Async = {
     };
   };
 
+  let validateFieldOfCollectionOfOptionStringTypeOnChangeInOnBlurModeWithMetadata =
+      (
+        ~input: 'input,
+        ~index: index,
+        ~metadata: 'metadata,
+        ~fieldStatus: fieldStatus(option(string), 'message),
+        ~submissionStatus: submissionStatus,
+        ~validator:
+           valueOfCollectionValidatorWithMetadata(
+             'input,
+             option(string),
+             'message,
+             'metadata,
+             'action,
+           ),
+        ~setStatus: fieldStatus(option(string), 'message) => 'statuses,
+      )
+      : 'statuses => {
+    switch (validator.strategy, fieldStatus, submissionStatus) {
+    | (_, Dirty(_, Shown), _)
+    | (_, _, AttemptedToSubmit)
+    | (OnFirstChange, _, NeverSubmitted) =>
+      switch (validator.validate(input, ~at=index, ~metadata)) {
+      | Ok(Some("")) as result
+      | Ok(None) as result
+      | Error(_) as result => Dirty(result, Shown)->setStatus
+      | Ok(Some(_)) as result => Dirty(result, Hidden)->setStatus
+      }
+    | (OnFirstSuccess | OnFirstSuccessOrFirstBlur, _, NeverSubmitted) =>
+      switch (validator.validate(input, ~at=index, ~metadata)) {
+      | Ok(Some("")) as result
+      | Ok(None) as result => Dirty(result, Shown)->setStatus
+      | Ok(Some(_)) as result
+      | Error(_) as result => Dirty(result, Hidden)->setStatus
+      }
+    | (OnFirstBlur | OnSubmit, _, NeverSubmitted) =>
+      Dirty(validator.validate(input, ~at=index, ~metadata), Hidden)
+      ->setStatus
+    };
+  };
+
   let validateFieldOnChangeInOnChangeMode =
       (
         ~input: 'input,
@@ -576,6 +1134,41 @@ module Async = {
       }
     | (OnFirstBlur | OnSubmit, _, NeverSubmitted) =>
       Dirty(validator.validate(input), Hidden)->setStatus
+    };
+  };
+
+  let validateFieldOnChangeInOnChangeModeWithMetadata =
+      (
+        ~input: 'input,
+        ~metadata: 'metadata,
+        ~fieldStatus: fieldStatus('outputValue, 'message),
+        ~submissionStatus: submissionStatus,
+        ~validator:
+           singleValueValidatorWithMetadata(
+             'input,
+             'outputValue,
+             'message,
+             'metadata,
+             'action,
+           ),
+        ~setStatus: fieldStatus('outputValue, 'message) => 'statuses,
+      )
+      : 'statuses => {
+    switch (validator.strategy, fieldStatus, submissionStatus) {
+    | (_, Dirty(_, Shown), _)
+    | (_, _, AttemptedToSubmit)
+    | (OnFirstChange, _, NeverSubmitted) =>
+      switch (validator.validate(input, metadata)) {
+      | Ok(x) => Validating(x)->setStatus
+      | Error(_) as result => Dirty(result, Shown)->setStatus
+      }
+    | (OnFirstSuccess | OnFirstSuccessOrFirstBlur, _, NeverSubmitted) =>
+      switch (validator.validate(input, metadata)) {
+      | Ok(x) => Validating(x)->setStatus
+      | Error(_) as result => Dirty(result, Hidden)->setStatus
+      }
+    | (OnFirstBlur | OnSubmit, _, NeverSubmitted) =>
+      Dirty(validator.validate(input, metadata), Hidden)->setStatus
     };
   };
 
@@ -613,6 +1206,43 @@ module Async = {
     };
   };
 
+  let validateFieldOfCollectionOnChangeInOnChangeModeWithMetadata =
+      (
+        ~input: 'input,
+        ~index: index,
+        ~metadata: 'metadata,
+        ~fieldStatus: fieldStatus('outputValue, 'message),
+        ~submissionStatus: submissionStatus,
+        ~validator:
+           valueOfCollectionValidatorWithMetadata(
+             'input,
+             'outputValue,
+             'message,
+             'metadata,
+             'action,
+           ),
+        ~setStatus: fieldStatus('outputValue, 'message) => 'statuses,
+      )
+      : 'statuses => {
+    switch (validator.strategy, fieldStatus, submissionStatus) {
+    | (_, Dirty(_, Shown), _)
+    | (_, _, AttemptedToSubmit)
+    | (OnFirstChange, _, NeverSubmitted) =>
+      switch (validator.validate(input, ~at=index, ~metadata)) {
+      | Ok(x) => Validating(x)->setStatus
+      | Error(_) as result => Dirty(result, Shown)->setStatus
+      }
+    | (OnFirstSuccess | OnFirstSuccessOrFirstBlur, _, NeverSubmitted) =>
+      switch (validator.validate(input, ~at=index, ~metadata)) {
+      | Ok(x) => Validating(x)->setStatus
+      | Error(_) as result => Dirty(result, Hidden)->setStatus
+      }
+    | (OnFirstBlur | OnSubmit, _, NeverSubmitted) =>
+      Dirty(validator.validate(input, ~at=index, ~metadata), Hidden)
+      ->setStatus
+    };
+  };
+
   let validateFieldOfOptionTypeOnChangeInOnChangeMode =
       (
         ~input: 'input,
@@ -640,6 +1270,43 @@ module Async = {
       }
     | (OnFirstBlur | OnSubmit, _, NeverSubmitted) =>
       Dirty(validator.validate(input), Hidden)->setStatus
+    };
+  };
+
+  let validateFieldOfOptionTypeOnChangeInOnChangeModeWithMetadata =
+      (
+        ~input: 'input,
+        ~metadata: 'metadata,
+        ~fieldStatus: fieldStatus('outputValue, 'message),
+        ~submissionStatus: submissionStatus,
+        ~validator:
+           singleValueValidatorWithMetadata(
+             'input,
+             'outputValue,
+             'message,
+             'metadata,
+             'action,
+           ),
+        ~setStatus: fieldStatus('outputValue, 'message) => 'statuses,
+      )
+      : 'statuses => {
+    switch (validator.strategy, fieldStatus, submissionStatus) {
+    | (_, Dirty(_, Shown), _)
+    | (_, _, AttemptedToSubmit)
+    | (OnFirstChange, _, NeverSubmitted) =>
+      switch (validator.validate(input, metadata)) {
+      | Ok(Some(_) as x) => Validating(x)->setStatus
+      | Ok(None) as result
+      | Error(_) as result => Dirty(result, Shown)->setStatus
+      }
+    | (OnFirstSuccess | OnFirstSuccessOrFirstBlur, _, NeverSubmitted) =>
+      switch (validator.validate(input, metadata)) {
+      | Ok(Some(_) as x) => Validating(x)->setStatus
+      | Ok(None) as result => Dirty(result, Shown)->setStatus
+      | Error(_) as result => Dirty(result, Hidden)->setStatus
+      }
+    | (OnFirstBlur | OnSubmit, _, NeverSubmitted) =>
+      Dirty(validator.validate(input, metadata), Hidden)->setStatus
     };
   };
 
@@ -679,6 +1346,45 @@ module Async = {
     };
   };
 
+  let validateFieldOfCollectionOfOptionTypeOnChangeInOnChangeModeWithMetadata =
+      (
+        ~input: 'input,
+        ~index: index,
+        ~metadata: 'metadata,
+        ~fieldStatus: fieldStatus('outputValue, 'message),
+        ~submissionStatus: submissionStatus,
+        ~validator:
+           valueOfCollectionValidatorWithMetadata(
+             'input,
+             'outputValue,
+             'message,
+             'metadata,
+             'action,
+           ),
+        ~setStatus: fieldStatus('outputValue, 'message) => 'statuses,
+      )
+      : 'statuses => {
+    switch (validator.strategy, fieldStatus, submissionStatus) {
+    | (_, Dirty(_, Shown), _)
+    | (_, _, AttemptedToSubmit)
+    | (OnFirstChange, _, NeverSubmitted) =>
+      switch (validator.validate(input, ~at=index, ~metadata)) {
+      | Ok(Some(_) as x) => Validating(x)->setStatus
+      | Ok(None) as result
+      | Error(_) as result => Dirty(result, Shown)->setStatus
+      }
+    | (OnFirstSuccess | OnFirstSuccessOrFirstBlur, _, NeverSubmitted) =>
+      switch (validator.validate(input, ~at=index, ~metadata)) {
+      | Ok(Some(_) as x) => Validating(x)->setStatus
+      | Ok(None) as result => Dirty(result, Shown)->setStatus
+      | Error(_) as result => Dirty(result, Hidden)->setStatus
+      }
+    | (OnFirstBlur | OnSubmit, _, NeverSubmitted) =>
+      Dirty(validator.validate(input, ~at=index, ~metadata), Hidden)
+      ->setStatus
+    };
+  };
+
   let validateFieldOfStringTypeOnChangeInOnChangeMode =
       (
         ~input: 'input,
@@ -705,6 +1411,43 @@ module Async = {
       }
     | (OnFirstBlur | OnSubmit, _, NeverSubmitted) =>
       Dirty(validator.validate(input), Hidden)->setStatus
+    };
+  };
+
+  let validateFieldOfStringTypeOnChangeInOnChangeModeWithMetadata =
+      (
+        ~input: 'input,
+        ~metadata: 'metadata,
+        ~fieldStatus: fieldStatus(string, 'message),
+        ~submissionStatus: submissionStatus,
+        ~validator:
+           singleValueValidatorWithMetadata(
+             'input,
+             string,
+             'message,
+             'metadata,
+             'action,
+           ),
+        ~setStatus: fieldStatus(string, 'message) => 'statuses,
+      )
+      : 'statuses => {
+    switch (validator.strategy, fieldStatus, submissionStatus) {
+    | (_, Dirty(_, Shown), _)
+    | (_, _, AttemptedToSubmit)
+    | (OnFirstChange, _, NeverSubmitted) =>
+      switch (validator.validate(input, metadata)) {
+      | Ok("") as result
+      | Error(_) as result => Dirty(result, Shown)->setStatus
+      | Ok(x) => Validating(x)->setStatus
+      }
+    | (OnFirstSuccess | OnFirstSuccessOrFirstBlur, _, NeverSubmitted) =>
+      switch (validator.validate(input, metadata)) {
+      | Ok("") as result => Dirty(result, Shown)->setStatus
+      | Ok(x) => Validating(x)->setStatus
+      | Error(_) as result => Dirty(result, Hidden)->setStatus
+      }
+    | (OnFirstBlur | OnSubmit, _, NeverSubmitted) =>
+      Dirty(validator.validate(input, metadata), Hidden)->setStatus
     };
   };
 
@@ -739,6 +1482,45 @@ module Async = {
     };
   };
 
+  let validateFieldOfCollectionOfStringTypeOnChangeInOnChangeModeWithMetadata =
+      (
+        ~input: 'input,
+        ~index: index,
+        ~metadata: 'metadata,
+        ~fieldStatus: fieldStatus(string, 'message),
+        ~submissionStatus: submissionStatus,
+        ~validator:
+           valueOfCollectionValidatorWithMetadata(
+             'input,
+             string,
+             'message,
+             'metadata,
+             'action,
+           ),
+        ~setStatus: fieldStatus(string, 'message) => 'statuses,
+      )
+      : 'statuses => {
+    switch (validator.strategy, fieldStatus, submissionStatus) {
+    | (_, Dirty(_, Shown), _)
+    | (_, _, AttemptedToSubmit)
+    | (OnFirstChange, _, NeverSubmitted) =>
+      switch (validator.validate(input, ~at=index, ~metadata)) {
+      | Ok("") as result
+      | Error(_) as result => Dirty(result, Shown)->setStatus
+      | Ok(x) => Validating(x)->setStatus
+      }
+    | (OnFirstSuccess | OnFirstSuccessOrFirstBlur, _, NeverSubmitted) =>
+      switch (validator.validate(input, ~at=index, ~metadata)) {
+      | Ok("") as result => Dirty(result, Shown)->setStatus
+      | Ok(x) => Validating(x)->setStatus
+      | Error(_) as result => Dirty(result, Hidden)->setStatus
+      }
+    | (OnFirstBlur | OnSubmit, _, NeverSubmitted) =>
+      Dirty(validator.validate(input, ~at=index, ~metadata), Hidden)
+      ->setStatus
+    };
+  };
+
   let validateFieldOfOptionStringTypeOnChangeInOnChangeMode =
       (
         ~input: 'input,
@@ -768,6 +1550,45 @@ module Async = {
       }
     | (OnFirstBlur | OnSubmit, _, NeverSubmitted) =>
       Dirty(validator.validate(input), Hidden)->setStatus
+    };
+  };
+
+  let validateFieldOfOptionStringTypeOnChangeInOnChangeModeWithMetadata =
+      (
+        ~input: 'input,
+        ~metadata: 'metadata,
+        ~fieldStatus: fieldStatus(option(string), 'message),
+        ~submissionStatus: submissionStatus,
+        ~validator:
+           singleValueValidatorWithMetadata(
+             'input,
+             option(string),
+             'message,
+             'metadata,
+             'action,
+           ),
+        ~setStatus: fieldStatus(option(string), 'message) => 'statuses,
+      )
+      : 'statuses => {
+    switch (validator.strategy, fieldStatus, submissionStatus) {
+    | (_, Dirty(_, Shown), _)
+    | (_, _, AttemptedToSubmit)
+    | (OnFirstChange, _, NeverSubmitted) =>
+      switch (validator.validate(input, metadata)) {
+      | Ok(Some("")) as result
+      | Ok(None) as result
+      | Error(_) as result => Dirty(result, Shown)->setStatus
+      | Ok(Some(_) as x) => Validating(x)->setStatus
+      }
+    | (OnFirstSuccess | OnFirstSuccessOrFirstBlur, _, NeverSubmitted) =>
+      switch (validator.validate(input, metadata)) {
+      | Ok(Some("")) as result
+      | Ok(None) as result => Dirty(result, Shown)->setStatus
+      | Ok(Some(_) as x) => Validating(x)->setStatus
+      | Error(_) as result => Dirty(result, Hidden)->setStatus
+      }
+    | (OnFirstBlur | OnSubmit, _, NeverSubmitted) =>
+      Dirty(validator.validate(input, metadata), Hidden)->setStatus
     };
   };
 
@@ -809,6 +1630,47 @@ module Async = {
     };
   };
 
+  let validateFieldOfCollectionOfOptionStringTypeOnChangeInOnChangeModeWithMetadata =
+      (
+        ~input: 'input,
+        ~index: index,
+        ~metadata: 'metadata,
+        ~fieldStatus: fieldStatus(option(string), 'message),
+        ~submissionStatus: submissionStatus,
+        ~validator:
+           valueOfCollectionValidatorWithMetadata(
+             'input,
+             option(string),
+             'message,
+             'metadata,
+             'action,
+           ),
+        ~setStatus: fieldStatus(option(string), 'message) => 'statuses,
+      )
+      : 'statuses => {
+    switch (validator.strategy, fieldStatus, submissionStatus) {
+    | (_, Dirty(_, Shown), _)
+    | (_, _, AttemptedToSubmit)
+    | (OnFirstChange, _, NeverSubmitted) =>
+      switch (validator.validate(input, ~at=index, ~metadata)) {
+      | Ok(Some("")) as result
+      | Ok(None) as result
+      | Error(_) as result => Dirty(result, Shown)->setStatus
+      | Ok(Some(_) as x) => Validating(x)->setStatus
+      }
+    | (OnFirstSuccess | OnFirstSuccessOrFirstBlur, _, NeverSubmitted) =>
+      switch (validator.validate(input, ~at=index, ~metadata)) {
+      | Ok(Some("")) as result
+      | Ok(None) as result => Dirty(result, Shown)->setStatus
+      | Ok(Some(_) as x) => Validating(x)->setStatus
+      | Error(_) as result => Dirty(result, Hidden)->setStatus
+      }
+    | (OnFirstBlur | OnSubmit, _, NeverSubmitted) =>
+      Dirty(validator.validate(input, ~at=index, ~metadata), Hidden)
+      ->setStatus
+    };
+  };
+
   let validateDependentFieldOnChange =
       (
         ~input: 'input,
@@ -824,6 +1686,31 @@ module Async = {
     | Dirty(_, Hidden) => None
     | Dirty(_, Shown) =>
       Dirty(validator.validate(input), Shown)->setStatus->Some
+    };
+  };
+
+  let validateDependentFieldOnChangeWithMetadata =
+      (
+        ~input: 'input,
+        ~metadata: 'metadata,
+        ~fieldStatus: fieldStatus('outputValue, 'message),
+        ~validator:
+           singleValueValidatorWithMetadata(
+             'input,
+             'outputValue,
+             'message,
+             'metadata,
+             'action,
+           ),
+        ~setStatus: fieldStatus('outputValue, 'message) => 'statuses,
+      )
+      : option('statuses) => {
+    switch (fieldStatus) {
+    | Pristine
+    | Validating(_)
+    | Dirty(_, Hidden) => None
+    | Dirty(_, Shown) =>
+      Dirty(validator.validate(input, metadata), Shown)->setStatus->Some
     };
   };
 
@@ -851,6 +1738,34 @@ module Async = {
     };
   };
 
+  let validateDependentFieldOfCollectionOnChangeWithMetadata =
+      (
+        ~input: 'input,
+        ~index: index,
+        ~metadata: 'metadata,
+        ~fieldStatus: fieldStatus('outputValue, 'message),
+        ~validator:
+           valueOfCollectionValidatorWithMetadata(
+             'input,
+             'outputValue,
+             'message,
+             'metadata,
+             'action,
+           ),
+        ~setStatus: fieldStatus('outputValue, 'message) => 'statuses,
+      )
+      : option('statuses) => {
+    switch (fieldStatus) {
+    | Pristine
+    | Validating(_)
+    | Dirty(_, Hidden) => None
+    | Dirty(_, Shown) =>
+      Dirty(validator.validate(input, ~at=index, ~metadata), Shown)
+      ->setStatus
+      ->Some
+    };
+  };
+
   let validateFieldOnBlur =
       (
         ~input: 'input,
@@ -872,6 +1787,42 @@ module Async = {
       | OnFirstBlur
       | OnFirstSuccessOrFirstBlur =>
         switch (validator.validate(input)) {
+        | Ok(x) => Validating(x)->setStatus->Some
+        | Error(_) as result => Dirty(result, Shown)->setStatus->Some
+        }
+      }
+    };
+  };
+
+  let validateFieldOnBlurWithMetadata =
+      (
+        ~input: 'input,
+        ~metadata: 'metadata,
+        ~fieldStatus: fieldStatus('outputValue, 'message),
+        ~validator:
+           singleValueValidatorWithMetadata(
+             'input,
+             'outputValue,
+             'message,
+             'metadata,
+             'action,
+           ),
+        ~setStatus: fieldStatus('outputValue, 'message) => 'statuses,
+      )
+      : option('statuses) => {
+    switch (fieldStatus) {
+    | Validating(_)
+    | Dirty(_, Shown) => None
+    | Pristine
+    | Dirty(_, Hidden) =>
+      switch (validator.strategy) {
+      | OnFirstChange
+      | OnFirstSuccess
+      | OnSubmit =>
+        Dirty(validator.validate(input, metadata), Hidden)->setStatus->Some
+      | OnFirstBlur
+      | OnFirstSuccessOrFirstBlur =>
+        switch (validator.validate(input, metadata)) {
         | Ok(x) => Validating(x)->setStatus->Some
         | Error(_) as result => Dirty(result, Shown)->setStatus->Some
         }
@@ -914,6 +1865,45 @@ module Async = {
     };
   };
 
+  let validateFieldOfCollectionOnBlurWithMetadata =
+      (
+        ~input: 'input,
+        ~index: index,
+        ~metadata: 'metadata,
+        ~fieldStatus: fieldStatus('outputValue, 'message),
+        ~validator:
+           valueOfCollectionValidatorWithMetadata(
+             'input,
+             'outputValue,
+             'message,
+             'metadata,
+             'action,
+           ),
+        ~setStatus: fieldStatus('outputValue, 'message) => 'statuses,
+      )
+      : option('statuses) => {
+    switch (fieldStatus) {
+    | Validating(_)
+    | Dirty(_, Shown) => None
+    | Pristine
+    | Dirty(_, Hidden) =>
+      switch (validator.strategy) {
+      | OnFirstChange
+      | OnFirstSuccess
+      | OnSubmit =>
+        Dirty(validator.validate(input, ~at=index, ~metadata), Hidden)
+        ->setStatus
+        ->Some
+      | OnFirstBlur
+      | OnFirstSuccessOrFirstBlur =>
+        switch (validator.validate(input, ~at=index, ~metadata)) {
+        | Ok(x) => Validating(x)->setStatus->Some
+        | Error(_) as result => Dirty(result, Shown)->setStatus->Some
+        }
+      }
+    };
+  };
+
   let validateFieldOfOptionTypeOnBlur =
       (
         ~input: 'input,
@@ -935,6 +1925,43 @@ module Async = {
       | OnFirstBlur
       | OnFirstSuccessOrFirstBlur =>
         switch (validator.validate(input)) {
+        | Ok(Some(_) as x) => Validating(x)->setStatus->Some
+        | Ok(None) as result
+        | Error(_) as result => Dirty(result, Shown)->setStatus->Some
+        }
+      }
+    };
+  };
+
+  let validateFieldOfOptionTypeOnBlurWithMetadata =
+      (
+        ~input: 'input,
+        ~metadata: 'metadata,
+        ~fieldStatus: fieldStatus('outputValue, 'message),
+        ~validator:
+           singleValueValidatorWithMetadata(
+             'input,
+             'outputValue,
+             'message,
+             'metadata,
+             'action,
+           ),
+        ~setStatus: fieldStatus('outputValue, 'message) => 'statuses,
+      )
+      : option('statuses) => {
+    switch (fieldStatus) {
+    | Validating(_)
+    | Dirty(_, Shown) => None
+    | Pristine
+    | Dirty(_, Hidden) =>
+      switch (validator.strategy) {
+      | OnFirstChange
+      | OnFirstSuccess
+      | OnSubmit =>
+        Dirty(validator.validate(input, metadata), Hidden)->setStatus->Some
+      | OnFirstBlur
+      | OnFirstSuccessOrFirstBlur =>
+        switch (validator.validate(input, metadata)) {
         | Ok(Some(_) as x) => Validating(x)->setStatus->Some
         | Ok(None) as result
         | Error(_) as result => Dirty(result, Shown)->setStatus->Some
@@ -979,6 +2006,46 @@ module Async = {
     };
   };
 
+  let validateFieldOfCollectionOfOptionTypeOnBlurWithMetadata =
+      (
+        ~input: 'input,
+        ~index: index,
+        ~metadata: 'metadata,
+        ~fieldStatus: fieldStatus('outputValue, 'message),
+        ~validator:
+           valueOfCollectionValidatorWithMetadata(
+             'input,
+             'outputValue,
+             'message,
+             'metadata,
+             'action,
+           ),
+        ~setStatus: fieldStatus('outputValue, 'message) => 'statuses,
+      )
+      : option('statuses) => {
+    switch (fieldStatus) {
+    | Validating(_)
+    | Dirty(_, Shown) => None
+    | Pristine
+    | Dirty(_, Hidden) =>
+      switch (validator.strategy) {
+      | OnFirstChange
+      | OnFirstSuccess
+      | OnSubmit =>
+        Dirty(validator.validate(input, ~at=index, ~metadata), Hidden)
+        ->setStatus
+        ->Some
+      | OnFirstBlur
+      | OnFirstSuccessOrFirstBlur =>
+        switch (validator.validate(input, ~at=index, ~metadata)) {
+        | Ok(Some(_) as x) => Validating(x)->setStatus->Some
+        | Ok(None) as result
+        | Error(_) as result => Dirty(result, Shown)->setStatus->Some
+        }
+      }
+    };
+  };
+
   let validateFieldOfStringTypeOnBlur =
       (
         ~input: 'input,
@@ -999,6 +2066,43 @@ module Async = {
       | OnFirstBlur
       | OnFirstSuccessOrFirstBlur =>
         switch (validator.validate(input)) {
+        | Ok("") as result
+        | Error(_) as result => Dirty(result, Shown)->setStatus->Some
+        | Ok(x) => Validating(x)->setStatus->Some
+        }
+      }
+    };
+  };
+
+  let validateFieldOfStringTypeOnBlurWithMetadata =
+      (
+        ~input: 'input,
+        ~metadata: 'metadata,
+        ~fieldStatus: fieldStatus(string, 'message),
+        ~validator:
+           singleValueValidatorWithMetadata(
+             'input,
+             string,
+             'message,
+             'metadata,
+             'action,
+           ),
+        ~setStatus: fieldStatus(string, 'message) => 'statuses,
+      )
+      : option('statuses) => {
+    switch (fieldStatus) {
+    | Validating(_)
+    | Dirty(_, Shown) => None
+    | Pristine
+    | Dirty(_, Hidden) =>
+      switch (validator.strategy) {
+      | OnFirstChange
+      | OnFirstSuccess
+      | OnSubmit =>
+        Dirty(validator.validate(input, metadata), Hidden)->setStatus->Some
+      | OnFirstBlur
+      | OnFirstSuccessOrFirstBlur =>
+        switch (validator.validate(input, metadata)) {
         | Ok("") as result
         | Error(_) as result => Dirty(result, Shown)->setStatus->Some
         | Ok(x) => Validating(x)->setStatus->Some
@@ -1038,6 +2142,46 @@ module Async = {
     };
   };
 
+  let validateFieldOfCollectionOfStringTypeOnBlurWithMetadata =
+      (
+        ~input: 'input,
+        ~index: index,
+        ~metadata: 'metadata,
+        ~fieldStatus: fieldStatus(string, 'message),
+        ~validator:
+           valueOfCollectionValidatorWithMetadata(
+             'input,
+             string,
+             'message,
+             'metadata,
+             'action,
+           ),
+        ~setStatus: fieldStatus(string, 'message) => 'statuses,
+      )
+      : option('statuses) => {
+    switch (fieldStatus) {
+    | Validating(_)
+    | Dirty(_, Shown) => None
+    | Pristine
+    | Dirty(_, Hidden) =>
+      switch (validator.strategy) {
+      | OnFirstChange
+      | OnFirstSuccess
+      | OnSubmit =>
+        Dirty(validator.validate(input, ~at=index, ~metadata), Hidden)
+        ->setStatus
+        ->Some
+      | OnFirstBlur
+      | OnFirstSuccessOrFirstBlur =>
+        switch (validator.validate(input, ~at=index, ~metadata)) {
+        | Ok("") as result
+        | Error(_) as result => Dirty(result, Shown)->setStatus->Some
+        | Ok(x) => Validating(x)->setStatus->Some
+        }
+      }
+    };
+  };
+
   let validateFieldOfOptionStringTypeOnBlur =
       (
         ~input: 'input,
@@ -1059,6 +2203,44 @@ module Async = {
       | OnFirstBlur
       | OnFirstSuccessOrFirstBlur =>
         switch (validator.validate(input)) {
+        | Ok(Some("")) as result
+        | Ok(None) as result
+        | Error(_) as result => Dirty(result, Shown)->setStatus->Some
+        | Ok(Some(_) as x) => Validating(x)->setStatus->Some
+        }
+      }
+    };
+  };
+
+  let validateFieldOfOptionStringTypeOnBlurWithMetadata =
+      (
+        ~input: 'input,
+        ~metadata: 'metadata,
+        ~fieldStatus: fieldStatus(option(string), 'message),
+        ~validator:
+           singleValueValidatorWithMetadata(
+             'input,
+             option(string),
+             'message,
+             'metadata,
+             'action,
+           ),
+        ~setStatus: fieldStatus(option(string), 'message) => 'statuses,
+      )
+      : option('statuses) => {
+    switch (fieldStatus) {
+    | Validating(_)
+    | Dirty(_, Shown) => None
+    | Pristine
+    | Dirty(_, Hidden) =>
+      switch (validator.strategy) {
+      | OnFirstChange
+      | OnFirstSuccess
+      | OnSubmit =>
+        Dirty(validator.validate(input, metadata), Hidden)->setStatus->Some
+      | OnFirstBlur
+      | OnFirstSuccessOrFirstBlur =>
+        switch (validator.validate(input, metadata)) {
         | Ok(Some("")) as result
         | Ok(None) as result
         | Error(_) as result => Dirty(result, Shown)->setStatus->Some
@@ -1096,6 +2278,47 @@ module Async = {
       | OnFirstBlur
       | OnFirstSuccessOrFirstBlur =>
         switch (validator.validate(input, ~at=index)) {
+        | Ok(Some("")) as result
+        | Ok(None) as result
+        | Error(_) as result => Dirty(result, Shown)->setStatus->Some
+        | Ok(Some(_) as x) => Validating(x)->setStatus->Some
+        }
+      }
+    };
+  };
+
+  let validateFieldOfCollectionOfOptionStringTypeOnBlurWithMetadata =
+      (
+        ~input: 'input,
+        ~index: index,
+        ~metadata: 'metadata,
+        ~fieldStatus: fieldStatus(option(string), 'message),
+        ~validator:
+           valueOfCollectionValidatorWithMetadata(
+             'input,
+             option(string),
+             'message,
+             'metadata,
+             'action,
+           ),
+        ~setStatus: fieldStatus(option(string), 'message) => 'statuses,
+      )
+      : option('statuses) => {
+    switch (fieldStatus) {
+    | Validating(_)
+    | Dirty(_, Shown) => None
+    | Pristine
+    | Dirty(_, Hidden) =>
+      switch (validator.strategy) {
+      | OnFirstChange
+      | OnFirstSuccess
+      | OnSubmit =>
+        Dirty(validator.validate(input, ~at=index, ~metadata), Hidden)
+        ->setStatus
+        ->Some
+      | OnFirstBlur
+      | OnFirstSuccessOrFirstBlur =>
+        switch (validator.validate(input, ~at=index, ~metadata)) {
         | Ok(Some("")) as result
         | Ok(None) as result
         | Error(_) as result => Dirty(result, Shown)->setStatus->Some

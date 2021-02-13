@@ -6,7 +6,7 @@ open Printer;
 open Ppxlib;
 open Ast_helper;
 
-let ast = (~loc, scheme: Scheme.t) =>
+let ast = (~loc, ~metadata: option(unit), scheme: Scheme.t) =>
   scheme
   |> List.fold_left(
        (acc, entry: Scheme.entry) =>
@@ -39,6 +39,7 @@ let ast = (~loc, scheme: Scheme.t) =>
                    Form_UseFormFn_BlurActions_SyncField.ast(
                      ~loc,
                      ~validator,
+                     ~metadata,
                      ~field_status_expr,
                      ~field_input_expr,
                      ~validator_expr,
@@ -48,6 +49,7 @@ let ast = (~loc, scheme: Scheme.t) =>
                    Form_UseFormFn_BlurActions_AsyncField.ast(
                      ~loc,
                      ~field,
+                     ~metadata,
                      ~optionality,
                      ~field_status_expr,
                      ~validator_expr,
@@ -111,6 +113,7 @@ let ast = (~loc, scheme: Scheme.t) =>
                           Form_UseFormFn_BlurActions_SyncFieldOfCollection.ast(
                             ~loc,
                             ~validator,
+                            ~metadata,
                             ~field_status_expr,
                             ~field_input_expr,
                             ~validator_expr,
@@ -121,6 +124,7 @@ let ast = (~loc, scheme: Scheme.t) =>
                             ~loc,
                             ~field,
                             ~collection,
+                            ~metadata,
                             ~optionality,
                             ~field_status_expr,
                             ~validator_expr,

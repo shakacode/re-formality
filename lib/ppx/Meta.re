@@ -1622,6 +1622,7 @@ module Metadata = {
     validators_record: ValidatorsRecord.t,
     message_type: option(unit),
     submission_error_type: option(unit),
+    metadata: option(unit),
     debounce_interval: option(unit),
   };
 
@@ -1652,6 +1653,7 @@ module Metadata = {
       ref(None);
     let message_type: ref(option(unit)) = ref(None);
     let submission_error_type: ref(option(unit)) = ref(None);
+    let metadata: ref(option(unit)) = ref(None);
     let debounce_interval_value: ref(option(unit)) = ref(None);
 
     structure
@@ -1746,6 +1748,10 @@ module Metadata = {
                   // Message type
                   | {ptype_name: {txt: "message"}, ptype_loc} =>
                     message_type := Some()
+
+                  // Metadata type
+                  | {ptype_name: {txt: "metadata"}, ptype_loc} =>
+                    metadata := Some()
 
                   // Submission error type
                   | {ptype_name: {txt: "submissionError"}, ptype_loc} =>
@@ -2412,6 +2418,7 @@ module Metadata = {
             validators_record,
             message_type: message_type^,
             submission_error_type: submission_error_type^,
+            metadata: metadata^,
             debounce_interval: debounce_interval_value^,
           })
         | Error(error) => Error(error)
