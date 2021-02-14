@@ -4,7 +4,7 @@ module Route = {
     | Login
     | BlogPost;
 
-  let fromUrl = (url: ReasonReactRouter.url) =>
+  let fromUrl = (url: RescriptReactRouter.url) =>
     switch (url.hash) {
     | "signup" => Signup
     | "login" => Login
@@ -15,7 +15,7 @@ module Route = {
 
 [@react.component]
 let make = () => {
-  let route = ReasonReactRouter.useUrl()->Route.fromUrl;
+  let route = RescriptReactRouter.useUrl()->Route.fromUrl;
 
   <div className="container">
     <div className="header">
@@ -34,7 +34,7 @@ let make = () => {
           | _ => ""
           },
         ])}
-        onClick={_ => ReasonReactRouter.push("#signup")}>
+        onClick={_ => RescriptReactRouter.push("#signup")}>
         "Signup"->React.string
       </button>
       <button
@@ -46,7 +46,7 @@ let make = () => {
           | _ => ""
           },
         ])}
-        onClick={_ => ReasonReactRouter.push("#login")}>
+        onClick={_ => RescriptReactRouter.push("#login")}>
         "Login"->React.string
       </button>
       <button
@@ -58,7 +58,7 @@ let make = () => {
           | _ => ""
           },
         ])}
-        onClick={_ => ReasonReactRouter.push("#blog-post")}>
+        onClick={_ => RescriptReactRouter.push("#blog-post")}>
         "Blog Post"->React.string
       </button>
     </div>

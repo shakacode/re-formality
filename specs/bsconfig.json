@@ -2,7 +2,7 @@
   "name": "re-formality-specs",
   "sources": ["app"],
   "bs-dependencies": [
-    "reason-react",
+    "@rescript/react",
     "re-formality"
   ],
   "reason": {

@@ -29,9 +29,9 @@ module Path = {
     Filename.(
       concat([current_dir_name, "node_modules", ".bin"] |> join, "bsrefmt")
     );
-  let reason_react =
+  let rescript_react =
     Filename.(
-      [parent_dir_name, "node_modules", "reason-react", "lib", "ocaml"]
+      [parent_dir_name, "node_modules", "@rescript", "react", "lib", "ocaml"]
       |> join
     );
   let re_formality =
@@ -52,7 +52,7 @@ module Bsc = {
       ++ " -I "
       ++ re_formality
       ++ " -I "
-      ++ reason_react
+      ++ rescript_react
       ++ " -w "
       ++ errors
       ++ " -warn-error "

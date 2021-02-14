@@ -837,6 +837,11 @@
     "@parcel/utils" "^1.11.0"
     physical-cpu-count "^2.0.0"
 
+"@rescript/react@0.10.1":
+  version "0.10.1"
+  resolved "https://registry.yarnpkg.com/@rescript/react/-/react-0.10.1.tgz#ddce66ba664a104354d559c350ca4ebf17ab5a26"
+  integrity sha512-5eIfGnV1yhjv03ktK6fQ6iEfsZKXKXXrq5hx4+ngEY4R/RU8o/oH9ne375m9RJMugV/jsE8hMoEeSSg2YQy3Ag==
+
 "@samverschueren/stream-to-observable@^0.3.0":
   version "0.3.0"
   resolved "https://registry.yarnpkg.com/@samverschueren/stream-to-observable/-/stream-to-observable-0.3.0.tgz#ecdf48d532c58ea477acfcab80348424f8d0662f"
@@ -1340,10 +1345,10 @@ browserslist@^4.0.0, browserslist@^4.1.0, browserslist@^4.6.0, browserslist@^4.8
     electron-to-chromium "^1.3.322"
     node-releases "^1.1.44"
 
-bs-platform@7.2.2:
-  version "7.2.2"
-  resolved "https://registry.yarnpkg.com/bs-platform/-/bs-platform-7.2.2.tgz#76fdc63e4889458ae3d257a0132107a792f2309c"
-  integrity sha512-PWcFfN+jCTtT/rMaHDhKh+W9RUTpaRunmSF9vbLYcrJbpgCNW6aFKAY33u0P3mLxwuhshN3b4FxqGUBPj6exZQ==
+bs-platform@9.0.0:
+  version "9.0.0"
+  resolved "https://registry.yarnpkg.com/bs-platform/-/bs-platform-9.0.0.tgz#873e9edcfe49a89b082e71c604d73bdb8276e2fb"
+  integrity sha512-32gIXIUt1RO+OUWLrkhXFOuZKS5Cka6lEShXaVC/ohg5N8cUnoNZW9M/vW3CWnmgZkQ0Hp9g9vj5I5NfzHpy5A==
 
 bsb-js@1.1.7:
   version "1.1.7"
@@ -4875,11 +4880,6 @@ readdirp@^2.2.1:
     graceful-fs "^4.1.11"
     micromatch "^3.1.10"
     readable-stream "^2.0.2"
-
-reason-react@0.8.0:
-  version "0.8.0"
-  resolved "https://registry.yarnpkg.com/reason-react/-/reason-react-0.8.0.tgz#a55143f95a872596c92b54595e7904c03ee7c9db"
-  integrity sha512-97AfK3eCF6vfP8rnbq3k6GgXsZt//OiPMINTUk5luJ8W0Wt/JaYsDG6eWKP8Zx3gPpxSU1EPjB1pUm6o6fBnFA==
 
 regenerate-unicode-properties@^8.1.0:
   version "8.1.0"

@@ -2,7 +2,7 @@
   "name": "re-formality",
   "sources": ["src"],
   "bs-dependencies": [
-    "reason-react",
+    "@rescript/react",
     "re-debouncer"
   ],
   "reason": {

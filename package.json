@@ -1,7 +1,7 @@
 {
   "name": "re-formality",
-  "version": "4.0.0-beta.10",
-  "description": "Form validation tool for reason-react",
+  "version": "4.0.0-beta.11",
+  "description": "Form validation tool for @rescript/react",
   "author": "Alex Fedoseev <alex.fedoseev@gmail.com>",
   "license": "MIT",
   "repository": {
@@ -16,8 +16,10 @@
   ],
   "keywords": [
     "react",
+    "rescript-react",
     "reason",
     "reason-react",
+    "rescript",
     "reasonml",
     "ocaml",
     "bucklescript",
