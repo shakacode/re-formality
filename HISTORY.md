@@ -1,5 +1,9 @@
 # History
 
+## 4.0.0-beta.11
+* **[ BREAKING ]** Switch to `@rescript/react`.
+* **[ BREAKING ]** Update `bs-platform`.
+
 ## 4.0.0-beta.10
 * Add `metadata`.
 
