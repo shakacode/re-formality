@@ -4,7 +4,7 @@
 [![build status](https://github.com/MinimaHQ/re-formality/workflows/re-formality%20pipeline/badge.svg)](https://github.com/MinimaHQ/re-formality/actions)
 [![license](https://img.shields.io/npm/l/re-formality.svg?style=flat-square)](https://www.npmjs.com/package/re-formality)
 
-Form validation tool for [`reason-react`](https://reasonml.github.io/reason-react/).
+Form validation tool for [`@rescript/react`](https://reasonml.github.io/reason-react/).
 
 ## Features
 * Validation strategies

@@ -18,14 +18,14 @@
     "predeploy": "yarn run build"
   },
   "dependencies": {
+    "@rescript/react": "0.10.1",
     "re-classnames": "4.1.0",
     "re-formality": "*",
     "react": "16.13.1",
-    "react-dom": "16.13.1",
-    "reason-react": "0.8.0"
+    "react-dom": "16.13.1"
   },
   "devDependencies": {
-    "bs-platform": "7.2.2",
+    "bs-platform": "8.4.2",
     "bsb-js": "1.1.7",
     "parcel-bundler": "1.12.4"
   }

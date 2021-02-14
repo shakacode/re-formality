@@ -19,7 +19,7 @@
     "re-debouncer": "2.1.0"
   },
   "devDependencies": {
-    "bs-platform": "7.2.2",
-    "reason-react": "0.8.0"
+    "@rescript/react": "0.10.1",
+    "bs-platform": "8.4.2"
   }
 }

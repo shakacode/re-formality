@@ -2,7 +2,7 @@
   "name": "re-formality-examples",
   "sources": ["src"],
   "bs-dependencies": [
-    "reason-react",
+    "@rescript/react",
     "re-formality",
     "re-classnames"
   ],
