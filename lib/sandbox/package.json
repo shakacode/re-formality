@@ -7,7 +7,7 @@
   },
   "dependencies": {
     "@rescript/react": "0.10.1",
-    "bs-platform": "8.4.2",
+    "bs-platform": "9.0.0",
     "re-formality": "*"
   }
 }
