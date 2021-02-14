@@ -2,7 +2,7 @@ module Test = {
   type t =
     | Placeholder;
 
-  let fromUrl = (url: ReasonReactRouter.url) =>
+  let fromUrl = (url: RescriptReactRouter.url) =>
     switch (url.hash) {
     | "Placeholder" => Placeholder
     | _ => failwith("Nothing here")
@@ -11,7 +11,7 @@ module Test = {
 
 [@react.component]
 let make = () => {
-  switch (ReasonReactRouter.useUrl()->Test.fromUrl) {
+  switch (RescriptReactRouter.useUrl()->Test.fromUrl) {
   | Placeholder => <Placeholder />
   };
 };
