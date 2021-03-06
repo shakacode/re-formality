@@ -4,6 +4,9 @@
   "description": "Form validation tool for @rescript/react",
   "author": "Alex Fedoseev <alex.fedoseev@gmail.com>",
   "license": "MIT",
+  "scripts": {
+    "release-static": "dune build --root . --only-packages '#{self.name}' --ignore-promoted-rules --no-config --profile release-static"
+  },
   "esy": {
     "build": "dune build -p #{self.name}",
     "buildsInSource": "_build"

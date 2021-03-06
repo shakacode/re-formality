@@ -9,7 +9,6 @@
     "bs:install": "bsb -install",
     "bs:clean": "bsb -clean-world",
     "ppx:build": "esy build",
-    "linux-release-static": "dune build -p '#{self.name}' --profile release-static",
     "test": "esy x test.exe",
     "test:output:read": "test/script/output-read",
     "test:output:write": "test/script/output-write",
