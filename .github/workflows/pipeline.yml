@@ -68,7 +68,7 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: |
           cd lib
-          esy dune build -p '#{self.name}' --profile release-static
+          esy release-static
 
       - name: Build BuckleScript lib
         run: |
