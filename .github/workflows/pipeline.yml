@@ -58,10 +58,17 @@ jobs:
           path: ${{ steps.print-esy-cache.outputs.esy-cache }}
           key: ${{ matrix.os }}-esy-${{ hashFiles('**/index.json') }}
 
-      - name: Build ppx
+      - name: Build ppx (non-linux)
+        if: matrix.os != 'ubuntu-latest'
         run: |
           cd lib
           esy build
+
+      - name: Build ppx (linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          cd lib
+          esy dune build -p '#{self.name}' --profile release-static
 
       - name: Build BuckleScript lib
         run: |
