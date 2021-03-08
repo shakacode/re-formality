@@ -99,7 +99,7 @@ jobs:
         node-version: [12.x]
         os: [ubuntu-latest]
     container:
-       image: cichocinski/docker-esy:alpine3.8
+       image: alexfedoseev/alpine-node-yarn-esy:0.0.1
 
     steps:
       - name: Checkout repo
