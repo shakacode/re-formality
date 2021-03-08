@@ -5,16 +5,6 @@ on:
     branches:
       - master
 
-shared:
-  .: &checkout
-    name: Checkout repo
-    uses: actions/checkout@v2
-  .: &setup-node
-    name: Setup Node ${{ matrix.node-version }}
-    uses: actions/setup-node@v1
-    with:
-      node-version: ${{ matrix.node-version }}
-
 jobs:
   build:
     name: Build on ${{ matrix.os }}
@@ -25,8 +15,13 @@ jobs:
         os: [ubuntu-latest, macOS-latest, windows-latest]
 
     steps:
-      - *checkout
-      - *setup-node
+      - name: Checkout repo
+        uses: actions/checkout@v2
+
+      - name: Setup Node ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
 
       - name: Print Yarn cache
         id: print-yarn-cache
