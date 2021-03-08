@@ -9,7 +9,7 @@
     "buildsInSource": "_build"
   },
   "scripts": {
-    "build-static": "dune build -p #{self.name} --ignore-promoted-rules --no-config --profile build-static"
+    "build-static": "dune build --root . --only-packages '#{self.name}' --ignore-promoted-rules --no-config --profile build-static"
   },
   "dependencies": {
     "@esy-ocaml/reason": "*",
