@@ -6,8 +6,10 @@
   "license": "MIT",
   "esy": {
     "build": "dune build -p #{self.name}",
-    "build-static": "dune build -p #{self.name} --ignore-promoted-rules --no-config --profile build-static",
     "buildsInSource": "_build"
+  },
+  "scripts": {
+    "build-static": "dune build -p #{self.name} --ignore-promoted-rules --no-config --profile build-static"
   },
   "dependencies": {
     "@esy-ocaml/reason": "*",
