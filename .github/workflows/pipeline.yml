@@ -11,7 +11,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        node-version: [12.x]
+        node-version: [14.x]
         os: [macOS-latest, windows-latest]
 
     steps:
@@ -96,19 +96,14 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        node-version: [12.x]
         os: [ubuntu-latest]
+
     container:
        image: alexfedoseev/alpine-node-yarn-esy:0.0.1
 
     steps:
       - name: Checkout repo
         uses: actions/checkout@v2
-
-      - name: Setup Node ${{ matrix.node-version }}
-        uses: actions/setup-node@v1
-        with:
-          node-version: ${{ matrix.node-version }}
 
       - name: Print Yarn cache
         id: print-yarn-cache
@@ -124,10 +119,6 @@ jobs:
       - name: Install Yarn deps
         run: |
           yarn install
-
-      - name: Install Esy
-        run: |
-          npm install -g esy@0.6.2
 
       - name: Install Esy deps
         run: |
@@ -192,7 +183,7 @@ jobs:
       - name: Setup Node ${{ matrix.node-version }}
         uses: actions/setup-node@v1
         with:
-          node-version: 12.x
+          node-version: 14.x
 
       - name: Download Linux artifacts
         uses: actions/download-artifact@v1

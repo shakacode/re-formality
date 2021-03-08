@@ -3,7 +3,7 @@
 # taken from https://github.com/anmonteiro/gh-feed-reader/blob/master/Dockerfile
 ################################################################################
 
-FROM node:12-alpine as build
+FROM node:14-alpine as build
 
 ENV TERM=dumb LD_LIBRARY_PATH=/usr/local/lib:/usr/lib:/lib
 
