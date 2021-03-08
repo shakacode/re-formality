@@ -12,7 +12,7 @@ jobs:
     strategy:
       matrix:
         node-version: [12.x]
-        os: [ubuntu-latest, macOS-latest, windows-latest]
+        os: [macOS-latest, windows-latest]
 
     steps:
       - name: Checkout repo
@@ -91,8 +91,97 @@ jobs:
           name: ${{ matrix.os }}
           path: lib/_build/default/bin/bin.exe
 
+  build_linux:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        node-version: [12.x]
+        os: [ubuntu-latest]
+    container:
+       image: cichocinski/docker-esy:alpine3.8
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v2
+
+      - name: Setup Node ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Print Yarn cache
+        id: print-yarn-cache
+        run: echo "::set-output name=yarn-cache::$(yarn cache dir)"
+
+      - name: Restore Yarn cache
+        id: yarn-cache
+        uses: actions/cache@v1
+        with:
+          path: ${{ steps.print-yarn-cache.outputs.yarn-cache }}
+          key: ${{ matrix.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+
+      - name: Install Yarn deps
+        run: |
+          yarn install
+
+      - name: Install Esy
+        run: |
+          npm install -g esy@0.6.2
+
+      - name: Install Esy deps
+        run: |
+          cd lib
+          esy install
+
+      - name: Print Esy cache
+        id: print-esy-cache
+        run: node .github/workflows/scripts/print-esy-cache.js
+
+      - name: Restore Esy cache
+        id: esy-cache
+        uses: actions/cache@v1
+        with:
+          path: ${{ steps.print-esy-cache.outputs.esy-cache }}
+          key: ${{ matrix.os }}-esy-${{ hashFiles('**/index.json') }}
+
+      - name: Build ppx
+        run: |
+          cd lib
+          esy build-static
+
+      - name: Build BuckleScript lib
+        run: |
+          cd lib
+          yarn bs:build
+
+      - name: Install public interface of BuckleScript lib
+        run: |
+          cd lib
+          yarn bs:install
+
+      - name: Run ppx tests
+        # FIXME: Snapshot tests are broken on Win
+        if: matrix.os != 'windows-latest'
+        run: |
+          cd lib
+          esy x test.exe
+
+      - name: Run integration tests
+        run: |
+          cd specs
+          yarn run test
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v1
+        with:
+          name: ${{ matrix.os }}
+          path: lib/_build/default/bin/bin.exe
+
   rc:
-    needs: build
+    needs:
+      - build
+      - build_linux
     name: Prepare RC
     runs-on: ubuntu-latest
 
