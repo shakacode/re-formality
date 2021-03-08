@@ -14,10 +14,6 @@ jobs:
         node-version: [12.x]
         os: [ubuntu-latest, macOS-latest, windows-latest]
 
-    container:
-      if: matrix.os == 'ubuntu-latest'
-      image: cichocinski/docker-esy:alpine3.8
-
     steps:
       - name: Checkout repo
         uses: actions/checkout@v2
