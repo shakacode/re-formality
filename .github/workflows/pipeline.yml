@@ -99,7 +99,7 @@ jobs:
         os: [ubuntu-latest]
 
     container:
-       image: alexfedoseev/alpine-node-yarn-esy:0.0.1
+       image: alexfedoseev/alpine-node-yarn-esy:0.0.2
 
     steps:
       - name: Checkout repo
