@@ -4,7 +4,7 @@ set -e
 set -o pipefail
 
 IMAGE=alexfedoseev/alpine-node-yarn-esy
-VERSION=0.0.2
+VERSION=0.0.3
 
 DOCKER_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 

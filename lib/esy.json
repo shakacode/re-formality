@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "@esy-ocaml/reason": "*",
-    "@opam/dune": "2.0.1",
+    "@opam/dune": "2.7.1",
     "@opam/ppxlib": "0.12.0",
     "ocaml": "~4.6.1000",
     "refmterr": "*"

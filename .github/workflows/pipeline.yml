@@ -40,7 +40,7 @@ jobs:
 
       - name: Install Esy
         run: |
-          npm install -g esy@0.6.2
+          npm install -g esy@0.6.8
 
       - name: Install Esy deps
         run: |

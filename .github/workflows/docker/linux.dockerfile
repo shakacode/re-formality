@@ -9,7 +9,7 @@ ENV TERM=dumb LD_LIBRARY_PATH=/usr/local/lib:/usr/lib:/lib
 
 WORKDIR /
 
-RUN npm install --global --unsafe-perm esy@0.6.2
+RUN npm install --global --unsafe-perm esy@0.6.8
 
 RUN apk add --no-cache ca-certificates wget bash curl perl-utils git patch \
   gcc g++ musl-dev make m4 linux-headers coreutils python
