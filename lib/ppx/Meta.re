@@ -664,7 +664,7 @@ module InputTypeParser = {
                  UnvalidatedDepField({name: dep}),
                  UnvalidatedDepField({name: dep'}),
                ) =>
-               dep == dep
+               dep == dep'
              | (
                  UnvalidatedDepFieldOfCollection({collection, field}),
                  UnvalidatedDepFieldOfCollection({

@@ -24,6 +24,7 @@ let () =
             "Ok__FieldWithSyncValidatorAndFieldWithAsyncValidatorInOnChangeMode",
             "Ok__FieldWithSyncValidatorAndFieldWithAsyncValidatorInOnBlurMode",
             "Ok__FieldWithSyncValidatorAndDependentFieldAndFieldWithSyncValidator",
+            "Ok__FieldWithSyncValidatorAndTwoDependentFieldsWithSyncValidators",
             "Ok__TwoFieldsWithNoValidators",
             "Ok__TwoFieldsWithSyncValidators",
             "Ok__TwoFieldsWithAsyncValidatorsInOnChangeMode",
