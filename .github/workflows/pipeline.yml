@@ -162,6 +162,11 @@ jobs:
       #     cd specs
       #     yarn run test
 
+      - name: Build ppx
+        run: |
+          cd lib
+          esy release-static
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v1
         with:
