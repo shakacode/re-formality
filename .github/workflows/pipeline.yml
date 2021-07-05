@@ -139,7 +139,7 @@ jobs:
       - name: Build ppx
         run: |
           cd lib
-          esy release-static
+          esy build
 
       - name: Build BuckleScript lib
         run: |
@@ -162,7 +162,7 @@ jobs:
       #     cd specs
       #     yarn run test
 
-      - name: Build ppx
+      - name: Build static ppx
         run: |
           cd lib
           esy release-static
