@@ -4,15 +4,15 @@
   "private": true,
   "scripts": {
     "start": "parcel src/index.html",
-    "prestart": "yarn run clean && yarn run bs:build",
+    "prestart": "yarn run clean && yarn run res:build",
     "build": "parcel build src/index.html",
-    "prebuild": "yarn run clean && yarn run bs:build",
-    "clean": "yarn run dist:clean && yarn run bs:clean",
-    "bs:build": "bsb -clean-world -make-world",
-    "bs:watch": "bsb -clean-world -make-world -w",
-    "bs:clean": "bsb -clean-world",
+    "prebuild": "yarn run clean && yarn run res:build",
+    "clean": "yarn run dist:clean && yarn run res:clean",
+    "res:build": "rescript build -with-deps",
+    "res:watch": "rescript build -with-deps -w",
+    "res:clean": "rescript clean",
     "dist:clean": "rm -rf dist",
-    "format": "bsrefmt --in-place **/*.{re,rei}",
+    "format": "rescript format -all",
     "test": "exit 0",
     "deploy": "now deploy dist --prod --name re-formality",
     "predeploy": "yarn run build"
@@ -25,8 +25,8 @@
     "react-dom": "16.13.1"
   },
   "devDependencies": {
-    "bs-platform": "9.0.0",
     "bsb-js": "1.1.7",
-    "parcel-bundler": "1.12.4"
+    "parcel-bundler": "1.12.4",
+    "rescript": "9.1.4"
   }
 }

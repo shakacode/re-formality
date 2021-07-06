@@ -1,2 +1,1 @@
-(lang dune 1.6)
-  (name re-formality-ppx)
+(lang dune 2.6)

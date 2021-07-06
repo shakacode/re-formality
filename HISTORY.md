@@ -1,5 +1,11 @@
 # History
 
+## 4.0.0-beta.15
+* Fix linux build [#104](https://github.com/MinimaHQ/re-formality/pull/104).
+
+## 4.0.0-beta.13
+* Fix multiple dependent fields [#101](https://github.com/MinimaHQ/re-formality/pull/101).
+
 ## 4.0.0-beta.11
 * **[ BREAKING ]** Switch to `@rescript/react`.
 * **[ BREAKING ]** Update `bs-platform`.
