@@ -1,5 +1,8 @@
 # History
 
+## 4.0.0-beta.16
+* Add support for m1 through rosetta [#106](https://github.com/shakacode/re-formality/pull/106).
+
 ## 4.0.0-beta.15
 * Fix linux build [#104](https://github.com/MinimaHQ/re-formality/pull/104).
 
