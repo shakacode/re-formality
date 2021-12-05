@@ -44,4 +44,4 @@ and author = {name: string}
 
 ---
 
-Next: **[Form Submission →](./08-FormSubmission.md)**
+Next: **[Metadata →](./08-Metadata.md)**
