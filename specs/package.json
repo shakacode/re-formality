@@ -4,23 +4,23 @@
   "private": true,
   "scripts": {
     "app:start": "parcel app/index.html --port 8080",
-    "bs:build": "bsb -clean-world -make-world",
-    "bs:watch": "bsb -make-world -w",
-    "bs:clean": "bsb -clean-world",
+    "res:build": "rescript build -with-deps",
+    "res:watch": "rescript build -with-deps -w",
+    "res:clean": "rescript clean",
     "cypress:open": "cypress open",
     "cypress:run": "cypress run",
     "test": "start-server-and-test app:start http://localhost:8080 cypress:run",
-    "pretest": "yarn run bs:build"
+    "pretest": "yarn run res:build"
   },
   "dependencies": {
-    "@rescript/react": "0.10.1",
-    "bs-platform": "9.0.0",
-    "bsb-js": "1.1.7",
+    "@rescript/react": "0.10.3",
     "cypress": "4.5.0",
-    "parcel-bundler": "1.12.4",
+    "parcel": "2.3.2",
+    "process": "0.11.10",
     "re-formality": "*",
     "react": "16.13.1",
     "react-dom": "16.13.1",
+    "rescript": "9.1.4",
     "start-server-and-test": "1.11.0"
   }
 }

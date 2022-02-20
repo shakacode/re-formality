@@ -3,7 +3,7 @@
   "sources": ["src"],
   "bs-dependencies": [
     "@rescript/react",
-    "re-debouncer"
+    "rescript-debounce"
   ],
   "reason": {
     "react-jsx": 3

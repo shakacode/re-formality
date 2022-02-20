@@ -1,0 +1,5 @@
+(executable
+  (name test)
+  (public_name test.exe)
+  (libraries alcotest str)
+)

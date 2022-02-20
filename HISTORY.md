@@ -1,5 +1,8 @@
 # History
 
+## 4.0.0-beta.17
+* Add native `arm64` support [#111](https://github.com/shakacode/re-formality/pull/111).
+
 ## 4.0.0-beta.16
 * Add support for m1 through rosetta [#106](https://github.com/shakacode/re-formality/pull/106).
 

@@ -10,7 +10,7 @@
   },
   "refmt": 3,
   "bsc-flags": ["-open Belt"],
-  "ppx-flags": ["../lib/_build/default/bin/bin.exe"],
+  "ppx-flags": ["../_build/default/ppx/bin/bin.exe"],
   "package-specs": {
     "module": "es6",
     "in-source": true
