@@ -1,0 +1,5 @@
+(executable
+  (name bin)
+  (public_name re-formality-ppx)
+  (libraries re-formality-ppx.lib)
+)

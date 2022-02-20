@@ -4,14 +4,17 @@
   "bs-dependencies": [
     "@rescript/react",
     "re-formality",
-    "re-classnames"
+    "rescript-classnames"
   ],
   "reason": {
     "react-jsx": 3
   },
   "refmt": 3,
-  "bsc-flags": ["-open Belt"],
-  "ppx-flags": ["../lib/_build/default/bin/bin.exe"],
+  "bsc-flags": [
+    "-open Belt",
+    "-open Cx"
+  ],
+  "ppx-flags": ["../_build/default/ppx/bin/bin.exe"],
   "package-specs": {
     "module": "es6",
     "in-source": true

@@ -837,10 +837,10 @@
     "@parcel/utils" "^1.11.0"
     physical-cpu-count "^2.0.0"
 
-"@rescript/react@0.10.1":
-  version "0.10.1"
-  resolved "https://registry.yarnpkg.com/@rescript/react/-/react-0.10.1.tgz#ddce66ba664a104354d559c350ca4ebf17ab5a26"
-  integrity sha512-5eIfGnV1yhjv03ktK6fQ6iEfsZKXKXXrq5hx4+ngEY4R/RU8o/oH9ne375m9RJMugV/jsE8hMoEeSSg2YQy3Ag==
+"@rescript/react@0.10.3":
+  version "0.10.3"
+  resolved "https://registry.yarnpkg.com/@rescript/react/-/react-0.10.3.tgz#a2a8bed6b017940ec26c2154764b350f50348889"
+  integrity sha512-Lf9rzrR3bQPKJjOK3PBRa/B3xrJ7CqQ1HYr9VHPVxJidarIJJFZBhj0Dg1uZURX+Wg/xiP0PHFxXmdj2bK8Vxw==
 
 "@samverschueren/stream-to-observable@^0.3.0":
   version "0.3.0"
@@ -1344,16 +1344,6 @@ browserslist@^4.0.0, browserslist@^4.1.0, browserslist@^4.6.0, browserslist@^4.8
     caniuse-lite "^1.0.30001017"
     electron-to-chromium "^1.3.322"
     node-releases "^1.1.44"
-
-bs-platform@9.0.0:
-  version "9.0.0"
-  resolved "https://registry.yarnpkg.com/bs-platform/-/bs-platform-9.0.0.tgz#873e9edcfe49a89b082e71c604d73bdb8276e2fb"
-  integrity sha512-32gIXIUt1RO+OUWLrkhXFOuZKS5Cka6lEShXaVC/ohg5N8cUnoNZW9M/vW3CWnmgZkQ0Hp9g9vj5I5NfzHpy5A==
-
-bsb-js@1.1.7:
-  version "1.1.7"
-  resolved "https://registry.yarnpkg.com/bsb-js/-/bsb-js-1.1.7.tgz#12cc91e974f5896b3a2aa8358419d24e56f552c3"
-  integrity sha512-FSR7d5Kb6KfVI5sLz9bEeD9pbA9F4Zbkk1xa6R9CJtyd+dJ7mIkxoXqv7cw7HWcuee+VpIhmjYzrplnFd/5Qgg==
 
 buffer-crc32@~0.2.3:
   version "0.2.13"
@@ -4816,16 +4806,6 @@ range-parser@~1.2.1:
   resolved "https://registry.yarnpkg.com/range-parser/-/range-parser-1.2.1.tgz#3cf37023d199e1c24d1a55b84800c2f3e6468031"
   integrity sha512-Hrgsx+orqoygnmhFbKaHE6c296J+HTAQXoxEF6gNupROmmGJRoyzfG3ccAveqCBrwr/2yxQ5BVd/GTl5agOwSg==
 
-re-classnames@4.1.0:
-  version "4.1.0"
-  resolved "https://registry.yarnpkg.com/re-classnames/-/re-classnames-4.1.0.tgz#a13e1d66d84518f55e78435579bc303f7dba55e1"
-  integrity sha512-3gWpk6R5AP3H2r+k+6rcEygcrSJ6wRbvEpPcW55USHhSCMNdHMRs9iD02mZ3+urKQygys+AjZMQXrZ6HDBA2IQ==
-
-re-debouncer@2.1.0:
-  version "2.1.0"
-  resolved "https://registry.yarnpkg.com/re-debouncer/-/re-debouncer-2.1.0.tgz#2eaf7994ba41590f4f80d4a363ae8905156b7dc1"
-  integrity sha512-Iy9BecWF9X4V6zXfL3ROZpKGkCnpzYdjG/j6NIBxQn7gEwO2DzED5BsbfRUiPeqr7C0tAD0HPHF6tYIcQFEnyA==
-
 react-dom@16.13.1:
   version "16.13.1"
   resolved "https://registry.yarnpkg.com/react-dom/-/react-dom-16.13.1.tgz#c1bd37331a0486c078ee54c4740720993b2e0e7f"
@@ -5036,6 +5016,16 @@ require-main-filename@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/require-main-filename/-/require-main-filename-2.0.0.tgz#d0b329ecc7cc0f61649f62215be69af54aa8989b"
   integrity sha512-NKN5kMDylKuldxYLSUfrbo5Tuzh4hd+2E8NPPX02mZtn1VuREQToYe/ZdlJy+J3uCpfaiGF05e7B8W0iXbQHmg==
+
+rescript-classnames@6.0.0:
+  version "6.0.0"
+  resolved "https://registry.yarnpkg.com/rescript-classnames/-/rescript-classnames-6.0.0.tgz#e833d9fc88e0e494c2ef39862721a80ab75fae32"
+  integrity sha512-hfOffijzIPnULtRZW3Kf0DCfCaw9lhGaMxf81WYlREieyBS2KNMcdI/8g5uSXFj0j4Ci21xkf70EFCKjuCTqpw==
+
+rescript-debounce@1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/rescript-debounce/-/rescript-debounce-1.0.0.tgz#943ba92f4f8560b6dba387f0f2614db87ae47eb1"
+  integrity sha512-vb1UlJvReXl9+p6TubaoEF06VBfAXdw+GPtDOPflce2IrqwCgwBVRn6mvImNFktPvyYvvDFDi36lihDamAM48w==
 
 rescript@9.1.4:
   version "9.1.4"

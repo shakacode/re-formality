@@ -2,7 +2,7 @@
   "name": "re-formality",
   "version": "4.0.0-beta.16",
   "description": "Form validation tool for @rescript/react",
-  "author": "Alex Fedoseev <alex.fedoseev@gmail.com>",
+  "author": "Alex Fedoseev <alex@fedoseev.mx>",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -12,7 +12,7 @@
     "lib",
     "specs",
     "examples",
-    "lib/sandbox"
+    "ppx/sandbox"
   ],
   "keywords": [
     "react",

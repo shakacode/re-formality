@@ -94,7 +94,7 @@ module Make = (Form: Form) => {
           )
         ->ignore
       );
-    fn->(Debouncer.make(~wait));
+    fn->(Debounce.make(~wait));
   };
 
   let getInitialState = input => {

@@ -3,23 +3,17 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "yarn run bs:watch",
-    "bs:build": "bsb -clean-world -make-world",
-    "bs:watch": "bsb -clean-world -make-world -w",
-    "bs:install": "bsb -install",
-    "bs:clean": "bsb -clean-world",
-    "ppx:build": "esy build",
-    "test": "esy x test.exe",
-    "test:output:read": "test/script/output-read",
-    "test:output:write": "test/script/output-write",
-    "test:clean": "test/script/clean",
-    "format": "bsrefmt --in-place **/*.{re,rei}"
+    "start": "yarn run res:watch",
+    "build": "rescript build -with-deps",
+    "watch": "rescript build -w",
+    "clean": "rescript clean",
+    "format": "rescript format -all"
   },
   "dependencies": {
-    "re-debouncer": "2.1.0"
+    "rescript-debounce": "1.0.0"
   },
   "devDependencies": {
-    "@rescript/react": "0.10.1",
-    "bs-platform": "9.0.0"
+    "@rescript/react": "0.10.3",
+    "rescript": "9.1.4"
   }
 }
