@@ -14,7 +14,7 @@ There might be 2 types of issues:
 1. Compile-time error.
 2. Runtime error (related to logic or just runtime crashes).
 
-If you are facing the former, add PPX test in [`lib/test`](./lib/test).<br>
+If you are facing the former, add PPX test in [`ppx/test`](./ppx/test).<br>
 If you are facing the latter, add integration test in [`specs`](./specs).
 
 See the corresponding README for details.
@@ -26,46 +26,58 @@ It would be great if you could reduce your test case to minimal size. I.e. inste
 ```shell
 - docs/       # Documentation
 - examples/   # Examples
-- lib/        # Library
+- lib/        # ReScript library
+  - src/      # ReScript library sources
+- ppx/        # PPX
   - bin/      # PPX binary
-  - ppx/      # PPX sources
-  - sandbox/  # Sandbox for PPX debugging
-  - src/      # BuckleScript lib sources
+  - lib/      # PPX implementation
+  - sandbox/  # PPX sandbox for debugging
   - test/     # PPX tests
 - specs/      # Integration tests
 ```
 
 ### Setup
-This repo uses `yarn` workspaces to manage frontend related dependencies and `esy` to manage PPX related dependencies.
+This repo uses `yarn` workspaces to manage frontend related dependencies and `esy` to manage PPX related dependencies (optionally, you can use `nix` shell instead of `esy` for development).
 
-Install dependencies:
+Install Yarn dependencies:
 
 ```shell
-# Install yarn deps
 yarn install
+```
 
-# Install esy deps
-cd lib
+Build ReScript library:
+
+```shell
+# In lib/ folder
+yarn rescript build -with-deps
+```
+
+Build public interface of the ReScript lib:
+
+```shell
+# Apparently `rescript` doesn't have `bsb -install` counterpart
+# So you need to build any app in this workspace that relies on `re-formality`
+
+# E.g. in ppx/sandbox folder
+yarn rescript build -with-deps
+```
+
+**Esy flow**
+Install Esy dependencies:
+
+```shell
 esy install
 ```
 
 Build PPX:
 
 ```shell
-# In lib folder
 esy build
 ```
 
-Build BuckleScript library:
+**Nix flow**
+Build PPX:
 
 ```shell
-# In lib folder
-yarn bsb -clean-world -make-world
-```
-
-Build public interface of the BuckleScript lib:
-
-```shell
-# In lib folder
-yarn bsb -install
+dune build
 ```
