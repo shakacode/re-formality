@@ -25,7 +25,8 @@
     "rescript-classnames": "6.0.0"
   },
   "devDependencies": {
-    "parcel-bundler": "1.12.4",
+    "parcel": "2.3.2",
+    "process": "0.11.10",
     "rescript": "9.1.4"
   }
 }

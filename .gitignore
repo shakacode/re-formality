@@ -2,9 +2,9 @@ node_modules/
 .direnv/
 .vscode/
 .envrc
-.cache
 .merlin
 .bsb.lock
+.parcel-cache
 *.bs.js
 yarn-error.log
 .DS_Store
