@@ -81,7 +81,7 @@ jobs:
         uses: actions/upload-artifact@v1
         with:
           name: ${{ matrix.os }}
-          path: lib/_build/default/ppx/bin/bin.exe
+          path: _build/default/ppx/bin/bin.exe
 
   build_linux:
     name: Build on ${{ matrix.os }}
@@ -157,7 +157,7 @@ jobs:
         uses: actions/upload-artifact@v1
         with:
           name: ${{ matrix.os }}
-          path: lib/_build/default/ppx/bin/bin.exe
+          path: _build/default/ppx/bin/bin.exe
 
   rc:
     needs:
