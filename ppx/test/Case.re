@@ -28,12 +28,12 @@ module Path = {
     );
   let rescript_react =
     Filename.(
-      [parent_dir_name, "node_modules", "@rescript", "react", "lib", "ocaml"]
+      [current_dir_name, "node_modules", "@rescript", "react", "lib", "ocaml"]
       |> join
     );
   let re_formality =
     Filename.(
-      [parent_dir_name, "node_modules", "re-formality", "lib", "ocaml"]
+      [current_dir_name, "node_modules", "re-formality", "lib", "ocaml"]
       |> join
     );
 };

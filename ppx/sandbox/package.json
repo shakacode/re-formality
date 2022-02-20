@@ -3,7 +3,8 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "rescript build -with-deps -w"
+    "start": "rescript build -with-deps -w",
+    "build": "rescript build -with-deps"
   },
   "dependencies": {
     "@rescript/react": "0.10.3",
