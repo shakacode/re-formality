@@ -13,6 +13,11 @@ Form validation tool for [`@rescript/react`](https://reasonml.github.io/reason-r
 * Dependent fields
 * I18n compatible
 
+> ### ShakaCode
+> If you are looking for help with the development and optimization of your project, [ShakaCode](https://www.shakacode.com) can help you to take the reliability and performance of your app to the next level.
+>
+> If you are a developer interested in working on ReScript / TypeScript / Rust / Ruby on Rails projects, [we're hiring](https://www.shakacode.com/career/)!
+
 ## Documentation
 - [Installation](./docs/01-Installation.md)
 - [Validation Strategies](./docs/02-ValidationStrategies.md)
