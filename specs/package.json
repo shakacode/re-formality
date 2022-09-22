@@ -20,7 +20,7 @@
     "re-formality": "*",
     "react": "16.13.1",
     "react-dom": "16.13.1",
-    "rescript": "9.1.4",
+    "rescript": "10.0.1",
     "start-server-and-test": "1.11.0"
   }
 }

@@ -2761,10 +2761,10 @@ rescript-debounce@1.0.0:
   resolved "https://registry.yarnpkg.com/rescript-debounce/-/rescript-debounce-1.0.0.tgz#943ba92f4f8560b6dba387f0f2614db87ae47eb1"
   integrity sha512-vb1UlJvReXl9+p6TubaoEF06VBfAXdw+GPtDOPflce2IrqwCgwBVRn6mvImNFktPvyYvvDFDi36lihDamAM48w==
 
-rescript@9.1.4:
-  version "9.1.4"
-  resolved "https://registry.yarnpkg.com/rescript/-/rescript-9.1.4.tgz#1eb126f98d6c16942c0bf0df67c050198e580515"
-  integrity sha512-aXANK4IqecJzdnDpJUsU6pxMViCR5ogAxzuqS0mOr8TloMnzAjJFu63fjD6LCkWrKAhlMkFFzQvVQYaAaVkFXw==
+rescript@10.0.1:
+  version "10.0.1"
+  resolved "https://registry.yarnpkg.com/rescript/-/rescript-10.0.1.tgz#5b2da8a8bcfb994bed1eb24820bf10cfb9d8c440"
+  integrity sha512-XwO1GPDtoEU4H03xQE5bp0/qtSVR6YLaJRPxWKrfFgKc+LI36ODOCie7o9UJfgzQdoMYkkZyiTGZ4N9OQEaiUw==
 
 resolve-from@^4.0.0:
   version "4.0.0"
