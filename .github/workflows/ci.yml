@@ -106,7 +106,7 @@ jobs:
         uses: actions/cache@v1
         with:
           path: ${{ steps.print-yarn-cache.outputs.yarn-cache }}
-          key: ${{ matrix.os }}-yarn-${{ hashFiles('**/yarn.lock') }}-v1
+          key: ${{ matrix.os }}-yarn-${{ hashFiles('yarn.lock') }}-v1
 
       - name: Install Yarn deps
         run: yarn install
@@ -123,7 +123,7 @@ jobs:
         uses: actions/cache@v1
         with:
           path: ${{ steps.print-esy-cache.outputs.esy-cache }}
-          key: ${{ matrix.os }}-esy-${{ hashFiles('**/index.json') }}
+          key: ${{ matrix.os }}-esy-${{ hashFiles('esy.lock/index.json') }}
 
       - name: Build ppx
         run: esy build
