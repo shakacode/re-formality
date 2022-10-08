@@ -13,6 +13,7 @@ mkShell {
     ocaml-lsp
     nodejs
     yarn
+    awscli2
     darwin.apple_sdk.frameworks.CoreServices
   ];
 }

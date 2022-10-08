@@ -19,6 +19,8 @@ fi
 echo "=== Unzipping release archive"
 unzip -d $RELEASE_DIR $RELEASE_ZIP
 rm $RELEASE_ZIP
+
+echo "Release tree:"
 tree -a -L 2 $RELEASE_DIR
 
 export CHMOD=$(stat -c %a "$RELEASE_BIN_DIR/$(ls $RELEASE_BIN_DIR | head -n 1)")
@@ -26,6 +28,7 @@ export CHMOD=$(stat -c %a "$RELEASE_BIN_DIR/$(ls $RELEASE_BIN_DIR | head -n 1)")
 ./scripts/build-macos-arm64.sh
 ./scripts/build-linux-arm64.sh
 
+echo "Release tree:"
 tree -a -L 2 $RELEASE_DIR
 
 echo ""

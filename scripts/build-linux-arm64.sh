@@ -4,8 +4,8 @@ set -euo pipefail
 
 export $(cat scripts/aws.env | xargs)
 
-ARCH="linux"
-PLATFORM="aarch64"
+ARCH="aarch64"
+PLATFORM="linux"
 
 BIN="$LIB-$PLATFORM-$ARCH.exe"
 REMOTE_BIN="~/re-formality/$RELEASE_DIR/$BIN"
@@ -50,7 +50,7 @@ USER="ubuntu"
 
 while :
 do
-  if ssh -o StrictHostKeyChecking=no -q -i aws.pem $USER@$INSTANCE_IP test -f "$REMOTE_BIN";
+  if ssh -o StrictHostKeyChecking=no -q -i scripts/aws.pem $USER@$INSTANCE_IP test -f "$REMOTE_BIN";
   then
     echo "Binary is ready. Downloading."
     break
@@ -59,7 +59,7 @@ do
   fi
 done
 
-scp -i aws.pem $USER@$INSTANCE_IP:$REMOTE_BIN $RELEASE_BIN
+scp -i scripts/aws.pem $USER@$INSTANCE_IP:$REMOTE_BIN $RELEASE_BIN
 echo "Downloaded."
 
 chmod $CHMOD $RELEASE_BIN
