@@ -15,5 +15,7 @@ yarn-error.log
 /examples/lib/
 /lib/lib/
 /specs/lib/
+/scripts/aws.env
+/scripts/aws.pem
 /ppx/test/**/*.cm[itj]
 re-formality-ppx.install
