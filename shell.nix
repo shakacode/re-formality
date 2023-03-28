@@ -1,11 +1,12 @@
 with import <nixpkgs> {};
-with pkgs.ocaml-ng.ocamlPackages_4_12;
+with pkgs.ocaml-ng.ocamlPackages_4_14;
 
 mkShell {
   buildInputs = [
     ocaml
-    dune_2
+    dune_3
     reason
+    result
     findlib
     ppxlib
     alcotest

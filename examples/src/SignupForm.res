@@ -8,7 +8,7 @@ module SignupForm = %form(
     email: {
       strategy: OnFirstSuccessOrFirstBlur,
       validate: ({email}) => {
-        let emailRegex = %re(`/.*@.*\\..+/`)
+        let emailRegex = %re(`/.*@.*\..+/`)
         switch email {
         | "" => Error("Email is required")
         | _ as value if !(emailRegex->Js.Re.test_(value)) => Error("Email is invalid")
