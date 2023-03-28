@@ -1,5 +1,5 @@
 with import <nixpkgs> {};
-with pkgs.ocaml-ng.ocamlPackages_4_14;
+with pkgs.ocaml-ng.ocamlPackages_4_12;
 
 mkShell {
   buildInputs = [
