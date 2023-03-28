@@ -1,30 +1,30 @@
 {
-  "name": "re-formality",
-  "version": "4.0.0-beta.18",
-  "description": "Form validation tool for @rescript/react",
-  "author": "Alex Fedoseev <alex@fedoseev.mx>",
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/MinimaHQ/re-formality.git"
-  },
-  "workspaces": [
-    "lib",
-    "specs",
-    "examples",
-    "ppx/sandbox"
-  ],
-  "keywords": [
-    "react",
-    "rescript-react",
-    "reason",
-    "reason-react",
-    "rescript",
-    "reasonml",
-    "ocaml",
-    "bucklescript",
-    "forms",
-    "validation"
-  ],
-  "private": true
+    "name": "re-formality",
+    "version": "4.0.0-beta.19",
+    "description": "Form validation tool for @rescript/react",
+    "author": "Alex Fedoseev <alex@fedoseev.mx>",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/MinimaHQ/re-formality.git"
+    },
+    "workspaces": [
+        "lib",
+        "specs",
+        "examples",
+        "ppx/sandbox"
+    ],
+    "keywords": [
+        "react",
+        "rescript-react",
+        "reason",
+        "reason-react",
+        "rescript",
+        "reasonml",
+        "ocaml",
+        "bucklescript",
+        "forms",
+        "validation"
+    ],
+    "private": true
 }

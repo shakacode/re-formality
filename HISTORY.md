@@ -1,5 +1,8 @@
 # History
 
+## 4.0.0-beta.19
+* Dependencies update.
+
 ## 4.0.0-beta.18
 * Add native Linux `arm64` support [#116](https://github.com/shakacode/re-formality/pull/116).
 
