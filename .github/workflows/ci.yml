@@ -11,8 +11,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        node-version: [16.x]
-        os: [macOS-latest, windows-latest]
+        node-version: [ 16.x ]
+        os: [ macOS-latest, windows-latest ]
 
     steps:
       - name: Checkout repo
@@ -85,10 +85,10 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest]
+        os: [ ubuntu-latest ]
 
     container:
-      image: alexfedoseev/alpine-node-yarn-esy:0.0.9
+      image: alexfedoseev/alpine-node-yarn-esy:0.0.10
 
     steps:
       - name: Checkout repo
