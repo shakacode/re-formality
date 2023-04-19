@@ -3,7 +3,7 @@ If the validity of one field depends on the value of another, use `@field.deps` 
 
 ```reason
 type input = {
-  a: @field.deps (b) string,
+  a: @field.deps(b) string,
   b: string,
 };
 ```
@@ -15,7 +15,7 @@ A real-world use-case is a form that updates a password:
 ```reason
 type input = {
   oldPassword string,
-  newPassword: @field.deps (newPasswordConfirmation) string,
+  newPassword: @field.deps(newPasswordConfirmation) string,
   newPasswordConfirmation: string,
 };
 ```
@@ -26,7 +26,7 @@ If you need to re-validate multiple fields, provide a tuple:
 
 ```reason
 type input = {
-  a: @field.deps ((b, c)) string,
+  a: @field.deps((b, c)) string,
   b: string,
   c: int,
 };
