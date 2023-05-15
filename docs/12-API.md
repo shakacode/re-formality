@@ -2,9 +2,9 @@
 
 - [Configuration](#configuration)
   - [`type input`](#type-input)
-    - [`[@field.async]`](#fieldasync)
-    - [`[@field.collection]`](#fieldcollection)
-    - [`[@field.deps]`](#fielddeps)
+    - [`@field.async`](#fieldasync)
+    - [`@field.collection`](#fieldcollection)
+    - [`@field.deps`](#fielddeps)
   - [`type output`](#type-output)
   - [`type message`](#type-message)
   - [`type metadata`](#metadata)
@@ -55,34 +55,34 @@ See **[IO](./03-IO.md)** & **[Basic Usage](./04-BasicUsage.md)**.
 <br>
 
 #### `input` field attributes
-##### `[@field.async]`
+##### `@field.async`
 **Requirements:** Optional.
 
 Attribute for a field with async validation.
 
 ```reason
-type input = {email: [@field.async] string};
+type input = {email: @field.async string};
 
 // OnChange mode
 // Default, use it if you want to be explicit.
-type input = {email: [@field.async {mode: OnChange}] string};
+type input = {email: @field.async({mode: OnChange}) string};
 
 // OnBlur mode
-type input = {email: [@field.async {mode: OnBlur}] string};
+type input = {email: @field.async({mode: OnBlur}) string};
 ```
 
 See **[Async Validation](./05-AsyncValidation.md)**.
 <br>
 <br>
 
-##### `[@field.collection]`
+##### `@field.collection`
 **Requirements:** Optional. If provided, must be an array.
 
 Attribute for a collection field.
 
 ```reason
-type input = {
-  authors: [@field.collection] array(author),
+type rec input = {
+  authors: @field.collection array<author>,
 }
 and author = {name: string};
 ```
@@ -91,14 +91,14 @@ See **[Collections](./06-Collections.md)**.
 <br>
 <br>
 
-##### `[@field.deps]`
+##### `@field.deps`
 **Requirements:** Optional.
 
 Dependent fields attribute.
 
 ```reason
 type input = {
-  a: [@field.deps b] string,
+  a: @field.deps(b) string,
   b: string,
 };
 ```
@@ -141,7 +141,7 @@ See **[Basic Usage](./04-BasicUsage.md)** & **[I18n](./10-I18n.md)**.
 Additional metadata.
 
 ```reason
-type metadata = { items: array(Item.t) };
+type metadata = { items: array<Item.t> };
 ```
 
 See **[Metadata](./08-Metadata.md)**.
@@ -189,50 +189,50 @@ let validators = {
   // General field
   field: {
     strategy: Strategy.t,
-    validate: input => result('outputValue, message),
+    validate: input => result<'outputValue, message>,
   },
 
   // Field of collection
   fieldOfCollection: {
-    collection: input => result(unit, message), // or None
+    collection: input => result<unit, message>, // or None
     fields: {
       strategy: Strategy.t,
-      validate: (input, ~at: int) => result('outputValue, message),
+      validate: (input, ~at: int) => result<'outputValue, message>,
     },
   },
 
   // Validator with `metadata`
   field: {
     strategy: Strategy.t,
-    validate: (input, metadata) => result('outputValue, message),
+    validate: (input, metadata) => result<'outputValue, message>,
   },
 
   // Async field
   asyncField: {
     strategy: Strategy.t,
-    validate: input => result('outputValue, message),
-    validateAsync: 'outputValue => Js.Promise.t(result('outputValue, message)),
+    validate: input => result<'outputValue, message>,
+    validateAsync: 'outputValue => Js.Promise.t<result<'outputValue, message>>,
   },
 
   // Async field of collection
   asyncFieldOfCollection: {
     strategy: Strategy.t,
-    validate: (input, ~at: int) => result('outputValue, message),
-    validateAsync: 'outputValue => Js.Promise.t(result('outputValue, message)),
+    validate: (input, ~at: int) => result<'outputValue, message>,
+    validateAsync: 'outputValue => Js.Promise.t<result<'outputValue, message>>,
   },
 
   // Async field with metadata
   asyncFieldWithEq: {
     strategy: Strategy.t,
-    validate: (input, metadata) => result('outputValue, message),
-    validateAsync: ('outputValue, metadata) => Js.Promise.t(result('outputValue, message)),
+    validate: (input, metadata) => result<'outputValue, message>,
+    validateAsync: ('outputValue, metadata) => Js.Promise.t<result<'outputValue, message>>,
   },
 
   // Async field with eq function
   asyncFieldWithEq: {
     strategy: Strategy.t,
-    validate: input => result('outputValue, message),
-    validateAsync: 'outputValue => Js.Promise.t(result('outputValue, message)),
+    validate: input => result<'outputValue, message>,
+    validateAsync: 'outputValue => Js.Promise.t<result<'outputValue, message>>,
     eq: ('outputValue, 'outputValue) => bool,
   },
 
@@ -246,7 +246,7 @@ See **[Validation Strategies](./02-ValidationStrategies.md)**, **[Basic Usage](.
 <br>
 
 ## Rendering
-Module created via `[%form]` extension exposes `useForm` React hook.
+Module created via `%form` extension exposes `useForm` React hook.
 
 ### `useForm`
 React hook.
@@ -271,7 +271,7 @@ Callbacks passed to `onSubmit` handler.
 
 ```reason
 type submissionCallbacks = {
-  notifyOnSuccess: option(input) => unit,
+  notifyOnSuccess: option<input> => unit,
   notifyOnFailure: submissionError => unit,
   reset: unit => unit,
   dismissSubmissionResult: unit => unit,
@@ -288,7 +288,7 @@ Interface to the hook.
 ```reason
 type interface = {
   input: input,
-  status: Formality.formStatus(submissionError),
+  status: Formality.formStatus<submissionError>,
   submitting: bool,
   dirty: unit => bool,
   submit: unit => unit,
@@ -300,22 +300,22 @@ type interface = {
   // General form
   valid: unit => bool,
   // Form with async fields
-  valid: unit => option(bool),
+  valid: unit => option<bool>,
 
   // General field
   update[Field]: ((input, 'inputValue) => input, 'inputValue) => unit,
   blur[Field]: unit => unit,
-  [field]Result: option(result('outputValue, message)),
+  [field]Result: option<result<'outputValue, message>>,
 
   // Async field
   update[Field]: ((input, 'inputValue) => input, 'inputValue) => unit,
   blur[Field]: unit => unit,
-  [field]Result: option(Formality.Async.exposedFieldStatus('outputValue, message)),
+  [field]Result: option<Formality.Async.exposedFieldStatus<'outputValue, message>>,
 
   // Field of collection
   update[CollectionEntry][Field]: (~at: index, (input, 'inputValue) => input, 'inputValue) => unit,
   blur[CollectionEntry][Field]: (~at: index) => unit,
-  [collectionEntry][Field]Result: (~at: index) => option(result('outputValue, message)),
+  [collectionEntry][Field]Result: (~at: index) => option<result<'outputValue, message>>,
 
   // Collection
   add[CollectionEntry]: 'collectionEntryInput => unit,
@@ -353,17 +353,17 @@ Used to display validation result for a specific field.
 
 ```reason
 // Field
-[field]Result: option(result('outputValue, message)),
+[field]Result: option<result<'outputValue, message>>,
 
 // Async field
 type asyncResult =
   | Validating('outputValue)
-  | Result(result('outputValue, message));
+  | Result(result<'outputValue, message>);
 
-[field]Result: option(asyncResult),
+[field]Result: option<asyncResult>,
 
 // Field of collection
-[collectionEntry][Field]Result: (~at: index) => option(result('outputValue, message)),
+[collectionEntry][Field]Result: (~at: index) => option<result<'outputValue, message>>,
 ```
 <br>
 
@@ -393,7 +393,7 @@ Current form status.
 ```reason
 type formStatus =
   | Editing
-  | Submitting(option(MyForm.submissionError))
+  | Submitting(option<MyForm.submissionError>)
   | Submitted
   | SubmissionFailed(MyForm.submissionError);
 
@@ -460,7 +460,7 @@ reset: unit => unit
 #### `valid`
 The function that would report the overall validity of the form.
 
-In forms with async fields, it would return `option(bool)`. `None` is possible when one of the async fields in `Validating` state, i.e. we don't know yet if it's valid or not. Also, keep in mind, if one of the async fields wasn't touched yet, it would perform only local validation.
+In forms with async fields, it would return `option<bool>`. `None` is possible when one of the async fields in `Validating` state, i.e. we don't know yet if it's valid or not. Also, keep in mind, if one of the async fields wasn't touched yet, it would perform only local validation.
 
 Use this function with caution since it might introduce noticeable overhead on large forms.
 
@@ -469,5 +469,5 @@ Use this function with caution since it might introduce noticeable overhead on l
 valid: unit => bool
 
 // Form with async fields
-valid: unit => option(bool)
+valid: unit => option<bool>
 ```
