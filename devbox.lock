@@ -1,0 +1,22 @@
+{
+  "lockfile_version": "1",
+  "packages": {
+    "nodejs": {
+      "resolved": "github:NixOS/nixpkgs/f80ac848e3d6f0c12c52758c0f25c10c97ca3b62#nodejs",
+      "source": "nixpkg"
+    },
+    "path:./nix/ocaml#alcotest": {},
+    "path:./nix/ocaml#dune": {},
+    "path:./nix/ocaml#findlib": {},
+    "path:./nix/ocaml#lsp": {},
+    "path:./nix/ocaml#merlin": {},
+    "path:./nix/ocaml#ocaml": {},
+    "path:./nix/ocaml#ppxlib": {},
+    "path:./nix/ocaml#reason": {},
+    "path:./nix/ocaml#result": {},
+    "yarn": {
+      "resolved": "github:NixOS/nixpkgs/f80ac848e3d6f0c12c52758c0f25c10c97ca3b62#yarn",
+      "source": "nixpkg"
+    }
+  }
+}
