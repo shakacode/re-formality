@@ -10,7 +10,8 @@
         "path:./nix/ocaml#merlin",
         "path:./nix/ocaml#lsp",
         "nodejs",
-        "yarn"
+        "yarn",
+        "awscli2"
     ],
     "shell": {
         "init_hook": [
