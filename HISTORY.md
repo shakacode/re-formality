@@ -1,5 +1,8 @@
 # History
 
+## 4.0.0-beta.20
+* Fix Linux `arm64` binary name.
+
 ## 4.0.0-beta.19
 * Dependencies update.
 

@@ -1,5 +1,6 @@
 node_modules/
 .direnv/
+.devbox/
 .vscode/
 .envrc
 .merlin
