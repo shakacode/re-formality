@@ -12,16 +12,16 @@ jobs:
     strategy:
       matrix:
         node-version: [ 16.x ]
-        os: [ macOS-latest ]
+        os: [ macOS-latest, windows-latest ]
 
     steps:
       - name: Checkout repo
         uses: actions/checkout@v2
 
-      - name: Install devbox
-        uses: jetpack-io/devbox-install-action@v0.6.0
+      - name: Setup Node ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
         with:
-          enable-cache: "true"
+          node-version: ${{ matrix.node-version }}
 
       - name: Print Yarn cache
         id: print-yarn-cache
@@ -37,8 +37,25 @@ jobs:
       - name: Install Yarn deps
         run: yarn install
 
+      - name: Install Esy
+        run: npm install -g esy@0.6.12
+
+      - name: Install Esy deps
+        run: esy install
+
+      - name: Print Esy cache
+        id: print-esy-cache
+        run: node .github/workflows/scripts/print-esy-cache.js
+
+      - name: Restore Esy cache
+        id: esy-cache
+        uses: actions/cache@v1
+        with:
+          path: ${{ steps.print-esy-cache.outputs.esy-cache }}
+          key: ${{ matrix.os }}-esy-${{ hashFiles('**/index.json') }}
+
       - name: Build ppx
-        run: devbox run build
+        run: esy build
 
       - name: Build ReScript lib
         run: |
@@ -48,7 +65,9 @@ jobs:
           yarn run build
 
       - name: Run ppx tests
-        run: devbox run test
+        # FIXME: Snapshot tests are broken on Win
+        if: matrix.os != 'windows-latest'
+        run: esy x test.exe
 
       - name: Run integration tests
         run: |

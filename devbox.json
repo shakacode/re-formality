@@ -15,10 +15,6 @@
     "shell": {
         "init_hook": [
             "export PATH=$PATH:node_modules/.bin"
-        ],
-        "scripts": {
-            "build": "dune build",
-            "test": "dune exec test.exe"
-        }
+        ]
     }
 }
