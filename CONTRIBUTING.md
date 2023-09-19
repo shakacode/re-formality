@@ -75,7 +75,7 @@ Build PPX:
 esy build
 ```
 
-**Nix flow**
+**Nix/Devbox flow**
 Build PPX:
 
 ```shell

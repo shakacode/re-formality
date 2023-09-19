@@ -4,7 +4,7 @@ set -euo pipefail
 
 export $(cat scripts/aws.env | xargs)
 
-ARCH="aarch64"
+ARCH="arm64"
 PLATFORM="linux"
 
 BIN="$LIB-$PLATFORM-$ARCH.exe"

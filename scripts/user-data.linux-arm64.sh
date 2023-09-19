@@ -7,20 +7,17 @@ exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
 export DEBIAN_FRONTEND=noninteractive
 
 apt update
-apt install opam -y
 
 sudo -u ubuntu bash -xec 'pwd;
-OCAML_VERSION=4.12.0;
-opam init --no;
-opam switch create $OCAML_VERSION;
-eval $(opam env --switch=$OCAML_VERSION);
-opam install -y dune ppxlib reason alcotest;
 cd ~;
+curl -fsSL https://get.jetpack.io/devbox -o devbox.sh;
+bash devbox.sh -f;
 git clone https://github.com/shakacode/re-formality.git;
 cd re-formality;
-dune build;
-ARCH=$(uname -m);
-PLATFORM=$(uname -s | tr "[:upper:]" "[:lower:]");
+devbox shell;
+devbox run build;
+ARCH=arm64;
+PLATFORM=linux;
 OPAM_FILE=$(basename -- $(find *.opam));
 LIB="${OPAM_FILE%.*}";
 SOURCE_BIN="_build/default/ppx/bin/bin.exe";
