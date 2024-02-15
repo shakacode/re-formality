@@ -8,7 +8,7 @@ type input = {
 };
 ```
 
- In the case above, it states: "If the value of field `a` has changed, please, re-validate field `b` as well".
+In the case above, it states: "If the value of field `a` has changed, please, re-validate field `b` as well".
 
 A real-world use-case is a form that updates a password:
 
@@ -35,7 +35,7 @@ type input = {
 If one of the dependent fields is a field of collection, define it like this:
 
 ```reason
-type input = {
+type rec input = {
   title: @field.deps(author.name) string,
   authors: @field.collection array<author>,
 }

@@ -10,15 +10,15 @@ To implement debounced async validations, you need to annotate your input field:
 
 ```reason
 type input = {
-  email: [@field.async] string,
+  email: @field.async string,
 };
 ```
 
-And update the validator: in addition to the `strategy` and `validate` entries, add `validateAsync` function which takes value of `output` type of the field and returns `Js.Promise.t(result([OUTPUT_TYPE_OF_FIELD], message))`. In case of the `email` field, it would be `Js.Promise.t(result(Email.t, message))`.
+And update the validator: in addition to the `strategy` and `validate` entries, add `validateAsync` function which takes value of `output` type of the field and returns `Js.Promise.t<result<[OUTPUT_TYPE_OF_FIELD], message>>`. In case of the `email` field, it would be `Js.Promise.t<result<Email.t, message>>`.
 
 ```reason
 type input = {
-  email: [@field.async] string,
+  email: @field.async string,
 };
 
 type output = {
@@ -47,9 +47,9 @@ let validators = {
 On the rendering side of things, there is only one change. The type of field result is a bit different:
 
 ```reason
-type asyncFieldStatus('outputValue, 'message) =
+type asyncFieldStatus<'outputValue, 'message> =
   | Validating('outputValue)
-  | Result(result('outputValue, 'message));
+  | Result(result<'outputValue, 'message>);
 ```
 
 So in UI it would look like this:
@@ -121,7 +121,7 @@ If you want to trigger async validations on blur, define mode explicitly:
 
 ```reason
 type input = {
-  email: [@field.async {mode: OnBlur}] string,
+  email: @field.async({mode: OnBlur}) string,
 };
 ```
 

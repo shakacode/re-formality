@@ -5,7 +5,7 @@ It takes 2 steps to implement a form:
 2. Render a form UI.
 
 ## Creating a form hook
-Form hook can be created using `[%form]` ppx extension. It requires at least 2 things:
+Form hook can be created using `%form()` ppx extension. It requires at least 2 things:
 
 - `input` type which must be a record
 - `validators` record
@@ -13,30 +13,30 @@ Form hook can be created using `[%form]` ppx extension. It requires at least 2 t
 Let's start with the `input`:
 
 ```reason
-module LoginForm = [%form
+module LoginForm = %form(
   type input = {
     email: string,
     password: string,
   };
-];
+);
 ```
 
 As mentioned in [**IO**](./03-IO.md) section, there should be an `output` type defined somewhere. If it's not provided, then under the hood it gets aliased to an `input` type. So the generated code would look like this:
 
 ```reason
-module LoginForm = [%form
+module LoginForm = %form(
   type input = {
     email: string,
     password: string,
   };
   type output = input;
-];
+);
 ```
 
 But since we want to deserialize form input into type-safe representation, we will provide our own `output` type with the `email` field set to `Email.t` type.
 
 ```reason
-module LoginForm = [%form
+module LoginForm = %form(
   type input = {
     email: string,
     password: string,
@@ -45,7 +45,7 @@ module LoginForm = [%form
     email: Email.t,
     password: string,
   };
-];
+);
 ```
 
 Worth mentioning, fields in the `output` type must be the same as in `input` type. Otherwise, it would be a compile-time error.
@@ -58,10 +58,10 @@ type output = LoginData.t;
 
 One more optional type that is involved here is `message`—the type of error messages that would be displayed in UI. If an app doesn't implement internalization, you can skip this type and it would be set to `string` (this is what we're going to do in the current example). Otherwise, feel free to use your own type here. See **[I18n](./10-I18n.md)** section for more details.
 
-The next thing to implement is a `validators`: a record with the same set of fields as in `input`/`output`, each holds instructions on how to validate a field. Let's implement one for `email` field, assuming that somewhere in the app there is an `Email` module that defines `Email.t` type and `Email.validate` function which takes `string` and returns `result(Email.t, string)`.
+The next thing to implement is a `validators`: a record with the same set of fields as in `input`/`output`, each holds instructions on how to validate a field. Let's implement one for `email` field, assuming that somewhere in the app there is an `Email` module that defines `Email.t` type and `Email.validate` function which takes `string` and returns `result<Email.t, string>`.
 
 ```reason
-// Email.validate: string => result(Email.t, string)
+// Email.validate: string => result<Email.t, string>
 let validators = {
   email: {
     strategy: OnFirstSuccessOrFirstBlur,
@@ -72,7 +72,7 @@ let validators = {
 
 First of all, you don't need to define a type for `validators`. It's already done by the ppx. In the simplest possible case, field validator record has 2 entries:
 1. `strategy`: as described in **[Validation Strategies](./02-ValidationStrategies.md)** section
-2. `validate`: function that takes `input` as argument and returns `result([OUTPUT_TYPE_OF_FIELD], message)`. In the `email` case, it's `result(Email.t, message)`.
+2. `validate`: function that takes `input` as argument and returns `result<[OUTPUT_TYPE_OF_FIELD], message>`. In the `email` case, it's `result<Email.t, message>`.
 
 If field shouldn't be validated, set its validator to `None`:
 
@@ -100,7 +100,7 @@ let validators = {
 Looks like we're done with the first step:
 
 ```reason
-module LoginForm = [%form
+module LoginForm = %form(
   type input = {
     email: string,
     password: string,
@@ -125,7 +125,7 @@ module LoginForm = [%form
         },
     },
   };
-];
+);
 ```
 
 ## Rendering UI
@@ -133,7 +133,7 @@ The resulting module exposes the `useForm` hook that we are going to use for ren
 
 ### `useForm` hook
 ```reason
-[@react.component]
+@react.component
 let make = () => {
   let form =
     LoginForm.useForm(
@@ -155,7 +155,7 @@ As a result, we get a `form` record that holds everything we need to render UI.
 Let's start with the `<form />` tag:
 
 ```reason
-[@react.component]
+@react.component
 let make = () => {
   let form = LoginForm.useForm(...);
 
@@ -273,9 +273,9 @@ But when submission fails, we need to display an error message in UI. So we need
 Here, we need to mention `form.status`. Form hook tracks the status of the whole form which can be in the following states:
 
 ```reason
-type formStatus('submissionError) =
+type formStatus<'submissionError> =
   | Editing
-  | Submitting(option('submissionError))
+  | Submitting(option<'submissionError>)
   | Submitted
   | SubmissionFailed('submissionError);
 ```
@@ -298,7 +298,7 @@ switch (form.status) {
 The whole implementation:
 
 ```reason
-module LoginForm = [%form
+module LoginForm = %form(
   type input = {
     email: string,
     password: string,
@@ -323,9 +323,9 @@ module LoginForm = [%form
         },
     },
   };
-];
+);
 
-[@react.component]
+@react.component
 let make = () => {
   let form =
     LoginForm.useForm(

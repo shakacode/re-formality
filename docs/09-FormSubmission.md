@@ -2,9 +2,9 @@
 `Formality` keeps track of the whole form status which can be in the following states:
 
 ```reason
-type formStatus('submissionError) =
+type formStatus<'submissionError> =
   | Editing
-  | Submitting(option('submissionError))
+  | Submitting(option<'submissionError>)
   | Submitted
   | SubmissionFailed('submissionError);
 ```
@@ -15,15 +15,15 @@ As it's been shown in **[Basic Usage](./04-BasicUsage.md)** section, to trigger 
 `onSubmit` handler takes 2 arguments: `output` data and callbacks. Let's look into the latter.
 
 ```reason
-type submissionCallbacks('input, 'submissionError) = {
-  notifyOnSuccess: option('input) => unit,
+type submissionCallbacks<'input, 'submissionError> = {
+  notifyOnSuccess: option<'input> => unit,
   notifyOnFailure: 'submissionError => unit,
   reset: unit => unit,
   dismissSubmissionResult: unit => unit,
 };
 ```
 
-### `notifyOnSuccess: option('input) => unit`
+### `notifyOnSuccess: option<'input> => unit`
 This callback should be triggered after successful submission if you don't want to completely reset the form but set it to `Submitted` state preserving all internal statuses. Optionally, you can pass the next `input` that would replace the current one.
 
 ### `notifyOnFailure: 'submissionError => unit`
@@ -43,7 +43,7 @@ type submissionError =
   | UnexpectedServerError;
 ```
 
-Then, when a response from the server is received, you can pass one of those constructors to the `notifyOnFailure` and it will be available via `form.status` variant in `SubmissionFailed(submissionError)` constructor.
+Then, when a response from the server is received, you can pass one of those constructors to the `notifyOnFailure` and it will be available via `form.status` variant in `SubmissionFailed<submissionError>` constructor.
 
 If you don't need to parse submission errors in your form, skip this type and it would be set to `unit` under the hood:
 

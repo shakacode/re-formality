@@ -2,25 +2,25 @@
 Collection is an array that contains sets of fields that can be added or removed from a form.
 
 ## Configuration
-To define a collection, you need to annotate a field in the `input` record with `[@field.collection]` attribute:
+To define a collection, you need to annotate a field in the `input` record with `@field.collection` attribute:
 
 ```reason
-type input = {
-  authors: [@field.collection] array(author),
+type rec input = {
+  authors: @field.collection array<author>,
 }
 and author = {name: string};
 ```
 
 Such field has few requirements:
-1. It must be of `array(entry)` type
+1. It must be of `array<entry>` type
 2. `entry` type must be a record which definition is inlined in the configuration module
-3. `[@field.collection]` can't be combined with other attributes but each field in `entry` record can be handled as any other field in the `input` record. E.g. you can do this:
+3. `@field.collection` can't be combined with other attributes but each field in `entry` record can be handled as any other field in the `input` record. E.g. you can do this:
 
 ```reason
-type input = {
-  authors: [@field.collection] array(author),
+type rec input = {
+  authors: @field.collection array<author>,
 }
-and author = {name: [@field.async] string};
+and author = {name: @field.async string};
 ```
 
 Also, make sure the naming is consistent. E.g. annotated `authors` field (plural) holds an array of `author` records (singular).
@@ -28,13 +28,13 @@ Also, make sure the naming is consistent. E.g. annotated `authors` field (plural
 When the `output` type is different, the implementation might look like this:
 
 ```reason
-type input = {
-  authors: [@field.collection] array(author),
+type rec input = {
+  authors: @field.collection array<author>,
 }
 and author = {name: string};
 
-type output = {
-  authors: array(author'),
+type rec output = {
+  authors: array<author'>,
 }
 and author' = {name: Author.name};
 ```
@@ -43,9 +43,9 @@ Collection validator has the following shape:
 
 ```reason
 authors: {
-  collection: input => result(unit, message),
+  collection: input => result<unit, message>,
   fields: {
-    name: (input, ~at: int) => result([OUTPUT_TYPE_OF_FIELD], message),
+    name: (input, ~at: int) => result<[OUTPUT_TYPE_OF_FIELD], message>,
   }
 }
 ```
