@@ -9,6 +9,8 @@
         "path:./nix/ocaml#alcotest",
         "path:./nix/ocaml#merlin",
         "path:./nix/ocaml#lsp",
+        "path:./nix/ocaml#ocamlformat",
+        "path:./nix/ocaml#ocamlformat_rpc",
         "nodejs",
         "yarn",
         "awscli2"

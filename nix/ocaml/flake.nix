@@ -44,6 +44,8 @@
                     alcotest = ocamlPackages.alcotest;
                     merlin = ocamlPackages.merlin;
                     lsp = ocamlPackages.ocaml-lsp;
+                    ocamlformat = ocamlPackages.ocamlformat;
+                    ocamlformat_rpc = ocamlPackages.ocamlformat-rpc-lib;
                 };
             }
         );
