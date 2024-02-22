@@ -19,7 +19,7 @@ module SignupForm = %form(
         open Js.Promise
         email
         ->Api.validateEmail
-        ->then_(valid => valid ? Ok(email)->resolve : Error("Email is already taken")->resolve, _)
+        ->(then_(valid => valid ? Ok(email)->resolve : Error("Email is already taken")->resolve, _))
       },
     },
     password: {
@@ -28,7 +28,8 @@ module SignupForm = %form(
         let minLength = 4
         switch password {
         | "" => Error("Password is required")
-        | _ if password->Js.String.length < minLength => Error(j` $(minLength)+ characters, please`)
+        | _ if password->Js.String.length < minLength =>
+          Error(` ${minLength->Int.toString}+ characters, please`)
         | _ => Ok(password)
         }
       },
@@ -90,7 +91,7 @@ let make = () => {
           </div>
         | Some(Result(Ok(_))) =>
           <div className={cx(["form-message", "form-message-for-field", "success"])}>
-            {j`✓`->React.string}
+            {"✓"->React.string}
           </div>
         | None => React.null
         }}
@@ -119,7 +120,7 @@ let make = () => {
           </div>
         | Some(Ok(_)) =>
           <div className={cx(["form-message", "form-message-for-field", "success"])}>
-            {j`✓`->React.string}
+            {"✓"->React.string}
           </div>
         | None => React.null
         }}
@@ -147,7 +148,7 @@ let make = () => {
           </div>
         | Some(Ok(_)) =>
           <div className={cx(["form-message", "form-message-for-field", "success"])}>
-            {j`✓`->React.string}
+            {"✓"->React.string}
           </div>
         | None => React.null
         }}
@@ -158,7 +159,7 @@ let make = () => {
         </button>
         {switch form.status {
         | Submitted =>
-          <div className={cx(["form-status", "success"])}> {j`✓ Signed Up`->React.string} </div>
+          <div className={cx(["form-status", "success"])}> {"✓ Signed Up"->React.string} </div>
         | _ => React.null
         }}
       </div>

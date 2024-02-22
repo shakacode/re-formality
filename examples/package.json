@@ -1,32 +1,32 @@
 {
-  "name": "re-formality-examples",
-  "version": "0.0.0",
-  "private": true,
-  "scripts": {
-    "start": "parcel src/index.html",
-    "prestart": "yarn run clean && yarn run res:build",
-    "build": "parcel build src/index.html",
-    "prebuild": "yarn run clean && yarn run res:build",
-    "clean": "yarn run dist:clean && yarn run res:clean",
-    "res:build": "rescript build -with-deps",
-    "res:watch": "rescript build -with-deps -w",
-    "res:clean": "rescript clean",
-    "dist:clean": "rm -rf dist",
-    "format": "rescript format -all",
-    "test": "exit 0",
-    "deploy": "now deploy dist --prod --name re-formality",
-    "predeploy": "yarn run build"
-  },
-  "dependencies": {
-    "@rescript/react": "0.11.0",
-    "re-formality": "*",
-    "react": "18.2.0",
-    "react-dom": "18.2.0",
-    "rescript-classnames": "6.0.0"
-  },
-  "devDependencies": {
-    "parcel": "2.8.3",
-    "process": "0.11.10",
-    "rescript": "10.1.3"
-  }
+    "name": "re-formality-examples",
+    "version": "0.0.0",
+    "private": true,
+    "scripts": {
+        "start": "parcel src/index.html",
+        "prestart": "yarn run clean && yarn run res:build",
+        "build": "parcel build src/index.html",
+        "prebuild": "yarn run clean && yarn run res:build",
+        "clean": "yarn run dist:clean && yarn run res:clean",
+        "res:build": "rescript build -with-deps",
+        "res:watch": "rescript build -with-deps -w",
+        "res:clean": "rescript clean",
+        "dist:clean": "rm -rf dist",
+        "format": "rescript format -all",
+        "test": "exit 0",
+        "deploy": "now deploy dist --prod --name re-formality",
+        "predeploy": "yarn run build"
+    },
+    "dependencies": {
+        "@rescript/react": "0.12.1",
+        "re-formality": "*",
+        "react": "18.2.0",
+        "react-dom": "18.2.0",
+        "rescript-classnames": "7.0.0"
+    },
+    "devDependencies": {
+        "parcel": "2.8.3",
+        "process": "0.11.10",
+        "rescript": "11.0.1"
+    }
 }

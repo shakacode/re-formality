@@ -69,7 +69,7 @@ let make = () => {
           </div>
         | Some(Ok(_)) =>
           <div className={cx(["form-message", "form-message-for-field", "success"])}>
-            {j`✓`->React.string}
+            {"✓"->React.string}
           </div>
         | None => React.null
         }}
@@ -95,7 +95,7 @@ let make = () => {
           </div>
         | Some(Ok(_)) =>
           <div className={cx(["form-message", "form-message-for-field", "success"])}>
-            {j`✓`->React.string}
+            {"✓"->React.string}
           </div>
         | None => React.null
         }}
@@ -122,7 +122,7 @@ let make = () => {
         </button>
         {switch form.status {
         | Submitted =>
-          <div className={cx(["form-status", "success"])}> {j`✓ Logged In`->React.string} </div>
+          <div className={cx(["form-status", "success"])}> {"✓ Logged In"->React.string} </div>
         | _ => React.null
         }}
       </div>
