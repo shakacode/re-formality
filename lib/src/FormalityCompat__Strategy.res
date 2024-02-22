@@ -3,4 +3,4 @@ type t =
   | OnFirstChange
   | OnFirstSuccess
   | OnFirstSuccessOrFirstBlur
-  | OnSubmit;
+  | OnSubmit
