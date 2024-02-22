@@ -15,15 +15,17 @@ let ast ~loc ~async ~metadata =
                   match metadata with
                   | None ->
                     [%expr
-                      (state.input |. validateForm)
+                      validateForm
+                        state.input
                         ~validators
-                        ~fieldsStatuses:state.fieldsStatuses]
+                        ~fieldsStatuses:state.fieldsStatuses [@res.uapp]]
                   | Some () ->
                     [%expr
-                      (state.input |. validateForm)
+                      validateForm
+                        state.input
                         ~validators
                         ~fieldsStatuses:state.fieldsStatuses
-                        ~metadata]]
+                        ~metadata [@res.uapp]]]
               with
               | Validating { fieldsStatuses; collectionsStatuses } ->
                 Update { state with fieldsStatuses; collectionsStatuses }
@@ -39,16 +41,48 @@ let ast ~loc ~async ~metadata =
                            | Editing | Submitted | Submitting _ -> None)
                     ; submissionStatus = AttemptedToSubmit
                     }
-                  , fun { state = _; dispatch } ->
-                      (output |. onSubmit)
-                        { notifyOnSuccess =
-                            (fun input -> SetSubmittedStatus input |. dispatch)
-                        ; notifyOnFailure =
-                            (fun error -> SetSubmissionFailedStatus error |. dispatch)
-                        ; reset = (fun () -> Reset |. dispatch)
-                        ; dismissSubmissionResult =
-                            (fun () -> DismissSubmissionResult |. dispatch)
-                        } )
+                  , [%e
+                      Uncurried.fn
+                        ~loc
+                        ~arity:1
+                        [%expr
+                          fun { state = _; dispatch } ->
+                            (onSubmit
+                               output
+                               { notifyOnSuccess =
+                                   [%e
+                                     Uncurried.fn
+                                       ~loc
+                                       ~arity:1
+                                       [%expr
+                                         fun input ->
+                                           (dispatch
+                                              (SetSubmittedStatus input) [@res.uapp])]]
+                               ; notifyOnFailure =
+                                   [%e
+                                     Uncurried.fn
+                                       ~loc
+                                       ~arity:1
+                                       [%expr
+                                         fun error ->
+                                           (dispatch
+                                              (SetSubmissionFailedStatus error)
+                                            [@res.uapp])]]
+                               ; reset =
+                                   [%e
+                                     Uncurried.fn
+                                       ~loc
+                                       ~arity:1
+                                       [%expr fun () -> (dispatch Reset [@res.uapp])]]
+                               ; dismissSubmissionResult =
+                                   [%e
+                                     Uncurried.fn
+                                       ~loc
+                                       ~arity:1
+                                       [%expr
+                                         fun () ->
+                                           (dispatch DismissSubmissionResult [@res.uapp])]]
+                               } [@res.uapp])]] )
               | Invalid { fieldsStatuses; collectionsStatuses } ->
                 Update
                   { state with
@@ -69,15 +103,17 @@ let ast ~loc ~async ~metadata =
                   match metadata with
                   | None ->
                     [%expr
-                      (state.input |. validateForm)
+                      validateForm
+                        state.input
                         ~validators
-                        ~fieldsStatuses:state.fieldsStatuses]
+                        ~fieldsStatuses:state.fieldsStatuses [@res.uapp]]
                   | Some () ->
                     [%expr
-                      (state.input |. validateForm)
+                      validateForm
+                        state.input
                         ~validators
                         ~fieldsStatuses:state.fieldsStatuses
-                        ~metadata]]
+                        ~metadata [@res.uapp]]]
               with
               | Valid { output; fieldsStatuses; collectionsStatuses } ->
                 UpdateWithSideEffects
@@ -91,16 +127,48 @@ let ast ~loc ~async ~metadata =
                            | Editing | Submitted | Submitting _ -> None)
                     ; submissionStatus = AttemptedToSubmit
                     }
-                  , fun { state = _; dispatch } ->
-                      (output |. onSubmit)
-                        { notifyOnSuccess =
-                            (fun input -> SetSubmittedStatus input |. dispatch)
-                        ; notifyOnFailure =
-                            (fun error -> SetSubmissionFailedStatus error |. dispatch)
-                        ; reset = (fun () -> Reset |. dispatch)
-                        ; dismissSubmissionResult =
-                            (fun () -> DismissSubmissionResult |. dispatch)
-                        } )
+                  , [%e
+                      Uncurried.fn
+                        ~loc
+                        ~arity:1
+                        [%expr
+                          fun { state = _; dispatch } ->
+                            (onSubmit
+                               output
+                               { notifyOnSuccess =
+                                   [%e
+                                     Uncurried.fn
+                                       ~loc
+                                       ~arity:1
+                                       [%expr
+                                         fun input ->
+                                           (dispatch
+                                              (SetSubmittedStatus input) [@res.uapp])]]
+                               ; notifyOnFailure =
+                                   [%e
+                                     Uncurried.fn
+                                       ~loc
+                                       ~arity:1
+                                       [%expr
+                                         fun error ->
+                                           (dispatch
+                                              (SetSubmissionFailedStatus error)
+                                            [@res.uapp])]]
+                               ; reset =
+                                   [%e
+                                     Uncurried.fn
+                                       ~loc
+                                       ~arity:1
+                                       [%expr fun () -> (dispatch Reset [@res.uapp])]]
+                               ; dismissSubmissionResult =
+                                   [%e
+                                     Uncurried.fn
+                                       ~loc
+                                       ~arity:1
+                                       [%expr
+                                         fun () ->
+                                           (dispatch DismissSubmissionResult [@res.uapp])]]
+                               } [@res.uapp])]] )
               | Invalid { fieldsStatuses; collectionsStatuses } ->
                 Update
                   { state with
@@ -118,13 +186,13 @@ let ast ~loc ~async ~metadata =
             { state with
               input
             ; formStatus = Submitted
-            ; fieldsStatuses = input |. initialFieldsStatuses
+            ; fieldsStatuses = initialFieldsStatuses input [@res.uapp]
             }
         | None ->
           Update
             { state with
               formStatus = Submitted
-            ; fieldsStatuses = state.input |. initialFieldsStatuses
+            ; fieldsStatuses = initialFieldsStatuses state.input [@res.uapp]
             }]
   ; Exp.case
       [%pat? SetSubmissionFailedStatus error]
@@ -134,9 +202,9 @@ let ast ~loc ~async ~metadata =
       [%expr
         match state.formStatus with
         | Submitting (Some error) ->
-          Update { state with formStatus = Submitting (Some (error |. map)) }
+          Update { state with formStatus = Submitting (Some (map error [@res.uapp])) }
         | SubmissionFailed error ->
-          Update { state with formStatus = SubmissionFailed (error |. map) }
+          Update { state with formStatus = SubmissionFailed (map error [@res.uapp]) }
         | Editing | Submitting None | Submitted -> NoUpdate]
   ; Exp.case
       [%pat? DismissSubmissionError]
@@ -150,6 +218,6 @@ let ast ~loc ~async ~metadata =
         match state.formStatus with
         | Editing | Submitting _ -> NoUpdate
         | Submitted | SubmissionFailed _ -> Update { state with formStatus = Editing }]
-  ; Exp.case [%pat? Reset] [%expr Update (initialInput |. initialState)]
+  ; Exp.case [%pat? Reset] [%expr Update (initialState initialInput [@res.uapp])]
   ]
 ;;

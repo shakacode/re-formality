@@ -1,11 +1,19 @@
 open Ppxlib
-let ast ~loc  =
+
+let ast ~loc =
   [%stri
-    let initialState input =
-      {
-        input;
-        fieldsStatuses = (input |. initialFieldsStatuses);
-        collectionsStatuses = initialCollectionsStatuses;
-        formStatus = Editing;
-        submissionStatus = NeverSubmitted
-      }]
+    let initialState =
+      [%e
+        Uncurried.fn
+          ~loc
+          ~arity:1
+          [%expr
+            fun input ->
+              { input
+              ; fieldsStatuses = initialFieldsStatuses input [@res.uapp]
+              ; collectionsStatuses = initialCollectionsStatuses
+              ; formStatus = Editing
+              ; submissionStatus = NeverSubmitted
+              }]]
+    ;;]
+;;

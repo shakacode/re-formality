@@ -11,38 +11,42 @@ module Dirty = struct
     | CollectionsOnly of { collections_cond : expression }
     | FieldsAndCollections of { collections_cond : expression }
 
-  let warning_4_disable ~loc = Attr.mk ("warning" |> str ~loc) (PStr [ [%stri "-4"] ])
-
   let collection_cond ~loc ({ collection; fields } : Scheme.collection) =
     [%expr
       Belt.Array.every
         [%e E.field2 ~in_:("state", "fieldsStatuses") ~loc collection.plural]
-        (fun item ->
-          [%e
-            Exp.match_
-              ~attrs:[ warning_4_disable ~loc ]
-              [%expr item]
-              [ Exp.case
-                  (Pat.record
-                     (fields
-                      |> List.rev_map (fun (field : Scheme.field) ->
-                        Lident field.name |> lid ~loc, [%pat? Pristine]))
-                     Closed)
-                  [%expr false]
-              ; Exp.case
-                  (Pat.record
-                     (fields
-                      |> List.rev_map (fun (field : Scheme.field) ->
-                        ( Lident field.name |> lid ~loc
-                        , match fields, field.validator with
-                          | _x :: [], SyncValidator _ -> [%pat? Dirty _]
-                          | _x :: [], AsyncValidator _ -> [%pat? Dirty _ | Validating _]
-                          | _, SyncValidator _ -> [%pat? Pristine | Dirty _]
-                          | _, AsyncValidator _ ->
-                            [%pat? Pristine | Dirty _ | Validating _] )))
-                     Closed)
-                  [%expr true]
-              ]])]
+        [%e
+          Uncurried.fn
+            ~loc
+            ~arity:1
+            [%expr
+              fun item ->
+                [%e
+                  Exp.match_
+                    ~attrs:[ warning_4_disable ~loc ]
+                    [%expr item]
+                    [ Exp.case
+                        (Pat.record
+                           (fields
+                            |> List.rev_map (fun (field : Scheme.field) ->
+                              Lident field.name |> lid ~loc, [%pat? Pristine]))
+                           Closed)
+                        [%expr false]
+                    ; Exp.case
+                        (Pat.record
+                           (fields
+                            |> List.rev_map (fun (field : Scheme.field) ->
+                              ( Lident field.name |> lid ~loc
+                              , match fields, field.validator with
+                                | _x :: [], SyncValidator _ -> [%pat? Dirty _]
+                                | _x :: [], AsyncValidator _ ->
+                                  [%pat? Dirty _ | Validating _]
+                                | _, SyncValidator _ -> [%pat? Pristine | Dirty _]
+                                | _, AsyncValidator _ ->
+                                  [%pat? Pristine | Dirty _ | Validating _] )))
+                           Closed)
+                        [%expr true]
+                    ]]]] [@res.uapp]]
   ;;
 end
 
@@ -121,58 +125,71 @@ let ast ~(scheme : Scheme.t) ~(async : bool) ~(metadata : unit option) ~loc =
         [%expr state.fieldsStatuses]
         [ no_case; yes_case ]
     in
-    [%expr
-      fun () ->
-        [%e
-          match context with
-          | FieldsOnly -> match_exp
-          | CollectionsOnly { collections_cond } -> collections_cond
-          | FieldsAndCollections { collections_cond } ->
-            [%expr if [%e collections_cond] then true else [%e match_exp]]]]
+    Uncurried.fn
+      ~loc
+      ~arity:1
+      [%expr
+        fun () ->
+          [%e
+            match context with
+            | FieldsOnly -> match_exp
+            | CollectionsOnly { collections_cond } -> collections_cond
+            | FieldsAndCollections { collections_cond } ->
+              [%expr if [%e collections_cond] then true else [%e match_exp]]]]
   in
   let valid =
     if async
     then
-      [%expr
-        fun () ->
-          match
-            [%e
-              match metadata with
-              | None ->
-                [%expr
-                  (state.input |. validateForm)
-                    ~validators
-                    ~fieldsStatuses:state.fieldsStatuses]
-              | Some () ->
-                [%expr
-                  (state.input |. validateForm)
-                    ~validators
-                    ~fieldsStatuses:state.fieldsStatuses
-                    ~metadata]]
-          with
-          | Validating _ -> None
-          | Valid _ -> Some true
-          | Invalid _ -> Some false]
+      Uncurried.fn
+        ~loc
+        ~arity:1
+        [%expr
+          fun () ->
+            match
+              [%e
+                match metadata with
+                | None ->
+                  [%expr
+                    validateForm
+                      state.input
+                      ~validators
+                      ~fieldsStatuses:state.fieldsStatuses [@res.uapp]]
+                | Some () ->
+                  [%expr
+                    validateForm
+                      state.input
+                      ~validators
+                      ~fieldsStatuses:state.fieldsStatuses
+                      ~metadata [@res.uapp]]]
+            with
+            | Validating _ -> None
+            | Valid _ -> Some true
+            | Invalid _ -> Some false]
     else
-      [%expr
-        fun () ->
-          match
-            [%e
-              match metadata with
-              | None ->
-                [%expr
-                  (state.input |. validateForm)
-                    ~validators
-                    ~fieldsStatuses:state.fieldsStatuses]
-              | Some () ->
-                [%expr
-                  (state.input |. validateForm)
-                    ~validators
-                    ~fieldsStatuses:state.fieldsStatuses
-                    ~metadata]]
-          with
-          | Valid _ -> true
-          | Invalid _ -> false]
+      Uncurried.fn
+        ~loc
+        ~arity:1
+        [%expr
+          fun () ->
+            match
+              [%e
+                match metadata with
+                | None ->
+                  [%expr
+                    validateForm
+                      state.input
+                      ~validators
+                      ~fieldsStatuses:state.fieldsStatuses [@res.uapp]]
+                | Some () ->
+                  [%expr
+                    validateForm
+                      state.input
+                      ~validators
+                      ~fieldsStatuses:state.fieldsStatuses
+                      ~metadata [@res.uapp]]]
+            with
+            | Valid _ -> true
+            | Invalid _ -> false]
   in
   let base =
     [ "input", [%expr state.input]
@@ -184,11 +201,23 @@ let ast ~(scheme : Scheme.t) ~(async : bool) ~(metadata : unit option) ~loc =
           match state.formStatus with
           | Submitting _ -> true
           | Editing | Submitted | SubmissionFailed _ -> false] )
-    ; "submit", [%expr fun () -> Submit |. dispatch]
-    ; "mapSubmissionError", [%expr fun map -> MapSubmissionError map |. dispatch]
-    ; "dismissSubmissionError", [%expr fun () -> DismissSubmissionError |. dispatch]
-    ; "dismissSubmissionResult", [%expr fun () -> DismissSubmissionResult |. dispatch]
-    ; "reset", [%expr fun () -> Reset |. dispatch]
+    ; "submit", Uncurried.fn ~loc ~arity:1 [%expr fun () -> (dispatch Submit [@res.uapp])]
+    ; ( "mapSubmissionError"
+      , Uncurried.fn
+          ~loc
+          ~arity:1
+          [%expr fun map -> (dispatch (MapSubmissionError map) [@res.uapp])] )
+    ; ( "dismissSubmissionError"
+      , Uncurried.fn
+          ~loc
+          ~arity:1
+          [%expr fun () -> (dispatch DismissSubmissionError [@res.uapp])] )
+    ; ( "dismissSubmissionResult"
+      , Uncurried.fn
+          ~loc
+          ~arity:1
+          [%expr fun () -> (dispatch DismissSubmissionResult [@res.uapp])] )
+    ; "reset", Uncurried.fn ~loc ~arity:1 [%expr fun () -> (dispatch Reset [@res.uapp])]
     ]
   in
   let update_fns =
@@ -198,30 +227,52 @@ let ast ~(scheme : Scheme.t) ~(async : bool) ~(metadata : unit option) ~loc =
            match entry with
            | Field field ->
              ( FieldPrinter.update_fn ~field:field.name
-             , [%expr
-                 fun nextInputFn nextValue ->
-                   [%e
-                     Exp.construct
-                       (Lident (FieldPrinter.update_action ~field:field.name) |> lid ~loc)
-                       (Some [%expr fun __x -> nextInputFn __x nextValue])]
-                   |. dispatch] )
+             , Uncurried.fn
+                 ~loc
+                 ~arity:2
+                 [%expr
+                   fun nextInputFn nextValue ->
+                     (dispatch
+                        [%e
+                          Exp.construct
+                            (Lident (FieldPrinter.update_action ~field:field.name)
+                             |> lid ~loc)
+                            (Some
+                               (Uncurried.fn
+                                  ~loc
+                                  ~arity:1
+                                  [%expr
+                                    fun __x -> (nextInputFn __x nextValue [@res.uapp])]))]
+                      [@res.uapp])] )
              :: acc
            | Collection { collection; fields } ->
              fields
              |> List.fold_left
                   (fun acc (field : Scheme.field) ->
                     ( FieldOfCollectionPrinter.update_fn ~collection ~field:field.name
-                    , [%expr
-                        fun ~at:index nextInputFn nextValue ->
-                          [%e
-                            Exp.construct
-                              (Lident
-                                 (FieldOfCollectionPrinter.update_action
-                                    ~collection
-                                    ~field:field.name)
-                               |> lid ~loc)
-                              (Some [%expr (fun __x -> nextInputFn __x nextValue), index])]
-                          |. dispatch] )
+                    , Uncurried.fn
+                        ~loc
+                        ~arity:3
+                        [%expr
+                          fun ~at:index nextInputFn nextValue ->
+                            (dispatch
+                               [%e
+                                 Exp.construct
+                                   (Lident
+                                      (FieldOfCollectionPrinter.update_action
+                                         ~collection
+                                         ~field:field.name)
+                                    |> lid ~loc)
+                                   (Some
+                                      [%expr
+                                        [%e
+                                          Uncurried.fn
+                                            ~loc
+                                            ~arity:1
+                                            [%expr
+                                              fun __x ->
+                                                (nextInputFn __x nextValue [@res.uapp])]]
+                                        , index])] [@res.uapp])] )
                     :: acc)
                   acc)
          []
@@ -233,30 +284,37 @@ let ast ~(scheme : Scheme.t) ~(async : bool) ~(metadata : unit option) ~loc =
            match entry with
            | Field field ->
              ( FieldPrinter.blur_fn ~field:field.name
-             , [%expr
-                 fun () ->
-                   [%e
-                     Exp.construct
-                       (Lident (FieldPrinter.blur_action ~field:field.name) |> lid ~loc)
-                       None]
-                   |. dispatch] )
+             , Uncurried.fn
+                 ~loc
+                 ~arity:1
+                 [%expr
+                   fun () ->
+                     (dispatch
+                        [%e
+                          Exp.construct
+                            (Lident (FieldPrinter.blur_action ~field:field.name)
+                             |> lid ~loc)
+                            None] [@res.uapp])] )
              :: acc
            | Collection { collection; fields } ->
              fields
              |> List.fold_left
                   (fun acc (field : Scheme.field) ->
                     ( FieldOfCollectionPrinter.blur_fn ~collection ~field:field.name
-                    , [%expr
-                        fun ~at:index ->
-                          [%e
-                            Exp.construct
-                              (Lident
-                                 (FieldOfCollectionPrinter.blur_action
-                                    ~collection
-                                    ~field:field.name)
-                               |> lid ~loc)
-                              (Some [%expr index])]
-                          |. dispatch] )
+                    , Uncurried.fn
+                        ~loc
+                        ~arity:1
+                        [%expr
+                          fun ~at:index ->
+                            (dispatch
+                               [%e
+                                 Exp.construct
+                                   (Lident
+                                      (FieldOfCollectionPrinter.blur_action
+                                         ~collection
+                                         ~field:field.name)
+                                    |> lid ~loc)
+                                   (Some [%expr index])] [@res.uapp])] )
                     :: acc)
                   acc)
          []
@@ -272,11 +330,13 @@ let ast ~(scheme : Scheme.t) ~(async : bool) ~(metadata : unit option) ~loc =
                | SyncValidator _ ->
                  [%expr
                    exposeFieldResult
-                     [%e field.name |> E.field2 ~in_:("state", "fieldsStatuses") ~loc]]
+                     [%e field.name |> E.field2 ~in_:("state", "fieldsStatuses") ~loc]
+                   [@res.uapp]]
                | AsyncValidator _ ->
                  [%expr
                    Async.exposeFieldResult
-                     [%e field.name |> E.field2 ~in_:("state", "fieldsStatuses") ~loc]] )
+                     [%e field.name |> E.field2 ~in_:("state", "fieldsStatuses") ~loc]
+                   [@res.uapp]] )
              :: acc
            | Collection { collection; fields } ->
              fields
@@ -285,25 +345,31 @@ let ast ~(scheme : Scheme.t) ~(async : bool) ~(metadata : unit option) ~loc =
                     ( FieldOfCollectionPrinter.result_fn ~collection ~field:field.name
                     , match field.validator with
                       | SyncValidator _ ->
-                        [%expr
-                          fun ~at:index ->
-                            exposeFieldResult
-                              [%e
-                                field.name
-                                |> E.field_of_collection2
-                                     ~in_:("state", "fieldsStatuses")
-                                     ~collection
-                                     ~loc]]
+                        Uncurried.fn
+                          ~loc
+                          ~arity:1
+                          [%expr
+                            fun ~at:index ->
+                              (exposeFieldResult
+                                 [%e
+                                   field.name
+                                   |> E.field_of_collection2
+                                        ~in_:("state", "fieldsStatuses")
+                                        ~collection
+                                        ~loc] [@res.uapp])]
                       | AsyncValidator _ ->
-                        [%expr
-                          fun ~at:index ->
-                            Async.exposeFieldResult
-                              [%e
-                                field.name
-                                |> E.field_of_collection2
-                                     ~in_:("state", "fieldsStatuses")
-                                     ~collection
-                                     ~loc]] )
+                        Uncurried.fn
+                          ~loc
+                          ~arity:1
+                          [%expr
+                            fun ~at:index ->
+                              (Async.exposeFieldResult
+                                 [%e
+                                   field.name
+                                   |> E.field_of_collection2
+                                        ~in_:("state", "fieldsStatuses")
+                                        ~collection
+                                        ~loc] [@res.uapp])] )
                     :: acc)
                   acc)
          []
@@ -317,24 +383,31 @@ let ast ~(scheme : Scheme.t) ~(async : bool) ~(metadata : unit option) ~loc =
            | Collection { collection; validator } ->
              let add_fn =
                ( collection |> CollectionPrinter.add_fn
-               , [%expr
-                   fun entry ->
-                     [%e
-                       Exp.construct
-                         (Lident (collection |> CollectionPrinter.add_action) |> lid ~loc)
-                         (Some [%expr entry])]
-                     |. dispatch] )
+               , Uncurried.fn
+                   ~loc
+                   ~arity:1
+                   [%expr
+                     fun entry ->
+                       (dispatch
+                          [%e
+                            Exp.construct
+                              (Lident (collection |> CollectionPrinter.add_action)
+                               |> lid ~loc)
+                              (Some [%expr entry])] [@res.uapp])] )
              in
              let remove_fn =
                ( collection |> CollectionPrinter.remove_fn
-               , [%expr
-                   fun ~at:index ->
-                     [%e
-                       Exp.construct
-                         (Lident (collection |> CollectionPrinter.remove_action)
-                          |> lid ~loc)
-                         (Some [%expr index])]
-                     |. dispatch] )
+               , Uncurried.fn
+                   ~loc
+                   ~arity:1
+                   [%expr
+                     fun ~at:index ->
+                       (dispatch
+                          [%e
+                            Exp.construct
+                              (Lident (collection |> CollectionPrinter.remove_action)
+                               |> lid ~loc)
+                              (Some [%expr index])] [@res.uapp])] )
              in
              let result_value =
                match validator with

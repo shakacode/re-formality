@@ -31,7 +31,7 @@ let ast ~loc ~(metadata : unit option) (scheme : Scheme.t) =
                        ~loc
                 in
                 [%expr
-                  let nextInput = nextInputFn state.input in
+                  let nextInput = (nextInputFn state.input [@res.uapp]) in
                   [%e
                     match field.validator with
                     | SyncValidator validator ->
@@ -62,7 +62,7 @@ let ast ~loc ~(metadata : unit option) (scheme : Scheme.t) =
                         ~set_status_expr]]
               | dep :: deps ->
                 [%expr
-                  let nextInput = nextInputFn state.input in
+                  let nextInput = (nextInputFn state.input [@res.uapp]) in
                   let nextFieldsStatuses = ref state.fieldsStatuses in
                   [%e
                     scheme
@@ -159,7 +159,7 @@ let ast ~loc ~(metadata : unit option) (scheme : Scheme.t) =
                               ~loc
                        in
                        [%expr
-                         let nextInput = nextInputFn state.input in
+                         let nextInput = (nextInputFn state.input [@res.uapp]) in
                          [%e
                            match field.validator with
                            | SyncValidator validator ->
@@ -193,7 +193,7 @@ let ast ~loc ~(metadata : unit option) (scheme : Scheme.t) =
                                ~set_status_expr]]
                      | dep :: deps ->
                        [%expr
-                         let nextInput = nextInputFn state.input in
+                         let nextInput = (nextInputFn state.input [@res.uapp]) in
                          let nextFieldsStatuses = ref state.fieldsStatuses in
                          [%e
                            scheme

@@ -22,7 +22,10 @@ let ast
                  ~input:state.input
                  ~fieldStatus:[%e field_status_expr]
                  ~validator:[%e validator_expr]
-                 ~setStatus:[%e [%expr fun status -> [%e set_status_expr]]]]
+                 ~setStatus:
+                   [%e
+                     Uncurried.fn ~loc ~arity:1 [%expr fun status -> [%e set_status_expr]]]
+               [@res.uapp]]
            | Some () ->
              [%expr
                validateFieldOnBlurWithValidatorAndMetadata
@@ -30,13 +33,18 @@ let ast
                  ~metadata
                  ~fieldStatus:[%e field_status_expr]
                  ~validator:[%e validator_expr]
-                 ~setStatus:[%e [%expr fun status -> [%e set_status_expr]]]])
+                 ~setStatus:
+                   [%e
+                     Uncurried.fn ~loc ~arity:1 [%expr fun status -> [%e set_status_expr]]]
+               [@res.uapp]])
         | Ok (Optional None) ->
           [%expr
             validateFieldOnBlurWithoutValidator
               ~fieldInput:[%e field_input_expr]
               ~fieldStatus:[%e field_status_expr]
-              ~setStatus:[%e [%expr fun status -> [%e set_status_expr]]]]]
+              ~setStatus:
+                [%e Uncurried.fn ~loc ~arity:1 [%expr fun status -> [%e set_status_expr]]]
+            [@res.uapp]]]
     in
     match result with
     | Some fieldsStatuses -> Update { state with fieldsStatuses }

@@ -34,7 +34,9 @@ let validate_field_of_collection_without_validator
       [%e
         Exp.field
           [%expr
-            Belt.Array.getUnsafe [%e collection.plural |> E.field ~in_:"input" ~loc] index]
+            Belt.Array.getUnsafe
+              [%e collection.plural |> E.field ~in_:"input" ~loc]
+              index [@res.uapp]]
           (Lident field.name |> lid ~loc)]
     , Hidden]
 ;;
@@ -433,7 +435,7 @@ let validate_fields_of_collection_in_sync_form
              | AsyncValidator _ ->
                failwith
                  "Form that supposed to be without async validators has one. Please, \
-                  file an issue with yoour use-case.")))
+                  file an issue with your use-case.")))
   in
   let ok_case =
     Exp.case
@@ -450,7 +452,7 @@ let validate_fields_of_collection_in_sync_form
              [%e
                Exp.record
                  (fields |> List.rev |> List.rev_map (output_field_record_field ~loc))
-                 None]);
+                 None] [@res.uapp]) [@res.uapp];
         ignore
           (Js.Array2.push
              statuses
@@ -459,7 +461,7 @@ let validate_fields_of_collection_in_sync_form
                  (fields
                   |> List.rev
                   |> List.rev_map (field_dirty_status_record_field ~loc))
-                 None]);
+                 None] [@res.uapp]) [@res.uapp];
         Ok output, statuses]
   in
   let error_case =
@@ -478,28 +480,33 @@ let validate_fields_of_collection_in_sync_form
                  (fields
                   |> List.rev
                   |> List.rev_map (field_dirty_status_record_field ~loc))
-                 None]);
+                 None] [@res.uapp]) [@res.uapp];
         Error (), statuses]
   in
   [%expr
     Belt.Array.reduceWithIndex
       [%e collection.plural |> E.field ~in_:"fieldsStatuses" ~loc]
       (Ok [||], [||])
-      (fun ( (output : ([%t output_type |> ItemType.unpack] array, unit) result)
-           , (statuses :
-               [%t
-                 Typ.constr
-                   (Lident (collection |> CollectionPrinter.fields_statuses_type)
-                    |> lid ~loc)
-                   []]
-               array) )
-           fieldStatus
-           index ->
-        [%e
-          Exp.match_
-            ~attrs:[ warning_4_disable ~loc ]
-            match_values
-            [ ok_case; error_case ]])]
+      [%e
+        Uncurried.fn
+          ~loc
+          ~arity:3
+          [%expr
+            fun ( (output : ([%t output_type |> ItemType.unpack] array, unit) result)
+                , (statuses :
+                    [%t
+                      Typ.constr
+                        (Lident (collection |> CollectionPrinter.fields_statuses_type)
+                         |> lid ~loc)
+                        []]
+                    array) )
+                fieldStatus
+                index ->
+              [%e
+                Exp.match_
+                  ~attrs:[ warning_4_disable ~loc ]
+                  match_values
+                  [ ok_case; error_case ]]]] [@res.uapp]]
 ;;
 
 let validate_fields_of_collection_in_async_form
@@ -579,7 +586,7 @@ let validate_fields_of_collection_in_async_form
                     | SyncValidator _ -> field |> field_dirty_status_record_field ~loc
                     | AsyncValidator _ ->
                       field |> async_field_dirty_or_validating_status_record_field ~loc))
-                 None]);
+                 None] [@res.uapp]) [@res.uapp];
         `ValidatingFieldsOfCollection statuses]
   in
   let ok_case =
@@ -599,7 +606,7 @@ let validate_fields_of_collection_in_async_form
              [%e
                Exp.record
                  (fields |> List.rev |> List.rev_map (output_field_record_field ~loc))
-                 None]);
+                 None] [@res.uapp]) [@res.uapp];
         ignore
           (Js.Array2.push
              statuses
@@ -608,7 +615,7 @@ let validate_fields_of_collection_in_async_form
                  (fields
                   |> List.rev
                   |> List.rev_map (field_dirty_status_record_field ~loc))
-                 None]);
+                 None] [@res.uapp]) [@res.uapp];
         `FieldsOfCollectionResult (Ok output, statuses)]
   in
   let error_case =
@@ -631,26 +638,31 @@ let validate_fields_of_collection_in_async_form
                     | SyncValidator _ -> field |> field_dirty_status_record_field ~loc
                     | AsyncValidator _ ->
                       field |> async_field_dirty_or_validating_status_record_field ~loc))
-                 None]);
+                 None] [@res.uapp]) [@res.uapp];
         `FieldsOfCollectionResult (Error (), statuses)]
   in
   [%expr
     Belt.Array.reduceWithIndex
       [%e collection.plural |> E.field ~in_:"fieldsStatuses" ~loc]
       (`FieldsOfCollectionResult (Ok [||], [||]))
-      (fun (result :
-             [ `ValidatingFieldsOfCollection of [%t fields_statuses_type] array
-             | `FieldsOfCollectionResult of
-               ([%t output_type |> ItemType.unpack] array, unit) result
-               * [%t fields_statuses_type] array
-             ])
-           fieldStatus
-           index ->
-        [%e
-          Exp.match_
-            ~attrs:[ warning_4_disable ~loc ]
-            match_values
-            [ validating_case; ok_case; error_case ]])]
+      [%e
+        Uncurried.fn
+          ~loc
+          ~arity:3
+          [%expr
+            fun (result :
+                  [ `ValidatingFieldsOfCollection of [%t fields_statuses_type] array
+                  | `FieldsOfCollectionResult of
+                    ([%t output_type |> ItemType.unpack] array, unit) result
+                    * [%t fields_statuses_type] array
+                  ])
+                fieldStatus
+                index ->
+              [%e
+                Exp.match_
+                  ~attrs:[ warning_4_disable ~loc ]
+                  match_values
+                  [ validating_case; ok_case; error_case ]]]] [@res.uapp]]
 ;;
 
 module Sync = struct
@@ -689,7 +701,7 @@ module Sync = struct
               | Field { name = _; validator = AsyncValidator _ } ->
                 failwith
                   "Form that supposed to be without async validators has one. Please, \
-                   file an issue with yoour use-case."
+                   file an issue with your use-case."
               | Collection { collection; fields; validator; output_type } ->
                 (match validator with
                  | Ok (Some ()) | Error () ->
@@ -853,38 +865,44 @@ module Sync = struct
     [%stri
       let validateForm =
         [%e
-          Exp.fun_
-            Nolabel
-            None
-            (Pat.constraint_ [%pat? input] [%type: input])
+          Uncurried.fn
+            ~loc
+            ~arity:
+              (match metadata with
+               | None -> 3
+               | Some () -> 4)
             (Exp.fun_
-               (Labelled "validators")
+               Nolabel
                None
-               (Pat.constraint_
-                  (match anything_validatable with
-                   | true -> [%pat? validators]
-                   | false -> [%pat? _])
-                  [%type: validators])
+               (Pat.constraint_ [%pat? input] [%type: input])
                (Exp.fun_
-                  (Labelled "fieldsStatuses")
+                  (Labelled "validators")
                   None
                   (Pat.constraint_
                      (match anything_validatable with
-                      | true -> [%pat? fieldsStatuses]
+                      | true -> [%pat? validators]
                       | false -> [%pat? _])
-                     [%type: fieldsStatuses])
-                  (match metadata with
-                   | None -> return_type |> Exp.constraint_ body
-                   | Some () ->
-                     Exp.fun_
-                       (Labelled "metadata")
-                       None
-                       (Pat.constraint_
-                          (match anything_validatable with
-                           | true -> [%pat? metadata]
-                           | false -> [%pat? _])
-                          [%type: metadata])
-                       (return_type |> Exp.constraint_ body))))]
+                     [%type: validators])
+                  (Exp.fun_
+                     (Labelled "fieldsStatuses")
+                     None
+                     (Pat.constraint_
+                        (match anything_validatable with
+                         | true -> [%pat? fieldsStatuses]
+                         | false -> [%pat? _])
+                        [%type: fieldsStatuses])
+                     (match metadata with
+                      | None -> return_type |> Exp.constraint_ body
+                      | Some () ->
+                        Exp.fun_
+                          (Labelled "metadata")
+                          None
+                          (Pat.constraint_
+                             (match anything_validatable with
+                              | true -> [%pat? metadata]
+                              | false -> [%pat? _])
+                             [%type: metadata])
+                          (return_type |> Exp.constraint_ body)))))]
       ;;]
   ;;
 end
@@ -1192,26 +1210,32 @@ module Async = struct
     [%stri
       let validateForm =
         [%e
-          Exp.fun_
-            Nolabel
-            None
-            (Pat.constraint_ [%pat? input] [%type: input])
+          Uncurried.fn
+            ~loc
+            ~arity:
+              (match metadata with
+               | None -> 3
+               | Some () -> 4)
             (Exp.fun_
-               (Labelled "validators")
+               Nolabel
                None
-               (Pat.constraint_ [%pat? validators] [%type: validators])
+               (Pat.constraint_ [%pat? input] [%type: input])
                (Exp.fun_
-                  (Labelled "fieldsStatuses")
+                  (Labelled "validators")
                   None
-                  (Pat.constraint_ [%pat? fieldsStatuses] [%type: fieldsStatuses])
-                  (match metadata with
-                   | None -> return_type |> Exp.constraint_ body
-                   | Some () ->
-                     Exp.fun_
-                       (Labelled "metadata")
-                       None
-                       (Pat.constraint_ [%pat? metadata] [%type: metadata])
-                       (return_type |> Exp.constraint_ body))))]
+                  (Pat.constraint_ [%pat? validators] [%type: validators])
+                  (Exp.fun_
+                     (Labelled "fieldsStatuses")
+                     None
+                     (Pat.constraint_ [%pat? fieldsStatuses] [%type: fieldsStatuses])
+                     (match metadata with
+                      | None -> return_type |> Exp.constraint_ body
+                      | Some () ->
+                        Exp.fun_
+                          (Labelled "metadata")
+                          None
+                          (Pat.constraint_ [%pat? metadata] [%type: metadata])
+                          (return_type |> Exp.constraint_ body)))))]
       ;;]
   ;;
 end

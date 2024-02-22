@@ -39,7 +39,7 @@ let ast ~(scheme : Scheme.t) ~loc =
                          (Typ.constr
                             (Lident (collection |> CollectionPrinter.fields_statuses_type)
                              |> lid ~loc)
-                            [])]] )))
+                            [])] [@res.uapp]] )))
           None]
     ;;]
 ;;

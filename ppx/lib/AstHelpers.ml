@@ -95,6 +95,7 @@ module E = struct
   let field_of_collection ~in_ ~(collection : Collection.t) ~loc field_name =
     Exp.field
       (Exp.apply
+         ~attrs:[ Uncurried.uapp ]
          [%expr Belt.Array.getUnsafe]
          [ Nolabel, collection.plural |> field ~in_ ~loc; Nolabel, [%expr index] ])
       (Lident field_name |> lid ~loc)
@@ -103,6 +104,7 @@ module E = struct
   let field_of_collection2 ~in_ ~(collection : Collection.t) ~loc field_name =
     Exp.field
       (Exp.apply
+         ~attrs:[ Uncurried.uapp ]
          [%expr Belt.Array.getUnsafe]
          [ Nolabel, collection.plural |> field2 ~in_ ~loc; Nolabel, [%expr index] ])
       (Lident field_name |> lid ~loc)
@@ -121,6 +123,7 @@ module E = struct
   let ref_field_of_collection ~in_:record ~(collection : Collection.t) ~loc field_name =
     Exp.field
       (Exp.apply
+         ~attrs:[ Uncurried.uapp ]
          [%expr Belt.Array.getUnsafe]
          [ Nolabel, Exp.field (record |> ref_ ~loc) (Lident collection.plural |> lid ~loc)
          ; Nolabel, [%expr index]
@@ -128,10 +131,21 @@ module E = struct
       (Lident field_name |> lid ~loc)
   ;;
 
-  let apply_field ~in_ ~fn ~args ~loc = Exp.apply (field ~in_ ~loc fn) args
-  let apply_field2 ~in_ ~fn ~args ~loc = Exp.apply (field2 ~in_ ~loc fn) args
-  let apply_field3 ~in_ ~fn ~args ~loc = Exp.apply (field3 ~in_ ~loc fn) args
-  let apply_field4 ~in_ ~fn ~args ~loc = Exp.apply (field4 ~in_ ~loc fn) args
+  let apply_field ~in_ ~fn ~args ~loc =
+    Exp.apply ~attrs:[ Uncurried.uapp ] (field ~in_ ~loc fn) args
+  ;;
+
+  let apply_field2 ~in_ ~fn ~args ~loc =
+    Exp.apply ~attrs:[ Uncurried.uapp ] (field2 ~in_ ~loc fn) args
+  ;;
+
+  let apply_field3 ~in_ ~fn ~args ~loc =
+    Exp.apply ~attrs:[ Uncurried.uapp ] (field3 ~in_ ~loc fn) args
+  ;;
+
+  let apply_field4 ~in_ ~fn ~args ~loc =
+    Exp.apply ~attrs:[ Uncurried.uapp ] (field4 ~in_ ~loc fn) args
+  ;;
 
   let update_field ~in_:record ~with_:value ~loc field =
     Exp.record
@@ -177,14 +191,18 @@ module E = struct
     Exp.record
       [ ( Lident collection.plural |> lid ~loc
         , Exp.apply
+            ~attrs:[ Uncurried.uapp ]
             [%expr Belt.Array.mapWithIndex]
             [ Nolabel, collection.plural |> field ~in_:record ~loc
             ; ( Nolabel
-              , [%expr
-                  fun index' item ->
-                    if index' = index
-                    then [%e field_name |> update_field ~in_:"item" ~with_:value ~loc]
-                    else item] )
+              , Uncurried.fn
+                  ~loc
+                  ~arity:2
+                  [%expr
+                    fun index' item ->
+                      if index' = index
+                      then [%e field_name |> update_field ~in_:"item" ~with_:value ~loc]
+                      else item] )
             ] )
       ]
       (Some (Exp.ident (Lident record |> lid ~loc)))
@@ -200,14 +218,18 @@ module E = struct
     Exp.record
       [ ( Lident collection.plural |> lid ~loc
         , Exp.apply
+            ~attrs:[ Uncurried.uapp ]
             [%expr Belt.Array.mapWithIndex]
             [ Nolabel, collection.plural |> field2 ~in_:(record1, record2) ~loc
             ; ( Nolabel
-              , [%expr
-                  fun index' item ->
-                    if index' = index
-                    then [%e field_name |> update_field ~in_:"item" ~with_:value ~loc]
-                    else item] )
+              , Uncurried.fn
+                  ~loc
+                  ~arity:2
+                  [%expr
+                    fun index' item ->
+                      if index' = index
+                      then [%e field_name |> update_field ~in_:"item" ~with_:value ~loc]
+                      else item] )
             ] )
       ]
       (Some (record2 |> field ~in_:record1 ~loc))
@@ -224,14 +246,18 @@ module E = struct
     Exp.record
       [ ( Lident collection.plural |> lid ~loc
         , Exp.apply
+            ~attrs:[ Uncurried.uapp ]
             [%expr Belt.Array.mapWithIndex]
             [ Nolabel, collection.plural |> ref_field ~in_:record ~loc
             ; ( Nolabel
-              , [%expr
-                  fun idx_ item ->
-                    if idx_ = [%e Exp.ident (Lident index_token |> lid ~loc)]
-                    then [%e field_name |> update_field ~in_:"item" ~with_:value ~loc]
-                    else item] )
+              , Uncurried.fn
+                  ~loc
+                  ~arity:2
+                  [%expr
+                    fun idx_ item ->
+                      if idx_ = [%e Exp.ident (Lident index_token |> lid ~loc)]
+                      then [%e field_name |> update_field ~in_:"item" ~with_:value ~loc]
+                      else item] )
             ] )
       ]
       (Some (record |> ref_ ~loc))

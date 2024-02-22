@@ -13,7 +13,9 @@ let ast ~(scheme : Scheme.t) ~loc =
            match entry with
            | Field field ->
              (FieldPrinter.update_action ~field:field.name
-              |> T.constructor ~args:[ [%type: input -> input] ] ~loc)
+              |> T.constructor
+                   ~args:[ Uncurried.ty ~loc ~arity:1 [%type: input -> input] ]
+                   ~loc)
              :: acc
            | Collection { collection; fields } ->
              fields
@@ -21,7 +23,10 @@ let ast ~(scheme : Scheme.t) ~loc =
                   (fun acc (field : Scheme.field) ->
                     (FieldOfCollectionPrinter.update_action ~collection ~field:field.name
                      |> T.constructor
-                          ~args:[ [%type: input -> input]; [%type: index] ]
+                          ~args:
+                            [ Uncurried.ty ~loc ~arity:1 [%type: input -> input]
+                            ; [%type: index]
+                            ]
                           ~loc)
                     :: acc)
                   acc)
@@ -109,7 +114,10 @@ let ast ~(scheme : Scheme.t) ~loc =
     ; "SetSubmittedStatus" |> T.constructor ~args:[ [%type: input option] ] ~loc
     ; "SetSubmissionFailedStatus" |> T.constructor ~args:[ [%type: submissionError] ] ~loc
     ; "MapSubmissionError"
-      |> T.constructor ~args:[ [%type: submissionError -> submissionError] ] ~loc
+      |> T.constructor
+           ~args:
+             [ Uncurried.ty ~loc ~arity:1 [%type: submissionError -> submissionError] ]
+           ~loc
     ; "DismissSubmissionError" |> T.constructor ~loc
     ; "DismissSubmissionResult" |> T.constructor ~loc
     ; "Reset" |> T.constructor ~loc

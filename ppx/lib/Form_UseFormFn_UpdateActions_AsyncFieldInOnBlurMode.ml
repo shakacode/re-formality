@@ -23,7 +23,12 @@ let ast
                   ~fieldStatus:[%e field_status_expr]
                   ~submissionStatus:state.submissionStatus
                   ~validator:[%e validator_expr]
-                  ~setStatus:[%e [%expr fun status -> [%e set_status_expr]]]]
+                  ~setStatus:
+                    [%e
+                      Uncurried.fn
+                        ~loc
+                        ~arity:1
+                        [%expr fun status -> [%e set_status_expr]]] [@res.uapp]]
             | None, Some OptionType ->
               [%expr
                 Async.validateFieldOfOptionTypeOnChangeInOnBlurMode
@@ -31,7 +36,12 @@ let ast
                   ~fieldStatus:[%e field_status_expr]
                   ~submissionStatus:state.submissionStatus
                   ~validator:[%e validator_expr]
-                  ~setStatus:[%e [%expr fun status -> [%e set_status_expr]]]]
+                  ~setStatus:
+                    [%e
+                      Uncurried.fn
+                        ~loc
+                        ~arity:1
+                        [%expr fun status -> [%e set_status_expr]]] [@res.uapp]]
             | None, Some StringType ->
               [%expr
                 Async.validateFieldOfStringTypeOnChangeInOnBlurMode
@@ -39,7 +49,12 @@ let ast
                   ~fieldStatus:[%e field_status_expr]
                   ~submissionStatus:state.submissionStatus
                   ~validator:[%e validator_expr]
-                  ~setStatus:[%e [%expr fun status -> [%e set_status_expr]]]]
+                  ~setStatus:
+                    [%e
+                      Uncurried.fn
+                        ~loc
+                        ~arity:1
+                        [%expr fun status -> [%e set_status_expr]]] [@res.uapp]]
             | None, Some OptionStringType ->
               [%expr
                 Async.validateFieldOfOptionStringTypeOnChangeInOnBlurMode
@@ -47,7 +62,12 @@ let ast
                   ~fieldStatus:[%e field_status_expr]
                   ~submissionStatus:state.submissionStatus
                   ~validator:[%e validator_expr]
-                  ~setStatus:[%e [%expr fun status -> [%e set_status_expr]]]]
+                  ~setStatus:
+                    [%e
+                      Uncurried.fn
+                        ~loc
+                        ~arity:1
+                        [%expr fun status -> [%e set_status_expr]]] [@res.uapp]]
             | Some (), None ->
               [%expr
                 Async.validateFieldOnChangeInOnBlurModeWithMetadata
@@ -56,7 +76,12 @@ let ast
                   ~submissionStatus:state.submissionStatus
                   ~validator:[%e validator_expr]
                   ~metadata
-                  ~setStatus:[%e [%expr fun status -> [%e set_status_expr]]]]
+                  ~setStatus:
+                    [%e
+                      Uncurried.fn
+                        ~loc
+                        ~arity:1
+                        [%expr fun status -> [%e set_status_expr]]] [@res.uapp]]
             | Some (), Some OptionType ->
               [%expr
                 Async.validateFieldOfOptionTypeOnChangeInOnBlurModeWithMetadata
@@ -65,7 +90,12 @@ let ast
                   ~submissionStatus:state.submissionStatus
                   ~validator:[%e validator_expr]
                   ~metadata
-                  ~setStatus:[%e [%expr fun status -> [%e set_status_expr]]]]
+                  ~setStatus:
+                    [%e
+                      Uncurried.fn
+                        ~loc
+                        ~arity:1
+                        [%expr fun status -> [%e set_status_expr]]] [@res.uapp]]
             | Some (), Some StringType ->
               [%expr
                 Async.validateFieldOfStringTypeOnChangeInOnBlurModeWithMetadata
@@ -74,7 +104,12 @@ let ast
                   ~submissionStatus:state.submissionStatus
                   ~validator:[%e validator_expr]
                   ~metadata
-                  ~setStatus:[%e [%expr fun status -> [%e set_status_expr]]]]
+                  ~setStatus:
+                    [%e
+                      Uncurried.fn
+                        ~loc
+                        ~arity:1
+                        [%expr fun status -> [%e set_status_expr]]] [@res.uapp]]
             | Some (), Some OptionStringType ->
               [%expr
                 Async.validateFieldOfOptionStringTypeOnChangeInOnBlurModeWithMetadata
@@ -83,6 +118,11 @@ let ast
                   ~submissionStatus:state.submissionStatus
                   ~validator:[%e validator_expr]
                   ~metadata
-                  ~setStatus:[%e [%expr fun status -> [%e set_status_expr]]]]]
+                  ~setStatus:
+                    [%e
+                      Uncurried.fn
+                        ~loc
+                        ~arity:1
+                        [%expr fun status -> [%e set_status_expr]]] [@res.uapp]]]
       }]
 ;;

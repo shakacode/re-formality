@@ -24,7 +24,7 @@ let ast ~loc (scheme : Scheme.t) =
                match
                  [%e field.name |> E.field2 ~in_:("state", "fieldsStatuses") ~loc]
                with
-               | Validating x when validator.eq x value ->
+               | Validating x when validator.eq x value [@res.uapp] ->
                  Update
                    { state with
                      fieldsStatuses =
@@ -74,7 +74,7 @@ let ast ~loc (scheme : Scheme.t) =
                                  ~collection
                                  ~loc]
                         with
-                        | Validating x when validator.eq x value ->
+                        | Validating x when validator.eq x value [@res.uapp] ->
                           Update
                             { state with
                               fieldsStatuses =
