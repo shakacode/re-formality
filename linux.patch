@@ -1,10 +1,11 @@
 diff --git a/ppx/bin/dune b/ppx/bin/dune
-index 0be22c0..d1faa33 100644
+index b346a3c..757e85d 100644
 --- a/ppx/bin/dune
 +++ b/ppx/bin/dune
-@@ -2,4 +2,5 @@
-   (name bin)
-   (public_name re-formality-ppx)
-   (libraries re-formality-ppx.lib)
-+  (flags (:standard -ccopt -static))
- )
+@@ -1,4 +1,5 @@
+ (executable
+  (name bin)
+  (public_name re-formality-ppx)
+- (libraries re-formality-ppx.lib))
++ (libraries re-formality-ppx.lib)
++ (flags (:standard -ccopt -static)))
