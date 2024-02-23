@@ -6,7 +6,7 @@ node_modules/
 .merlin
 .bsb.lock
 .parcel-cache
-*.bs.js
+*.res.js
 yarn-error.log
 .DS_Store
 */dist/
