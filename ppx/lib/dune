@@ -4,5 +4,4 @@
   (kind ppx_rewriter)
   (libraries ppxlib)
   (flags (:standard -w -30-9))
-  (preprocess (pps ppxlib.metaquot))
-)
+  (preprocess (pps ppxlib.metaquot)))
