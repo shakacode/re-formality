@@ -37,7 +37,6 @@
                 packages = {
                     ocaml = ocamlPackages.ocaml;
                     dune = ocamlPackages.dune_3;
-                    reason = ocamlPackages.reason;
                     result = ocamlPackages.result;
                     findlib = ocamlPackages.findlib;
                     ppxlib = ocamlPackages.ppxlib;

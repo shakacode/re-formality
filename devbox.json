@@ -2,7 +2,6 @@
     "packages": [
         "path:./nix/ocaml#ocaml",
         "path:./nix/ocaml#dune",
-        "path:./nix/ocaml#reason",
         "path:./nix/ocaml#result",
         "path:./nix/ocaml#findlib",
         "path:./nix/ocaml#ppxlib",

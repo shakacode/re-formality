@@ -10,7 +10,6 @@
     },
     "dependencies": {
         "ocaml": "4.12.0",
-        "@opam/reason": "3.8.2",
         "@opam/dune": "3.7.0",
         "@opam/ppxlib": "0.28.0",
         "@opam/ocamlfind": "1.9.6"
