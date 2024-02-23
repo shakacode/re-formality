@@ -713,10 +713,15 @@
     chrome-trace-event "^1.0.2"
     nullthrows "^1.1.1"
 
-"@rescript/react@0.11.0":
-  version "0.11.0"
-  resolved "https://registry.yarnpkg.com/@rescript/react/-/react-0.11.0.tgz#d2545546d823bdb8e6b59daa1790098d1666f79e"
-  integrity sha512-RzoAO+3cJwXE2D7yodMo4tBO2EkeDYCN/I/Sj/yRweI3S1CY1ZBOF/GMcVtjeIurJJt7KMveqQXTaRrqoGZBBg==
+"@rescript/core@1.0.0":
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/@rescript/core/-/core-1.0.0.tgz#8626f3b1c09eeb1b4788f42f754e58d3e68041c1"
+  integrity sha512-F5HURYYx8Kp6h1KBiri2nFwGKR16o9/XTCNl2TEWfCwqR+MTzf/lpuPuB6ajnaYytsU0kTUBIFI0DOoLgkDxSg==
+
+"@rescript/react@0.12.1":
+  version "0.12.1"
+  resolved "https://registry.yarnpkg.com/@rescript/react/-/react-0.12.1.tgz#7bddb957a1bc08b944c6597f28549ac410982d64"
+  integrity sha512-ZD7nhDr5FZgLYqRH9s4CNM+LRz/3IMuTb+LH12fd2Akk0xYkYUP+DZveB2VQUC2UohJnTf/c8yPSNsiFihVCCg==
 
 "@samverschueren/stream-to-observable@^0.3.0":
   version "0.3.0"
@@ -2578,20 +2583,24 @@ request@^2.88.0:
     tunnel-agent "^0.6.0"
     uuid "^3.3.2"
 
-rescript-classnames@6.0.0:
-  version "6.0.0"
-  resolved "https://registry.yarnpkg.com/rescript-classnames/-/rescript-classnames-6.0.0.tgz#e833d9fc88e0e494c2ef39862721a80ab75fae32"
-  integrity sha512-hfOffijzIPnULtRZW3Kf0DCfCaw9lhGaMxf81WYlREieyBS2KNMcdI/8g5uSXFj0j4Ci21xkf70EFCKjuCTqpw==
+rescript-classnames@7.0.0:
+  version "7.0.0"
+  resolved "https://registry.yarnpkg.com/rescript-classnames/-/rescript-classnames-7.0.0.tgz#bf30d65fff325cdc672b8659fb1e52dc43860fa7"
+  integrity sha512-/VQs2a/AjcIEAUV40+mIaWuOMQGxIw50qPCX44tLl+yTMb7/7lad47+jlxRdixSTO4HsaAu8y8rA6hEfkqBCKg==
+  dependencies:
+    "@rescript/core" "1.0.0"
 
-rescript-debounce@1.0.1:
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/rescript-debounce/-/rescript-debounce-1.0.1.tgz#4b0d2ddae538a4cc3829daaeb77526d9bc531c42"
-  integrity sha512-bdClQdmKw5k1PZLilZNYiZqqqDBXdHUZ3dKqrKGuLlYdLL5dC6A/m6jyv8yemcdtgRJAwPdUVfYFf2tZ1t3eMw==
+rescript-debounce@2.0.0:
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/rescript-debounce/-/rescript-debounce-2.0.0.tgz#ca6ceecaf909b6b24eb51d6e7558878d6c278d7a"
+  integrity sha512-hZkvTnnGj/ppG6ZSXta9WSmDoMJmePEH3/lEWxjYVByIV9ALH9wePgyrnad6mgmP1EW6syEZhsmjXFMDJ5PrYA==
+  dependencies:
+    "@rescript/core" "1.0.0"
 
-rescript@10.1.3:
-  version "10.1.3"
-  resolved "https://registry.yarnpkg.com/rescript/-/rescript-10.1.3.tgz#0ff208cef09ea1f8ad38efc171c4942eca72d444"
-  integrity sha512-5qaf63As6nkbrMRJ85kZ0ifLzKAGPOGLuoJ4zFVGZIp4oMePRt6bCKWAIX7zgbRDfRPa3jSu+EnoY2873gxaIA==
+rescript@11.0.1:
+  version "11.0.1"
+  resolved "https://registry.yarnpkg.com/rescript/-/rescript-11.0.1.tgz#c74af134dc8a16d152169b2456d0720324835f54"
+  integrity sha512-7T4PRp/d0+CBNnY6PYKffFqo9tGZlvnZpboF/n+8SKS+JZ6VvXJO7W538VPZXf3EYx1COGAWWvkF9e/HgSAqHg==
 
 resolve-from@^4.0.0:
   version "4.0.0"
