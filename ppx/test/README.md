@@ -11,7 +11,7 @@ yarn install
 esy install
 
 # Build public interface of the lib
-cd ppx/sandbox
+cd examples
 yarn rescript build -with-deps
 ```
 
@@ -35,10 +35,4 @@ To write expected output for specific error case:
 
 ```shell
 ppx/test/script/write-error-snapshot [CASE_MODULE_NAME_WITHOUT_EXTENSION]
-```
-
-To write un-ppx'ed source of a test case to sandbox for debugging:
-
-```shell
-ppx/test/script/sandbox [CASE_MODULE_NAME_WITHOUT_EXTENSION]
 ```

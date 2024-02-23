@@ -2,4 +2,12 @@
 
 source "ppx/test/script/var"
 
-$BSC -ppx $PPX -I $RE_FORMALITY -I $RESCRIPT_REACT -w $ERRORS -warn-error $ERRORS -bs-cmi-only $SRC
+$BSC \
+    -ppx $PPX \
+    -I $RE_FORMALITY \
+    -I $RESCRIPT_REACT \
+    -w $ERRORS \
+    -warn-error $ERRORS \
+    -uncurried \
+    -bs-cmi-only \
+    $SRC

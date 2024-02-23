@@ -155,8 +155,7 @@ let update_async_validator_of_field_of_collection
                                           [ Exp.ident (Lident "value" |> lid ~loc)
                                           ; Exp.ident (Lident "index" |> lid ~loc)
                                           ; Exp.ident (Lident "res" |> lid ~loc)
-                                          ]))] [@res.uapp])]] [@res.uapp])
-                  []]
+                                          ]))] [@res.uapp])]] [@res.uapp])]
         | Some () ->
           Uncurried.fn
             ~loc
