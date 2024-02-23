@@ -11,8 +11,7 @@
     "workspaces": [
         "lib",
         "specs",
-        "examples",
-        "ppx/sandbox"
+        "examples"
     ],
     "keywords": [
         "react",
