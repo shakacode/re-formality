@@ -11,8 +11,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        node-version: [ 16.x ]
-        os: [ macOS-latest, windows-latest ]
+        node-version: [16.x]
+        os: [macOS-latest, windows-latest]
 
     steps:
       - name: Checkout repo
@@ -38,7 +38,7 @@ jobs:
         run: yarn install
 
       - name: Install Esy
-        run: npm install -g esy@0.6.12
+        run: npm install -g esy@0.7.2
 
       - name: Install Esy deps
         run: esy install
@@ -61,7 +61,7 @@ jobs:
         run: |
           cd lib
           yarn run build
-          cd ../ppx/sandbox
+          cd ../examples
           yarn run build
 
       - name: Run ppx tests
@@ -85,7 +85,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ ubuntu-latest ]
+        os: [ubuntu-latest]
 
     container:
       image: alexfedoseev/alpine-node-yarn-esy:0.0.10
@@ -132,7 +132,7 @@ jobs:
         run: |
           cd lib
           yarn run build
-          cd ../ppx/sandbox
+          cd ../examples
           yarn run build
 
       - name: Run ppx tests
