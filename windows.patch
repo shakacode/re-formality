@@ -1,0 +1,17 @@
+diff --git a/re-formality-ppx.opam b/re-formality-ppx.opam
+index ed99957..f9516b3 100644
+--- a/re-formality-ppx.opam
++++ b/re-formality-ppx.opam
+@@ -13,9 +13,9 @@ bug-reports: "https://github.com/MinimaHQ/re-formality/issues"
+ dev-repo: "git+https://github.com/MinimaHQ/re-formality.git"
+ depends: [
+   "ocaml" { = "4.14.1" }
+-  "dune" { = "3.11.1" }
+-  "ppxlib" { = "0.30.0" }
+-  "alcotest" { = "1.7.0" }
++  "dune" { = "3.5.0" }
++  "ppxlib" { = "0.28.0" }
++  "alcotest" { = "1.6.0" }
+ ]
+ build: [
+   ["dune" "build" "-p" name "-j" jobs]

@@ -9,13 +9,11 @@
         "buildsInSource": "_build"
     },
     "dependencies": {
-        "ocaml": "4.12.0",
-        "@opam/dune": "3.7.0",
-        "@opam/ppxlib": "0.28.0",
-        "@opam/ocamlfind": "1.9.6"
+        "ocaml": "4.14.1000",
+        "@opam/dune": "3.11.1",
+        "@opam/ppxlib": "O.30.0"
     },
     "devDependencies": {
-        "@opam/merlin": "*",
-        "@opam/alcotest": "1.4.0"
+        "@opam/alcotest": "1.7.0"
     }
 }
