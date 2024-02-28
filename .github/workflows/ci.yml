@@ -70,7 +70,7 @@ jobs:
   build_macos:
     name: Build on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
-    # if: startsWith(github.ref, 'refs/tags/v') && github.ref ==~ /^refs\/tags\/v\d+\.\d+\.\d+.*/
+    if: startsWith(github.ref, 'refs/tags/v')
     needs:
       - validate
     strategy:
@@ -137,7 +137,7 @@ jobs:
   build_linux:
     name: Build on ${{ matrix.container-os }}
     runs-on: ${{ matrix.host-os }}
-    # if: startsWith(github.ref, 'refs/tags/v') && github.ref ==~ /^refs\/tags\/v\d+\.\d+\.\d+.*/
+    if: startsWith(github.ref, 'refs/tags/v')
     needs:
       - validate
     strategy:
@@ -192,7 +192,7 @@ jobs:
   build_windows:
     name: Build on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
-    # if: startsWith(github.ref, 'refs/tags/v') && github.ref ==~ /^refs\/tags\/v\d+\.\d+\.\d+.*/
+    if: startsWith(github.ref, 'refs/tags/v')
     needs:
       - validate
     strategy:
@@ -271,7 +271,7 @@ jobs:
       - build_windows
     name: Prepare release
     runs-on: ubuntu-latest
-    # if: startsWith(github.ref, 'refs/tags/v') && github.ref ==~ /^refs\/tags\/v\d+\.\d+\.\d+.*/
+    if: startsWith(github.ref, 'refs/tags/v')
 
     steps:
       - name: Checkout repo
