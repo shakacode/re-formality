@@ -4,70 +4,124 @@ on:
   pull_request:
     branches:
       - master
+  push:
+    tags:
+      - 'v*'
 
 jobs:
-  build:
-    name: Build on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
+  validate:
+    name: Validate
+    runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [ 16.x ]
-        os: [ macOS-latest, windows-latest ]
+        os: [ubuntu-latest]
+        ocaml-version: [4.14.1]
+        node-version: [16.x]
 
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Setup Node ${{ matrix.node-version }}
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
 
       - name: Print Yarn cache
         id: print-yarn-cache
-        run: echo "::set-output name=yarn-cache::$(yarn cache dir)"
+        run: echo "yarn-cache=$(yarn cache dir)" >> $GITHUB_OUTPUT
 
       - name: Restore Yarn cache
         id: yarn-cache
-        uses: actions/cache@v1
+        uses: actions/cache@v4
         with:
           path: ${{ steps.print-yarn-cache.outputs.yarn-cache }}
-          key: ${{ matrix.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+          key: ${{ matrix.os }}-yarn-${{ hashFiles('yarn.lock', '*/yarn.lock') }}
 
       - name: Install Yarn deps
         run: yarn install
 
-      - name: Install Esy
-        run: npm install -g esy@0.6.12
-
-      - name: Install Esy deps
-        run: esy install
-
-      - name: Print Esy cache
-        id: print-esy-cache
-        run: node .github/workflows/scripts/print-esy-cache.js
-
-      - name: Restore Esy cache
-        id: esy-cache
-        uses: actions/cache@v1
+      - name: Setup OCaml ${{ matrix.ocaml-version }}
+        uses: ocaml/setup-ocaml@v2
         with:
-          path: ${{ steps.print-esy-cache.outputs.esy-cache }}
-          key: ${{ matrix.os }}-esy-${{ hashFiles('**/index.json') }}
+          ocaml-compiler: ${{ matrix.ocaml-version }}
 
-      - name: Build ppx
-        run: esy build
+      - name: Install Opam deps
+        run: opam install . --deps-only --with-test
+
+      - name: Build PPX
+        run: opam exec -- dune build
 
       - name: Build ReScript lib
         run: |
           cd lib
           yarn run build
-          cd ../ppx/sandbox
+          cd ../examples
           yarn run build
 
-      - name: Run ppx tests
-        # FIXME: Snapshot tests are broken on Win
-        if: matrix.os != 'windows-latest'
-        run: esy x test.exe
+      - name: Run PPX tests
+        run: opam exec -- dune exec test.exe
+
+      - name: Run integration tests
+        run: |
+          cd specs
+          yarn run test
+
+  build_macos:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs:
+      - validate
+    strategy:
+      matrix:
+        os: [macos-13, macos-14]
+        ocaml-version: [4.14.1]
+        node-version: [16.x]
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Print Yarn cache
+        id: print-yarn-cache
+        run: echo "yarn-cache=$(yarn cache dir)" >> $GITHUB_OUTPUT
+
+      - name: Restore Yarn cache
+        id: yarn-cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.print-yarn-cache.outputs.yarn-cache }}
+          key: ${{ matrix.os }}-yarn-${{ hashFiles('yarn.lock', '*/yarn.lock') }}
+
+      - name: Install Yarn deps
+        run: yarn install
+
+      - name: Setup OCaml ${{ matrix.ocaml-version }}
+        uses: ocaml/setup-ocaml@v2
+        with:
+          ocaml-compiler: ${{ matrix.ocaml-version }}
+
+      - name: Install Opam deps
+        run: opam install . --deps-only --with-test
+
+      - name: Build PPX
+        run: opam exec -- dune build
+
+      - name: Build ReScript lib
+        run: |
+          cd lib
+          yarn run build
+          cd ../examples
+          yarn run build
+
+      - name: Run PPX tests
+        run: opam exec -- dune exec test.exe
 
       - name: Run integration tests
         run: |
@@ -75,111 +129,179 @@ jobs:
           yarn run test
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.os }}
           path: _build/default/ppx/bin/bin.exe
 
   build_linux:
-    name: Build on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
+    name: Build on ${{ matrix.container-os }}
+    runs-on: ${{ matrix.host-os }}
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs:
+      - validate
     strategy:
       matrix:
-        os: [ ubuntu-latest ]
-
+        host-os: [ubuntu-latest]
+        container-os: [linux-alpine-3]
+        ocaml-version: [4.14.1]
+        node-version: [16.x]
     container:
-      image: alexfedoseev/alpine-node-yarn-esy:0.0.10
+      image: alex35mil/alpine-ocaml-opam-node-yarn:alpine-3.19-ocaml-4.14-node-16.20-yarn-1.22-o5gm
 
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v2
-
-      - name: Apply static linking patch
-        run: git apply linux.patch
+        uses: actions/checkout@v4
 
       - name: Print Yarn cache
         id: print-yarn-cache
-        run: echo "::set-output name=yarn-cache::$(yarn cache dir)"
+        run: echo "yarn-cache=$(yarn cache dir)" >> $GITHUB_OUTPUT
 
       - name: Restore Yarn cache
         id: yarn-cache
-        uses: actions/cache@v1
+        uses: actions/cache@v4
         with:
           path: ${{ steps.print-yarn-cache.outputs.yarn-cache }}
-          key: ${{ matrix.os }}-yarn-${{ hashFiles('yarn.lock') }}-v1
+          key: ${{ matrix.container-os }}-yarn-${{ hashFiles('yarn.lock', '*/yarn.lock') }}
 
       - name: Install Yarn deps
         run: yarn install
 
-      - name: Install Esy deps
-        run: esy install
+      - name: Setup OCaml ${{ matrix.ocaml-version }}
+        run: opam init -a --disable-sandboxing --compiler=${{ matrix.ocaml-version }}
 
-      - name: Print Esy cache
-        id: print-esy-cache
-        run: node .github/workflows/scripts/print-esy-cache.js
+      - name: Install Opam deps
+        run: opam install . --deps-only --with-test
 
-      - name: Restore Esy cache
-        id: esy-cache
-        uses: actions/cache@v1
-        with:
-          path: ${{ steps.print-esy-cache.outputs.esy-cache }}
-          key: ${{ matrix.os }}-esy-${{ hashFiles('esy.lock/index.json') }}
-
-      - name: Build ppx
-        run: esy build
+      - name: Build PPX
+        run: opam exec -- dune build --profile static
 
       - name: Build ReScript lib
         run: |
           cd lib
           yarn run build
-          cd ../ppx/sandbox
+          cd ../examples
           yarn run build
 
-      - name: Run ppx tests
-        run: esy x test.exe
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.container-os }}
+          path: _build/default/ppx/bin/bin.exe
 
-      # FIXME: Integration tests are broken on Linux
-      # - name: Run integration tests
-      #   run: |
-      #     cd specs
-      #     yarn run test
+  build_windows:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs:
+      - validate
+    strategy:
+      matrix:
+        os: [windows-latest]
+        ocaml-version: [4.14.1]
+        node-version: [16.x]
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Print Yarn cache
+        id: print-yarn-cache
+        run: echo "::set-output name=yarn-cache::$(yarn cache dir)" # Using the old way as the new way doesn't work on windows
+
+      - name: Restore Yarn cache
+        id: yarn-cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.print-yarn-cache.outputs.yarn-cache }}
+          key: ${{ matrix.os }}-yarn-${{ hashFiles('yarn.lock', '*/yarn.lock') }}
+
+      - name: Install Yarn deps
+        run: yarn install
+
+      - name: Apply Opam deps patch
+        run: |
+          $lastCommitterName = git log -1 --pretty=format:'%an'
+          $lastCommitterEmail = git log -1 --pretty=format:'%ae'
+          git config user.name "$lastCommitterName"
+          git config user.email "$lastCommitterEmail"
+          git apply windows.patch
+          git add .
+          git commit -m "Patch opam deps"
+
+      - name: Setup OCaml ${{ matrix.ocaml-version }}
+        uses: ocaml/setup-ocaml@v2
+        with:
+          ocaml-compiler: ${{ matrix.ocaml-version }}
+
+      - name: Pin Opam deps
+        run: |
+          opam pin add dune https://github.com/ocaml/dune.git#7cbb0e7 # 3.11.1
+          opam pin add ppxlib https://github.com/ocaml-ppx/ppxlib.git#f0496c9 # 0.30.0
+          opam pin add alcotest https://github.com/mirage/alcotest.git#927088f # 1.7.0
+
+      - name: Install Opam deps
+        run: opam install . --deps-only --with-test
+
+      - name: Build PPX
+        run: opam exec -- dune build
+
+      - name: Build ReScript lib
+        run: |
+          cd lib
+          yarn run build
+          cd ../examples
+          yarn run build
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.os }}
           path: _build/default/ppx/bin/bin.exe
 
-  rc:
+  prepare_release:
     needs:
-      - build
+      - build_macos
       - build_linux
-    name: Prepare RC
+      - build_windows
+    name: Prepare release
     runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
 
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Setup Node ${{ matrix.node-version }}
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v4
         with:
           node-version: 16.x
 
-      - name: Download Linux artifacts
-        uses: actions/download-artifact@v1
+      - name: Download macOS x86 artifacts
+        uses: actions/download-artifact@v4
         with:
-          name: ubuntu-latest
+          name: macos-13
+          path: _bin/darwin/intel
+
+      - name: Download macOS ARM artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: macos-14
+          path: _bin/darwin/arm
+
+      - name: Download Linux artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: linux-alpine-3
           path: _bin/linux
 
-      - name: Download macOS artifacts
-        uses: actions/download-artifact@v1
-        with:
-          name: macOS-latest
-          path: _bin/darwin
-
       - name: Download Windows artifacts
-        uses: actions/download-artifact@v1
+        uses: actions/download-artifact@v4
         with:
           name: windows-latest
           path: _bin/windows
@@ -187,22 +309,23 @@ jobs:
       - name: Move artifacts
         run: |
           mkdir -p _release/bin
-          mv _bin/darwin/bin.exe _release/bin/re-formality-ppx-darwin-x64.exe
-          mv _bin/windows/bin.exe _release/bin/re-formality-ppx-win-x64.exe
+          mv _bin/darwin/intel/bin.exe _release/bin/re-formality-ppx-darwin-x64.exe
+          mv _bin/darwin/arm/bin.exe _release/bin/re-formality-ppx-darwin-arm64.exe
           mv _bin/linux/bin.exe _release/bin/re-formality-ppx-linux-x64.exe
+          mv _bin/windows/bin.exe _release/bin/re-formality-ppx-win-x64.exe
           rm -rf _bin
 
       - name: Move lib files
         run: |
           mkdir -p _release/src
           cp README.md _release/README.md
-          cp lib/bsconfig.json _release/bsconfig.json
+          cp lib/rescript.json _release/rescript.json
           cp -a lib/src/. _release/src/
           cp .github/workflows/scripts/postinstall.js _release/postinstall.js
           node .github/workflows/scripts/write-package-json.js
 
       - name: Upload release
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v4
         with:
           name: release
           path: _release

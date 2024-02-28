@@ -31,13 +31,12 @@ It would be great if you could reduce your test case to minimal size. I.e. inste
 - ppx/        # PPX
   - bin/      # PPX binary
   - lib/      # PPX implementation
-  - sandbox/  # PPX sandbox for debugging
   - test/     # PPX tests
 - specs/      # Integration tests
 ```
 
 ### Setup
-This repo uses `yarn` workspaces to manage frontend related dependencies and `esy` to manage PPX related dependencies (optionally, you can use `nix` shell instead of `esy` for development).
+This repo uses `yarn` workspaces to manage frontend related dependencies and `opam` to manage PPX related dependencies (optionally, you can use `nix` shell instead of `opam` for development).
 
 Install Yarn dependencies:
 
@@ -58,25 +57,26 @@ Build public interface of the ReScript lib:
 # Apparently `rescript` doesn't have `bsb -install` counterpart
 # So you need to build any app in this workspace that relies on `re-formality`
 
-# E.g. in ppx/sandbox folder
+# E.g. in ./examples folder
 yarn rescript build -with-deps
 ```
 
-**Esy flow**
+**Opam flow**
 Install Esy dependencies:
 
 ```shell
-esy install
+opam init -a --disable-sandboxing --compiler=4.14.1
+opam install . --deps-only --with-test
 ```
 
 Build PPX:
 
 ```shell
-esy build
+opam exec -- dune build
 ```
 
 **Nix/Devbox flow**
-Build PPX:
+Considering you are already in Devbox shell, build PPX:
 
 ```shell
 dune build

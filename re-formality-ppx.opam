@@ -1,0 +1,22 @@
+opam-version: "2.0"
+name: "re-formality-ppx"
+version: "4.0.0-beta.20"
+synopsis: "Form validation tool for @rescript/react"
+description: """
+Form validation tool for @rescript/react
+"""
+maintainer: "Alex Fedoseev <alex@35mil.me>"
+authors: "Alex Fedoseev <alex@35mil.me>"
+license: "MIT"
+homepage: "https://github.com/MinimaHQ/re-formality.git"
+bug-reports: "https://github.com/MinimaHQ/re-formality/issues"
+dev-repo: "git+https://github.com/MinimaHQ/re-formality.git"
+depends: [
+  "ocaml" { = "4.14.1" }
+  "dune" { = "3.11.1" }
+  "ppxlib" { = "0.30.0" }
+  "alcotest" { = "1.7.0" }
+]
+build: [
+  ["dune" "build" "-p" name "-j" jobs]
+]

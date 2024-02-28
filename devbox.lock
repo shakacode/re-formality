@@ -1,23 +1,42 @@
 {
   "lockfile_version": "1",
   "packages": {
-    "awscli2": {
-      "resolved": "github:NixOS/nixpkgs/f80ac848e3d6f0c12c52758c0f25c10c97ca3b62#awscli2",
-      "source": "nixpkg"
-    },
     "nodejs": {
       "resolved": "github:NixOS/nixpkgs/f80ac848e3d6f0c12c52758c0f25c10c97ca3b62#nodejs",
       "source": "nixpkg"
     },
-    "path:./nix/ocaml#alcotest": {},
-    "path:./nix/ocaml#dune": {},
-    "path:./nix/ocaml#findlib": {},
-    "path:./nix/ocaml#lsp": {},
-    "path:./nix/ocaml#merlin": {},
-    "path:./nix/ocaml#ocaml": {},
-    "path:./nix/ocaml#ppxlib": {},
-    "path:./nix/ocaml#reason": {},
-    "path:./nix/ocaml#result": {},
+    "ocamlPackages.alcotest": {
+      "resolved": "github:NixOS/nixpkgs/75a52265bda7fd25e06e3a67dee3f0354e73243c#ocamlPackages.alcotest",
+      "source": "nixpkg"
+    },
+    "ocamlPackages.dune_3": {
+      "resolved": "github:NixOS/nixpkgs/75a52265bda7fd25e06e3a67dee3f0354e73243c#ocamlPackages.dune_3",
+      "source": "nixpkg"
+    },
+    "ocamlPackages.findlib": {
+      "resolved": "github:NixOS/nixpkgs/75a52265bda7fd25e06e3a67dee3f0354e73243c#ocamlPackages.findlib",
+      "source": "nixpkg"
+    },
+    "ocamlPackages.ocaml": {
+      "resolved": "github:NixOS/nixpkgs/75a52265bda7fd25e06e3a67dee3f0354e73243c#ocamlPackages.ocaml",
+      "source": "nixpkg"
+    },
+    "ocamlPackages.ocaml-lsp": {
+      "resolved": "github:NixOS/nixpkgs/75a52265bda7fd25e06e3a67dee3f0354e73243c#ocamlPackages.ocaml-lsp",
+      "source": "nixpkg"
+    },
+    "ocamlPackages.ocamlformat": {
+      "resolved": "github:NixOS/nixpkgs/75a52265bda7fd25e06e3a67dee3f0354e73243c#ocamlPackages.ocamlformat",
+      "source": "nixpkg"
+    },
+    "ocamlPackages.ocamlformat-rpc-lib": {
+      "resolved": "github:NixOS/nixpkgs/75a52265bda7fd25e06e3a67dee3f0354e73243c#ocamlPackages.ocamlformat-rpc-lib",
+      "source": "nixpkg"
+    },
+    "ocamlPackages.ppxlib": {
+      "resolved": "github:NixOS/nixpkgs/75a52265bda7fd25e06e3a67dee3f0354e73243c#ocamlPackages.ppxlib",
+      "source": "nixpkg"
+    },
     "yarn": {
       "resolved": "github:NixOS/nixpkgs/f80ac848e3d6f0c12c52758c0f25c10c97ca3b62#yarn",
       "source": "nixpkg"

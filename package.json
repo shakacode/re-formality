@@ -1,8 +1,8 @@
 {
     "name": "re-formality",
-    "version": "4.0.0-beta.20",
+    "version": "4.0.0-beta.21",
     "description": "Form validation tool for @rescript/react",
-    "author": "Alex Fedoseev <alex@fedoseev.mx>",
+    "author": "Alex Fedoseev <alex@35mil.me>",
     "license": "MIT",
     "repository": {
         "type": "git",
@@ -11,8 +11,7 @@
     "workspaces": [
         "lib",
         "specs",
-        "examples",
-        "ppx/sandbox"
+        "examples"
     ],
     "keywords": [
         "react",

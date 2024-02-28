@@ -99,7 +99,7 @@ let make = () => {
           </div>
         | Some(Ok(_)) =>
           <div className={cx(["form-message", "form-message-for-field", "success"])}>
-            {j`✓`->React.string}
+            {"✓"->React.string}
           </div>
         | None => React.null
         }}
@@ -135,7 +135,7 @@ let make = () => {
           </div>
         | Some(Ok(_)) =>
           <div className={cx(["form-message", "form-message-for-field", "success"])}>
-            {j`✓`->React.string}
+            {"✓"->React.string}
           </div>
         | None => React.null
         }}
@@ -182,7 +182,7 @@ let make = () => {
               )}
           />
           <button type_="button" className="control" onClick={_ => form.removeAuthor(~at=index)}>
-            {j`✕`->React.string}
+            {"✕"->React.string}
           </button>
           {switch form.authorNameResult(~at=index) {
           | Some(Error(message)) =>
@@ -193,7 +193,7 @@ let make = () => {
           | Some(Ok(_)) =>
             <div
               className={cx(["form-message", "form-message-for-field-of-collection", "success"])}>
-              {j`✓`->React.string}
+              {"✓"->React.string}
             </div>
           | None => React.null
           }}
@@ -214,7 +214,7 @@ let make = () => {
         </button>
         {switch form.status {
         | Submitted =>
-          <div className={cx(["form-status", "success"])}> {j`✓ Posted`->React.string} </div>
+          <div className={cx(["form-status", "success"])}> {"✓ Posted"->React.string} </div>
         | _ => React.null
         }}
       </div>

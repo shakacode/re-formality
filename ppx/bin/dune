@@ -1,5 +1,10 @@
+(env
+ (static
+  (flags
+   (:standard -ccopt -static))))
+
 (executable
-  (name bin)
-  (public_name re-formality-ppx)
-  (libraries re-formality-ppx.lib)
-)
+ (package re-formality-ppx)
+ (name bin)
+ (public_name re-formality-ppx)
+ (libraries re-formality-ppx.lib))

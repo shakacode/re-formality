@@ -10,10 +10,10 @@
     "format": "rescript format -all"
   },
   "dependencies": {
-    "rescript-debounce": "1.0.1"
+    "rescript-debounce": "2.0.0"
   },
   "devDependencies": {
-    "@rescript/react": "0.11.0",
-    "rescript": "10.1.3"
+    "@rescript/react": "0.12.1",
+    "rescript": "11.0.1"
   }
 }

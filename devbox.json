@@ -1,17 +1,15 @@
 {
     "packages": [
-        "path:./nix/ocaml#ocaml",
-        "path:./nix/ocaml#dune",
-        "path:./nix/ocaml#reason",
-        "path:./nix/ocaml#result",
-        "path:./nix/ocaml#findlib",
-        "path:./nix/ocaml#ppxlib",
-        "path:./nix/ocaml#alcotest",
-        "path:./nix/ocaml#merlin",
-        "path:./nix/ocaml#lsp",
+        "ocamlPackages.ocaml",
+        "ocamlPackages.dune_3",
+        "ocamlPackages.findlib",
+        "ocamlPackages.ppxlib",
+        "ocamlPackages.alcotest",
+        "ocamlPackages.ocaml-lsp",
+        "ocamlPackages.ocamlformat",
+        "ocamlPackages.ocamlformat-rpc-lib",
         "nodejs",
-        "yarn",
-        "awscli2"
+        "yarn"
     ],
     "shell": {
         "init_hook": [

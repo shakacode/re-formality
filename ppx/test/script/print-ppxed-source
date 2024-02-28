@@ -1,5 +1,0 @@
-#!/bin/bash
-
-source "ppx/test/script/var"
-
-cat $SRC | $REFMT --parse re --print binary | $PPX /dev/stdin /dev/stdout | $REFMT --parse binary --interface false

@@ -1,5 +1,15 @@
 # History
 
+## 4.0.0-beta.21
+** This is the last release before library rename: `re-formality → rescript-formality` (unless there are bugs)**
+
+* **[ BREAKING ]** Update to ReScript v11. All the functions are now uncurried. We don't offer curried option, sorry.
+* **[ BREAKING ]** Remove Linux `arm64` binary.
+
+Internal changes:
+* PPX source code is converted from Reason to OCaml.
+* ReScript library source code is converted from Reason to ReScript.
+
 ## 4.0.0-beta.20
 * Fix Linux `arm64` binary name.
 
