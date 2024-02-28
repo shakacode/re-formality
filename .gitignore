@@ -10,13 +10,10 @@ node_modules/
 yarn-error.log
 .DS_Store
 */dist/
-/_esy
 /_build
 /_release
 /examples/lib/
 /lib/lib/
 /specs/lib/
-/scripts/aws.env
-/scripts/aws.pem
 /ppx/test/**/*.cm[itj]
 re-formality-ppx.install
