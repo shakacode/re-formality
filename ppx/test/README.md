@@ -1,27 +1,17 @@
 # PPX tests
 These tests ensure that there are no errors/warnings during a compilation of valid forms and check proper error messages produced by PPX itself.
 
-Before running tests:
-
-```shell
-# Install yarn deps
-yarn install
-
-# Install esy deps (unless you use nix)
-esy install
-
-# Build public interface of the lib
-cd examples
-yarn rescript build -with-deps
-```
+Before running tests, setup the local env. See [CONTRIBUTING](/CONTRIBUTING.md) for more info.
 
 To run tests:
 
 ```shell
-# with esy
-esy x test.exe
+## Opam
+opam exec -- dune build
+opam exec -- dune exec test.exe
 
-#with nix
+## Nix
+dune build
 dune exec test.exe
 ```
 
