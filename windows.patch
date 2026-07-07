@@ -8,10 +8,10 @@ index ed99957..f9516b3 100644
    "ocaml" { = "4.14.1" }
 -  "dune" { = "3.11.1" }
 -  "ppxlib" { = "0.30.0" }
--  "alcotest" { = "1.7.0" }
+-  "alcotest" { = "1.7.0" & with-test }
 +  "dune" { = "3.5.0" }
 +  "ppxlib" { = "0.28.0" }
-+  "alcotest" { = "1.6.0" }
++  "alcotest" { = "1.6.0" & with-test }
  ]
  build: [
    ["dune" "build" "-p" name "-j" jobs]

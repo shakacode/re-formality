@@ -76,7 +76,7 @@ jobs:
       - validate
     strategy:
       matrix:
-        os: [macos-13, macos-14]
+        os: [macos-15-intel, macos-15]
         ocaml-version: [4.14.1]
 
     steps:
@@ -96,10 +96,10 @@ jobs:
           opam update
 
       - name: Install Opam deps
-        run: opam install . --deps-only --with-test --yes
+        run: opam install . --deps-only --yes
 
       - name: Build PPX
-        run: opam exec -- dune build
+        run: opam exec -- dune build _build/default/ppx/bin/bin.exe
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -134,10 +134,10 @@ jobs:
           opam update
 
       - name: Install Opam deps
-        run: opam install . --deps-only --with-test --yes
+        run: opam install . --deps-only --yes
 
       - name: Build PPX
-        run: opam exec -- dune build --profile static
+        run: opam exec -- dune build --profile static _build/default/ppx/bin/bin.exe
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -181,13 +181,12 @@ jobs:
         run: |
           opam pin add dune https://github.com/ocaml/dune.git#7cbb0e7 # 3.11.1
           opam pin add ppxlib https://github.com/ocaml-ppx/ppxlib.git#f0496c9 # 0.30.0
-          opam pin add alcotest https://github.com/mirage/alcotest.git#927088f # 1.7.0
 
       - name: Install Opam deps
-        run: opam install . --deps-only --with-test --yes
+        run: opam install . --deps-only --yes
 
       - name: Build PPX
-        run: opam exec -- dune build
+        run: opam exec -- dune build _build/default/ppx/bin/bin.exe
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -216,13 +215,13 @@ jobs:
       - name: Download macOS x86 artifacts
         uses: actions/download-artifact@v4
         with:
-          name: macos-13
+          name: macos-15-intel
           path: _bin/darwin/intel
 
       - name: Download macOS ARM artifacts
         uses: actions/download-artifact@v4
         with:
-          name: macos-14
+          name: macos-15
           path: _bin/darwin/arm
 
       - name: Download Linux artifacts
