@@ -10,7 +10,7 @@
     "cypress:open": "cypress open",
     "cypress:run": "cypress run",
     "test": "start-server-and-test app:start http://localhost:8085 cypress:run",
-    "pretest": "yarn run res:build"
+    "pretest": "pnpm run res:build"
   },
   "dependencies": {
     "@rescript/react": "0.12.1",

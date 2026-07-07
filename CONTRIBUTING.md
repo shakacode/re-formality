@@ -36,19 +36,19 @@ It would be great if you could reduce your test case to minimal size. I.e. inste
 ```
 
 ### Setup
-This repo uses `yarn` workspaces to manage frontend related dependencies and `opam` to manage PPX related dependencies (optionally, you can use `nix` shell instead of `opam` for development).
+This repo uses `mise` to manage development tools, `pnpm` workspaces for frontend dependencies, and a repo-local `opam` switch for PPX dependencies.
 
-Install Yarn dependencies:
+Install tools and dependencies:
 
 ```shell
-yarn install
+mise install
+mise run setup
 ```
 
 Build ReScript library:
 
 ```shell
-# In lib/ folder
-yarn rescript build -with-deps
+pnpm --filter re-formality exec rescript build -with-deps
 ```
 
 Build public interface of the ReScript lib:
@@ -57,27 +57,17 @@ Build public interface of the ReScript lib:
 # Apparently `rescript` doesn't have `bsb -install` counterpart
 # So you need to build any app in this workspace that relies on `re-formality`
 
-# E.g. in ./examples folder
-yarn rescript build -with-deps
-```
-
-**Opam flow**
-Install Esy dependencies:
-
-```shell
-opam init -a --disable-sandboxing --compiler=4.14.1
-opam install . --deps-only --with-test
+pnpm --filter re-formality-examples exec rescript build -with-deps
 ```
 
 Build PPX:
 
 ```shell
-opam exec -- dune build
+mise run build
 ```
 
-**Nix/Devbox flow**
-Considering you are already in Devbox shell, build PPX:
+Run PPX tests:
 
 ```shell
-dune build
+mise run test
 ```

@@ -22,7 +22,7 @@ let collection_type ~loc (collection : Collection.t) =
         Typ.constr
           (Lident (collection |> CollectionPrinter.fields_statuses_type) |> lid ~loc)
           []]
-      array]
+        array]
 ;;
 
 let ast ~(scheme : Scheme.t) ~loc =

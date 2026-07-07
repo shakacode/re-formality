@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "yarn run res:watch",
+    "start": "pnpm run res:watch",
     "build": "rescript build -with-deps",
     "watch": "rescript build -w",
     "clean": "rescript clean",

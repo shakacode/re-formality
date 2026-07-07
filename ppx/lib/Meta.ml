@@ -590,7 +590,7 @@ module InputTypeParser = struct
     unvalidated_entries
     |> List.fold_left
          (fun (res : (validated_entry list, FieldDepsParser.error) Stdlib.result)
-              (unvalidated_entry : unvalidated_entry) ->
+           (unvalidated_entry : unvalidated_entry) ->
            match res, unvalidated_entry with
            | Error error, _ -> Error error
            | Ok validated_entries, UnvalidatedInputField field ->
@@ -598,7 +598,7 @@ module InputTypeParser = struct
                field.deps
                |> List.fold_left
                     (fun (res : (FieldDep.t list, FieldDepsParser.error) Stdlib.result)
-                         dep ->
+                      dep ->
                       match res with
                       | Error error -> Error error
                       | Ok validated_deps ->
@@ -610,10 +610,10 @@ module InputTypeParser = struct
                               |> List.fold_left
                                    (fun (res :
                                           ( FieldDep.t
-                                          , FieldDepsParser.error )
-                                          Stdlib.result
-                                          option)
-                                        entry ->
+                                            , FieldDepsParser.error )
+                                            Stdlib.result
+                                            option)
+                                     entry ->
                                      match res, dep, entry with
                                      | (Some _ as res), _, _ -> res
                                      | ( None
@@ -689,9 +689,9 @@ module InputTypeParser = struct
                |> List.fold_left
                     (fun (res :
                            ( InputFieldData.validated list
-                           , FieldDepsParser.error )
-                           Stdlib.result)
-                         (field : InputFieldData.unvalidated) ->
+                             , FieldDepsParser.error )
+                             Stdlib.result)
+                      (field : InputFieldData.unvalidated) ->
                       match res with
                       | Error error -> Error error
                       | Ok validated_fields ->
@@ -700,9 +700,9 @@ module InputTypeParser = struct
                           |> List.fold_left
                                (fun (res :
                                       ( FieldDep.t list
-                                      , FieldDepsParser.error )
-                                      Stdlib.result)
-                                    dep ->
+                                        , FieldDepsParser.error )
+                                        Stdlib.result)
+                                 dep ->
                                  match res with
                                  | Error error -> Error error
                                  | Ok validated_deps ->
@@ -714,10 +714,10 @@ module InputTypeParser = struct
                                          |> List.fold_left
                                               (fun (res :
                                                      ( FieldDep.t
-                                                     , FieldDepsParser.error )
-                                                     Stdlib.result
-                                                     option)
-                                                   entry ->
+                                                       , FieldDepsParser.error )
+                                                       Stdlib.result
+                                                       option)
+                                                entry ->
                                                 match res, dep, entry with
                                                 | (Some _ as res), _, _ -> res
                                                 | ( None
@@ -749,13 +749,12 @@ module InputTypeParser = struct
                                                       |> List.fold_left
                                                            (fun (res :
                                                                   ( FieldDep.t
-                                                                  , FieldDepsParser.error
-                                                                  )
-                                                                  Stdlib.result
-                                                                  option)
-                                                                (field :
-                                                                  InputFieldData
-                                                                  .unvalidated) ->
+                                                                    , FieldDepsParser
+                                                                      .error )
+                                                                    Stdlib.result
+                                                                    option)
+                                                             (field :
+                                                               InputFieldData.unvalidated) ->
                                                              match res with
                                                              | Some _ -> res
                                                              | None ->
@@ -849,7 +848,7 @@ module InputTypeParser = struct
              entry_fields
              |> List.fold_left
                   (fun (_res : InputField.validated option)
-                       (entry_field : InputFieldData.validated) ->
+                    (entry_field : InputFieldData.validated) ->
                     entry_field.deps
                     |> List.fold_left
                          (fun (res : InputField.validated option) (dep : FieldDep.t) ->
@@ -895,7 +894,7 @@ module InputTypeParser = struct
              entry_fields
              |> List.fold_left
                   (fun (_res : InputField.validated option)
-                       (entry_field : InputFieldData.validated) ->
+                    (entry_field : InputFieldData.validated) ->
                     entry_field.deps
                     |> List.fold_left
                          (fun (res : InputField.validated option) (dep : FieldDep.t) ->
@@ -1049,10 +1048,10 @@ module OutputTypeParser = struct
                                      record_type := Some (Ok fields)
                                    | _ ->
                                      record_type
-                                       := Some
-                                            (Error
-                                               (CollectionTypeNotRecord decl.ptype_loc [@explicit_arity
-                                                                                         ])))
+                                     := Some
+                                          (Error
+                                             (CollectionTypeNotRecord decl.ptype_loc [@explicit_arity
+                                                                                       ])))
                                 | _ -> ())
                             | _ -> ());
                           (match !record_type with
@@ -1331,8 +1330,8 @@ module Metadata = struct
             ; ptype_loc
             } as decl ->
             input_parsing_result
-              := (Some (fields |> InputTypeParser.parse ~decl ~structure ~loc:ptype_loc) [@explicit_arity
-                                                                                          ])
+            := (Some (fields |> InputTypeParser.parse ~decl ~structure ~loc:ptype_loc) [@explicit_arity
+                                                                                         ])
           | { ptype_name = { txt = "input" }; ptype_loc } ->
             input_parsing_result := Some (Error (InputTypeParser.NotRecord ptype_loc))
           | { ptype_name = { txt = "output" }
@@ -1343,20 +1342,20 @@ module Metadata = struct
              | None -> output_parsing_result := Error (InputNotAvailable ptype_loc)
              | Some (Ok { entries }) ->
                output_parsing_result
-                 := fields
-                    |> OutputTypeParser.parse
-                         ~structure
-                         ~loc:ptype_loc
-                         ~input_collections:
-                           (entries
-                            |> List.fold_left
-                                 (fun acc (entry : InputTypeParser.unvalidated_entry) ->
-                                   match entry with
-                                   | UnvalidatedInputField _ -> acc
-                                   | ((UnvalidatedInputCollection { collection }) [@explicit_arity
-                                                                                    ]) ->
-                                     collection :: acc)
-                                 [])
+               := fields
+                  |> OutputTypeParser.parse
+                       ~structure
+                       ~loc:ptype_loc
+                       ~input_collections:
+                         (entries
+                          |> List.fold_left
+                               (fun acc (entry : InputTypeParser.unvalidated_entry) ->
+                                 match entry with
+                                 | UnvalidatedInputField _ -> acc
+                                 | ((UnvalidatedInputCollection { collection }) [@explicit_arity
+                                                                                  ]) ->
+                                   collection :: acc)
+                               [])
              | Some (Error _) -> ())
           | { ptype_name = { txt = "output" }
             ; ptype_kind = Ptype_abstract
@@ -1588,7 +1587,7 @@ module Metadata = struct
                       (fun ( (result : (Scheme.t, error) result)
                            , (input_fields_not_in_output : InputField.validated list)
                            , (output_fields_not_in_input : OutputField.t list) )
-                           (input_entry : InputTypeParser.validated_entry) ->
+                        (input_entry : InputTypeParser.validated_entry) ->
                         match input_entry with
                         | ValidatedInputField input_field_data ->
                           let output_field_data =
@@ -1703,15 +1702,15 @@ module Metadata = struct
                                              InputField.validated list)
                                          , (output_fields_not_in_input :
                                              OutputField.t list) )
-                                         (input_field_data : InputFieldData.validated) ->
+                                      (input_field_data : InputFieldData.validated) ->
                                       let output_field_data =
                                         output_fields
                                         |> List.find_opt
                                              (fun
                                                  (output_field_data : OutputFieldData.t)
                                                ->
-                                               output_field_data.name
-                                               = input_field_data.name)
+                                                output_field_data.name
+                                                = input_field_data.name)
                                       in
                                       match res, output_field_data with
                                       | _, None ->
@@ -1728,16 +1727,16 @@ module Metadata = struct
                                         , output_fields_not_in_input
                                           |> List.filter
                                                (fun (output_field : OutputField.t) ->
-                                                 match output_field with
-                                                 | OutputField _ -> true
-                                                 | ((OutputFieldOfCollection
-                                                      { collection; field }) [@explicit_arity
-                                                                               ]) ->
-                                                   not
-                                                     (input_collection.plural
-                                                      = collection.plural
-                                                      && output_field_data.name
-                                                         = field.name)) )
+                                                  match output_field with
+                                                  | OutputField _ -> true
+                                                  | ((OutputFieldOfCollection
+                                                       { collection; field }) [@explicit_arity
+                                                                                ]) ->
+                                                    not
+                                                      (input_collection.plural
+                                                       = collection.plural
+                                                       && output_field_data.name
+                                                          = field.name)) )
                                       | Ok fields, Some output_field_data ->
                                         let validator =
                                           validator
@@ -1766,16 +1765,16 @@ module Metadata = struct
                                         , output_fields_not_in_input
                                           |> List.filter
                                                (fun (output_field : OutputField.t) ->
-                                                 match output_field with
-                                                 | OutputField _ -> true
-                                                 | ((OutputFieldOfCollection
-                                                      { collection; field }) [@explicit_arity
-                                                                               ]) ->
-                                                   not
-                                                     (input_collection.plural
-                                                      = collection.plural
-                                                      && output_field_data.name
-                                                         = field.name)) ))
+                                                  match output_field with
+                                                  | OutputField _ -> true
+                                                  | ((OutputFieldOfCollection
+                                                       { collection; field }) [@explicit_arity
+                                                                                ]) ->
+                                                    not
+                                                      (input_collection.plural
+                                                       = collection.plural
+                                                       && output_field_data.name
+                                                          = field.name)) ))
                                     ( Ok []
                                     , input_fields_not_in_output
                                     , output_fields_not_in_input )
@@ -1832,7 +1831,7 @@ module Metadata = struct
                           ; output_fields_not_in_input
                           ; loc = output_loc
                           }))))
-             : (Scheme.t, error) result)
+            : (Scheme.t, error) result)
          in
          (match scheme with
           | Ok scheme ->

@@ -1,13 +1,14 @@
 node_modules/
 .direnv/
-.devbox/
+.opam/
+_opam/
 .vscode/
 .envrc
 .merlin
 .bsb.lock
 .parcel-cache
 *.res.js
-yarn-error.log
+pnpm-debug.log*
 .DS_Store
 */dist/
 /_build

@@ -1,0 +1,13 @@
+packages:
+  - lib
+  - specs
+  - examples
+
+minimumReleaseAge: 10080 # 7 days
+
+allowBuilds:
+  '@parcel/watcher': true
+  cypress: true
+  lmdb: true
+  msgpackr-extract: true
+  rescript: true

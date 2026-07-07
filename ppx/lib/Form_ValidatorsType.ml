@@ -15,34 +15,34 @@ let field_type ~loc ~metadata (field : Scheme.field) =
         | None ->
           [%type:
             ( input
-            , [%t field.output_type |> ItemType.unpack]
-            , message )
-            singleValueValidator]
+              , [%t field.output_type |> ItemType.unpack]
+              , message )
+              singleValueValidator]
         | Some () ->
           [%type:
             ( input
-            , [%t field.output_type |> ItemType.unpack]
-            , message
-            , metadata )
-            singleValueValidatorWithMetadata])
+              , [%t field.output_type |> ItemType.unpack]
+              , message
+              , metadata )
+              singleValueValidatorWithMetadata])
      | SyncValidator (Ok (Optional None)) -> [%type: unit]
      | AsyncValidator _ ->
        (match metadata with
         | None ->
           [%type:
             ( input
-            , [%t field.output_type |> ItemType.unpack]
-            , message
-            , action )
-            Async.singleValueValidator]
+              , [%t field.output_type |> ItemType.unpack]
+              , message
+              , action )
+              Async.singleValueValidator]
         | Some () ->
           [%type:
             ( input
-            , [%t field.output_type |> ItemType.unpack]
-            , message
-            , metadata
-            , action )
-            Async.singleValueValidatorWithMetadata]))
+              , [%t field.output_type |> ItemType.unpack]
+              , message
+              , metadata
+              , action )
+              Async.singleValueValidatorWithMetadata]))
 ;;
 
 let collection_type
@@ -59,29 +59,29 @@ let collection_type
         | None ->
           [%type:
             ( input
-            , message
-            , [%t
-                Typ.constr
-                  (Lident (collection |> CollectionPrinter.validator_type) |> lid ~loc)
-                  []] )
-            collectionValidatorWithWholeCollectionValidator]
+              , message
+              , [%t
+                  Typ.constr
+                    (Lident (collection |> CollectionPrinter.validator_type) |> lid ~loc)
+                    []] )
+              collectionValidatorWithWholeCollectionValidator]
         | Some () ->
           [%type:
             ( input
-            , message
-            , [%t
-                Typ.constr
-                  (Lident (collection |> CollectionPrinter.validator_type) |> lid ~loc)
-                  []]
-            , metadata )
-            collectionValidatorWithWholeCollectionValidatorAndMetadata])
+              , message
+              , [%t
+                  Typ.constr
+                    (Lident (collection |> CollectionPrinter.validator_type) |> lid ~loc)
+                    []]
+              , metadata )
+              collectionValidatorWithWholeCollectionValidatorAndMetadata])
      | Ok None ->
        [%type:
          [%t
            Typ.constr
              (Lident (collection |> CollectionPrinter.validator_type) |> lid ~loc)
              []]
-         collectionValidatorWithoutWholeCollectionValidator])
+           collectionValidatorWithoutWholeCollectionValidator])
 ;;
 
 let field_of_collection_type ~loc ~(metadata : unit option) (field : Scheme.field) =
@@ -95,34 +95,34 @@ let field_of_collection_type ~loc ~(metadata : unit option) (field : Scheme.fiel
         | None ->
           [%type:
             ( input
-            , [%t field.output_type |> ItemType.unpack]
-            , message )
-            valueOfCollectionValidator]
+              , [%t field.output_type |> ItemType.unpack]
+              , message )
+              valueOfCollectionValidator]
         | Some () ->
           [%type:
             ( input
-            , [%t field.output_type |> ItemType.unpack]
-            , message
-            , metadata )
-            valueOfCollectionValidatorWithMetadata])
+              , [%t field.output_type |> ItemType.unpack]
+              , message
+              , metadata )
+              valueOfCollectionValidatorWithMetadata])
      | SyncValidator (Ok (Optional None)) -> [%type: unit]
      | AsyncValidator _ ->
        (match metadata with
         | None ->
           [%type:
             ( input
-            , [%t field.output_type |> ItemType.unpack]
-            , message
-            , action )
-            Async.valueOfCollectionValidator]
+              , [%t field.output_type |> ItemType.unpack]
+              , message
+              , action )
+              Async.valueOfCollectionValidator]
         | Some () ->
           [%type:
             ( input
-            , [%t field.output_type |> ItemType.unpack]
-            , message
-            , metadata
-            , action )
-            Async.valueOfCollectionValidatorWithMetadata]))
+              , [%t field.output_type |> ItemType.unpack]
+              , message
+              , metadata
+              , action )
+              Async.valueOfCollectionValidatorWithMetadata]))
 ;;
 
 let ast ~(scheme : Scheme.t) ~(metadata : unit option) ~loc =

@@ -112,9 +112,9 @@ let ast ~(scheme : Scheme.t) ~(async : bool) ~loc =
                 | AsyncValidator _ ->
                   [%type:
                     ( [%t field.output_type |> ItemType.unpack]
-                    , message )
-                    Async.exposedFieldStatus
-                    option])
+                      , message )
+                      Async.exposedFieldStatus
+                      option])
              :: acc
            | Collection { collection; fields } ->
              fields
@@ -130,9 +130,9 @@ let ast ~(scheme : Scheme.t) ~(async : bool) ~loc =
                            [%type:
                              at:index
                              -> ( [%t field.output_type |> ItemType.unpack]
-                                , message )
-                                result
-                                option]
+                                  , message )
+                                  result
+                                  option]
                        | AsyncValidator _ ->
                          Uncurried.ty
                            ~loc
@@ -140,9 +140,9 @@ let ast ~(scheme : Scheme.t) ~(async : bool) ~loc =
                            [%type:
                              at:index
                              -> ( [%t field.output_type |> ItemType.unpack]
-                                , message )
-                                Async.exposedFieldStatus
-                                option])
+                                  , message )
+                                  Async.exposedFieldStatus
+                                  option])
                     :: acc)
                   acc)
          []

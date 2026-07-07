@@ -499,9 +499,9 @@ let validate_fields_of_collection_in_sync_form
                         (Lident (collection |> CollectionPrinter.fields_statuses_type)
                          |> lid ~loc)
                         []]
-                    array) )
-                fieldStatus
-                index ->
+                      array) )
+              fieldStatus
+              index ->
               [%e
                 Exp.match_
                   ~attrs:[ warning_4_disable ~loc ]
@@ -656,8 +656,8 @@ let validate_fields_of_collection_in_async_form
                     ([%t output_type |> ItemType.unpack] array, unit) result
                     * [%t fields_statuses_type] array
                   ])
-                fieldStatus
-                index ->
+              fieldStatus
+              index ->
               [%e
                 Exp.match_
                   ~attrs:[ warning_4_disable ~loc ]
@@ -965,7 +965,7 @@ module Async = struct
                           `AsyncField field :: acc
                         | Collection { collection } -> `Collection collection :: acc)
                       []
-                  : validating_entry list)
+                 : validating_entry list)
               in
               let make (entry : validating_entry) =
                 match entry with

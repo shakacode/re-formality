@@ -38,7 +38,7 @@ let update_async_validator_of_field
               fun (value, dispatch) ->
                 let validate =
                   ([%e expr]
-                    : ([%t output_type |> ItemType.unpack], message) Async.validateAsyncFn)
+                   : ([%t output_type |> ItemType.unpack], message) Async.validateAsyncFn)
                 in
                 (Async.validateAsync
                    ~value
@@ -69,10 +69,10 @@ let update_async_validator_of_field
               fun (value, metadata, dispatch) ->
                 let validate =
                   ([%e expr]
-                    : ( [%t output_type |> ItemType.unpack]
-                      , message
-                      , metadata )
-                      Async.validateAsyncFnWithMetadata)
+                   : ( [%t output_type |> ItemType.unpack]
+                       , message
+                       , metadata )
+                       Async.validateAsyncFnWithMetadata)
                 in
                 (Async.validateAsyncWithMetadata
                    ~value
@@ -130,7 +130,7 @@ let update_async_validator_of_field_of_collection
               fun (value, index, dispatch) ->
                 let validate =
                   ([%e expr]
-                    : ([%t output_type |> ItemType.unpack], message) Async.validateAsyncFn)
+                   : ([%t output_type |> ItemType.unpack], message) Async.validateAsyncFn)
                 in
                 (Async.validateAsync
                    ~value
@@ -164,10 +164,10 @@ let update_async_validator_of_field_of_collection
               fun (value, index, metadata, dispatch) ->
                 let validate =
                   ([%e expr]
-                    : ( [%t output_type |> ItemType.unpack]
-                      , message
-                      , metadata )
-                      Async.validateAsyncFnWithMetadata)
+                   : ( [%t output_type |> ItemType.unpack]
+                       , message
+                       , metadata )
+                       Async.validateAsyncFnWithMetadata)
                 in
                 (Async.validateAsyncWithMetadata
                    ~value

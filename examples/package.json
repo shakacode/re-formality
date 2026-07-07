@@ -4,10 +4,10 @@
     "private": true,
     "scripts": {
         "start": "parcel src/index.html",
-        "prestart": "yarn run clean && yarn run res:build",
+        "prestart": "pnpm run clean && pnpm run res:build",
         "build": "parcel build src/index.html",
-        "prebuild": "yarn run clean && yarn run res:build",
-        "clean": "yarn run dist:clean && yarn run res:clean",
+        "prebuild": "pnpm run clean && pnpm run res:build",
+        "clean": "pnpm run dist:clean && pnpm run res:clean",
         "res:build": "rescript build -with-deps",
         "res:watch": "rescript build -with-deps -w",
         "res:clean": "rescript clean",
@@ -15,7 +15,7 @@
         "format": "rescript format -all",
         "test": "exit 0",
         "deploy": "now deploy dist --prod --name re-formality",
-        "predeploy": "yarn run build"
+        "predeploy": "pnpm run build"
     },
     "dependencies": {
         "@rescript/react": "0.12.1",

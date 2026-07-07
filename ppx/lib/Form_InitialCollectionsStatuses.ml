@@ -19,6 +19,6 @@ let ast ~(scheme : Scheme.t) ~loc =
                   | Ok (Some ()) | Error () -> [%expr None]
                   | Ok None -> [%expr ()] )))
              None]
-        : collectionsStatuses)
+       : collectionsStatuses)
     ;;]
 ;;
