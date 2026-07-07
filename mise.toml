@@ -1,0 +1,31 @@
+[tools]
+node = "24"
+pnpm = "11.10.0"
+opam = "2.5.1"
+
+[env]
+OPAMROOT = "{{config_root}}/.opam"
+_.path = ["node_modules/.bin", "_opam/bin"]
+
+[tasks.setup]
+run = [
+  "pnpm install",
+  "opam init --bare --disable-sandboxing --yes || true",
+  "opam repo set-url default git+https://github.com/ocaml/opam-repository.git#a52dd1c5b0298d669078ed99d219623a6bf0f0c1 --yes",
+  "opam update",
+  "test -d _opam || opam switch create . 4.14.1 --no-install --yes",
+  "opam install . --deps-only --with-test --yes",
+  "opam install ocaml-lsp-server ocamlformat ocamlformat-rpc-lib ocamlfind --yes"
+]
+
+[tasks.build]
+run = "opam exec -- dune build"
+
+[tasks.symlink]
+run = "ln -sf ../_build/default/ppx/bin/bin.exe node_modules/re-formality-ppx"
+
+[tasks.test]
+run = "opam exec -- dune exec test.exe"
+
+[tasks.format]
+run = "opam exec -- ocamlformat --inplace ppx/**/*.ml ppx/**/*.mli"

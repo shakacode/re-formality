@@ -1,3 +1,0 @@
-#!/bin/bash
-
-ppx/test/script/print-ppxed-source $1 > ppx/sandbox/src/Sandbox.re

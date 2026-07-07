@@ -8,10 +8,10 @@ module LoginForm = %form(
     email: {
       strategy: OnFirstSuccessOrFirstBlur,
       validate: ({email}) => {
-        let emailRegex = %re(`/.*@.*\..+/`)
+        let emailRegex = /.*@.*\..+/
         switch email {
         | "" => Error("Email is required")
-        | _ as value if !(emailRegex->Js.Re.test_(value)) => Error("Email is invalid")
+        | _ as value if !(emailRegex->RegExp.test(value)) => Error("Email is invalid")
         | _ => Ok(email)
         }
       },
@@ -37,10 +37,10 @@ let initialInput: LoginForm.input = {
 @react.component
 let make = () => {
   let form = LoginForm.useForm(~initialInput, ~onSubmit=(output, form) => {
-    Js.log2("Submitted with:", output)
-    Js.Global.setTimeout(() => {
+    Console.log2("Submitted with:", output)
+    setTimeout(() => {
       form.notifyOnSuccess(None)
-      form.reset->Js.Global.setTimeout(3000)->ignore
+      form.reset->setTimeout(3000)->ignore
     }, 500)->ignore
   })
 
@@ -69,7 +69,7 @@ let make = () => {
           </div>
         | Some(Ok(_)) =>
           <div className={cx(["form-message", "form-message-for-field", "success"])}>
-            {j`✓`->React.string}
+            {"✓"->React.string}
           </div>
         | None => React.null
         }}
@@ -95,7 +95,7 @@ let make = () => {
           </div>
         | Some(Ok(_)) =>
           <div className={cx(["form-message", "form-message-for-field", "success"])}>
-            {j`✓`->React.string}
+            {"✓"->React.string}
           </div>
         | None => React.null
         }}
@@ -122,7 +122,7 @@ let make = () => {
         </button>
         {switch form.status {
         | Submitted =>
-          <div className={cx(["form-status", "success"])}> {j`✓ Logged In`->React.string} </div>
+          <div className={cx(["form-status", "success"])}> {"✓ Logged In"->React.string} </div>
         | _ => React.null
         }}
       </div>

@@ -1,0 +1,24 @@
+packages:
+  - lib
+  - specs
+  - examples
+
+minimumReleaseAge: 10080 # 7 days
+minimumReleaseAgeStrict: true
+minimumReleaseAgeIgnoreMissingTime: false
+blockExoticSubdeps: true
+strictDepBuilds: true
+savePrefix: ""
+
+publicHoistPattern:
+  - "*@rescript/runtime*"
+  - "react"
+  - "react-dom"
+
+allowBuilds:
+  '@parcel/watcher': true
+  '@swc/core': true
+  cypress: true
+  lmdb: true
+  msgpackr-extract: true
+  rescript: true

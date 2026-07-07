@@ -1,0 +1,21 @@
+{
+    "name": "re-formality-specs",
+    "sources": [
+        "app"
+    ],
+    "dependencies": [
+        "@rescript/react",
+        "re-formality"
+    ],
+    "jsx": {
+        "version": 4
+    },
+    "ppx-flags": [
+        "re-formality-ppx"
+    ],
+    "package-specs": {
+        "module": "esmodule",
+        "in-source": true
+    },
+    "suffix": ".res.js"
+}

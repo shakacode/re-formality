@@ -20,7 +20,7 @@ module BlogPostForm = %form(
       validate: ({category}, metadata) =>
         switch category {
         | "" => Error("Category is required")
-        | _ if !(metadata.categories->Js.Array2.includes(category)) => Error("Invalid category")
+        | _ if !(metadata.categories->Array.includes(category)) => Error("Invalid category")
         | _ => Ok(category)
         },
     },
@@ -37,7 +37,7 @@ module BlogPostForm = %form(
             switch authors->Array.getUnsafe(at) {
             | {name: ""} => Error("Author name is required")
             | {name}
-              if authors->Js.Array2.somei((author, idx) =>
+              if authors->Array.someWithIndex((author, idx) =>
                 if at == idx {
                   false
                 } else {
@@ -67,10 +67,10 @@ let make = () => {
     output,
     form,
   ) => {
-    Js.log2("Submitted with:", output)
-    Js.Global.setTimeout(() => {
+    Console.log2("Submitted with:", output)
+    setTimeout(() => {
       form.notifyOnSuccess(None)
-      form.reset->Js.Global.setTimeout(3000)->ignore
+      form.reset->setTimeout(3000)->ignore
     }, 500)->ignore
   })
 
@@ -99,7 +99,7 @@ let make = () => {
           </div>
         | Some(Ok(_)) =>
           <div className={cx(["form-message", "form-message-for-field", "success"])}>
-            {j`✓`->React.string}
+            {"✓"->React.string}
           </div>
         | None => React.null
         }}
@@ -118,7 +118,8 @@ let make = () => {
             form.updateCategory(
               (input, value) => {...input, category: value},
               (event->ReactEvent.Form.target)["value"],
-            )}>
+            )}
+        >
           <option value="" default=true disabled=true hidden=true>
             {"Select category..."->React.string}
           </option>
@@ -135,7 +136,7 @@ let make = () => {
           </div>
         | Some(Ok(_)) =>
           <div className={cx(["form-message", "form-message-for-field", "success"])}>
-            {j`✓`->React.string}
+            {"✓"->React.string}
           </div>
         | None => React.null
         }}
@@ -152,7 +153,7 @@ let make = () => {
         }}
       </div>
       {form.input.authors
-      ->Array.mapWithIndex((index, author) => {
+      ->Array.mapWithIndex((author, index) => {
         let authorNameDomId = "blog-post--author-name" ++ index->Int.toString
 
         <div key=authorNameDomId className="form-row">
@@ -168,7 +169,7 @@ let make = () => {
                 ~at=index,
                 (input, value) => {
                   ...input,
-                  authors: input.authors->Array.mapWithIndex((idx, author) =>
+                  authors: input.authors->Array.mapWithIndex((author, idx) =>
                     if idx != index {
                       author
                     } else {
@@ -182,18 +183,20 @@ let make = () => {
               )}
           />
           <button type_="button" className="control" onClick={_ => form.removeAuthor(~at=index)}>
-            {j`✕`->React.string}
+            {"✕"->React.string}
           </button>
           {switch form.authorNameResult(~at=index) {
           | Some(Error(message)) =>
             <div
-              className={cx(["form-message", "form-message-for-field-of-collection", "failure"])}>
+              className={cx(["form-message", "form-message-for-field-of-collection", "failure"])}
+            >
               {message->React.string}
             </div>
           | Some(Ok(_)) =>
             <div
-              className={cx(["form-message", "form-message-for-field-of-collection", "success"])}>
-              {j`✓`->React.string}
+              className={cx(["form-message", "form-message-for-field-of-collection", "success"])}
+            >
+              {"✓"->React.string}
             </div>
           | None => React.null
           }}
@@ -204,7 +207,8 @@ let make = () => {
         <button
           type_="button"
           className={cx(["secondary", "push-lg"])}
-          onClick={_ => form.addAuthor({name: ""})}>
+          onClick={_ => form.addAuthor({name: ""})}
+        >
           {"Add author"->React.string}
         </button>
       </div>
@@ -214,7 +218,7 @@ let make = () => {
         </button>
         {switch form.status {
         | Submitted =>
-          <div className={cx(["form-status", "success"])}> {j`✓ Posted`->React.string} </div>
+          <div className={cx(["form-status", "success"])}> {"✓ Posted"->React.string} </div>
         | _ => React.null
         }}
       </div>

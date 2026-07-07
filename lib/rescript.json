@@ -1,0 +1,15 @@
+{
+    "name": "re-formality",
+    "sources": [
+        "src"
+    ],
+    "dependencies": [
+        "@rescript/react",
+        "rescript-debounce"
+    ],
+    "package-specs": {
+        "module": "esmodule",
+        "in-source": true
+    },
+    "suffix": ".res.js"
+}

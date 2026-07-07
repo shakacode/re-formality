@@ -1,0 +1,25 @@
+{
+    "name": "re-formality-examples",
+    "sources": [
+        "src"
+    ],
+    "dependencies": [
+        "@rescript/react",
+        "re-formality",
+        "rescript-classnames"
+    ],
+    "jsx": {
+        "version": 4
+    },
+    "compiler-flags": [
+        "-open Cx"
+    ],
+    "ppx-flags": [
+        "re-formality-ppx"
+    ],
+    "package-specs": {
+        "module": "esmodule",
+        "in-source": true
+    },
+    "suffix": ".res.js"
+}
