@@ -40,6 +40,8 @@ jobs:
         uses: ocaml/setup-ocaml@v2
         with:
           ocaml-compiler: ${{ matrix.ocaml-version }}
+          opam-pin: false
+          opam-depext: false
 
       - name: Set Opam repository
         run: |
@@ -85,6 +87,8 @@ jobs:
         uses: ocaml/setup-ocaml@v2
         with:
           ocaml-compiler: ${{ matrix.ocaml-version }}
+          opam-pin: false
+          opam-depext: false
 
       - name: Set Opam repository
         run: |
@@ -170,6 +174,8 @@ jobs:
         uses: ocaml/setup-ocaml@v2
         with:
           ocaml-compiler: ${{ matrix.ocaml-version }}
+          opam-pin: false
+          opam-depext: false
 
       - name: Pin Opam deps
         run: |
