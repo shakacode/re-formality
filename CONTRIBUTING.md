@@ -48,7 +48,7 @@ mise run setup
 Build ReScript library:
 
 ```shell
-pnpm --filter re-formality exec rescript build -with-deps
+pnpm --filter re-formality exec rescript build
 ```
 
 Build public interface of the ReScript lib:
@@ -57,7 +57,7 @@ Build public interface of the ReScript lib:
 # Apparently `rescript` doesn't have `bsb -install` counterpart
 # So you need to build any app in this workspace that relies on `re-formality`
 
-pnpm --filter re-formality-examples exec rescript build -with-deps
+pnpm --filter re-formality-examples exec rescript build
 ```
 
 Build PPX:

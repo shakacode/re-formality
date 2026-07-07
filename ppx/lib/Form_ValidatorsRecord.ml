@@ -11,7 +11,9 @@ let ensure_eq ~loc fields =
        | Lident "eq" -> true
        | _ -> false)
   then fields
-  else (Lident "eq" |> lid ~loc, [%expr ( = )]) :: fields
+  else
+    (Lident "eq" |> lid ~loc, Uncurried.fn ~loc ~arity:2 [%expr fun a b -> a == b])
+    :: fields
 ;;
 
 let update_async_validator_of_field

@@ -21,6 +21,9 @@ run = [
 [tasks.build]
 run = "opam exec -- dune build"
 
+[tasks.symlink]
+run = "ln -sf ../_build/default/ppx/bin/bin.exe node_modules/re-formality-ppx"
+
 [tasks.test]
 run = "opam exec -- dune exec test.exe"
 

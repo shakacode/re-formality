@@ -37,7 +37,7 @@ module Async = {
     | Dirty(Result.result<'message>, Visibility.t)
     | Validating
 
-  type validate<'state, 'message> = 'state => Js.Promise.t<Result.result<'message>>
+  type validate<'state, 'message> = 'state => Promise.t<Result.result<'message>>
 
   type equalityChecker<'state> = ('state, 'state) => bool
 

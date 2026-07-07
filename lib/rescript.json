@@ -3,15 +3,12 @@
     "sources": [
         "src"
     ],
-    "bs-dependencies": [
+    "dependencies": [
         "@rescript/react",
         "rescript-debounce"
     ],
-    "bsc-flags": [
-        "-open Belt"
-    ],
     "package-specs": {
-        "module": "es6",
+        "module": "esmodule",
         "in-source": true
     },
     "suffix": ".res.js"

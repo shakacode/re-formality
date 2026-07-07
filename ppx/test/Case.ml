@@ -28,17 +28,26 @@ module Path = struct
 
   let bsc =
     let open Filename in
-    concat ([ current_dir_name; "node_modules"; "rescript" ] |> join) "bsc"
+    [ current_dir_name; "node_modules"; ".pnpm"; "node_modules"; ".bin"; "bsc" ] |> join
   ;;
 
   let rescript_react =
     let open Filename in
-    [ current_dir_name; "node_modules"; "@rescript"; "react"; "lib"; "ocaml" ] |> join
+    [ current_dir_name
+    ; "node_modules"
+    ; ".pnpm"
+    ; "node_modules"
+    ; "@rescript"
+    ; "react"
+    ; "lib"
+    ; "ocaml"
+    ]
+    |> join
   ;;
 
   let re_formality =
     let open Filename in
-    [ current_dir_name; "node_modules"; "re-formality"; "lib"; "ocaml" ] |> join
+    [ current_dir_name; "lib"; "lib"; "ocaml" ] |> join
   ;;
 end
 

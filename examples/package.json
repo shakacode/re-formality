@@ -8,25 +8,25 @@
         "build": "parcel build src/index.html",
         "prebuild": "pnpm run clean && pnpm run res:build",
         "clean": "pnpm run dist:clean && pnpm run res:clean",
-        "res:build": "rescript build -with-deps",
-        "res:watch": "rescript build -with-deps -w",
+        "res:build": "rescript build",
+        "res:watch": "rescript watch",
         "res:clean": "rescript clean",
         "dist:clean": "rm -rf dist",
-        "format": "rescript format -all",
+        "format": "rescript format",
         "test": "exit 0",
         "deploy": "now deploy dist --prod --name re-formality",
         "predeploy": "pnpm run build"
     },
     "dependencies": {
-        "@rescript/react": "0.12.1",
-        "re-formality": "*",
-        "react": "18.2.0",
-        "react-dom": "18.2.0",
-        "rescript-classnames": "7.0.0"
+        "@rescript/react": "0.15.0",
+        "re-formality": "link:../lib",
+        "react": "19.2.7",
+        "react-dom": "19.2.7",
+        "rescript-classnames": "8.0.0"
     },
     "devDependencies": {
-        "parcel": "2.8.3",
+        "parcel": "2.16.4",
         "process": "0.11.10",
-        "rescript": "11.0.1"
+        "rescript": "12.3.0"
     }
 }

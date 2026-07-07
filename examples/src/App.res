@@ -34,7 +34,8 @@ let make = () => {
           | _ => ""
           },
         ])}
-        onClick={_ => RescriptReactRouter.push("#signup")}>
+        onClick={_ => RescriptReactRouter.push("#signup")}
+      >
         {"Signup"->React.string}
       </button>
       <button
@@ -46,7 +47,8 @@ let make = () => {
           | _ => ""
           },
         ])}
-        onClick={_ => RescriptReactRouter.push("#login")}>
+        onClick={_ => RescriptReactRouter.push("#login")}
+      >
         {"Login"->React.string}
       </button>
       <button
@@ -58,7 +60,8 @@ let make = () => {
           | _ => ""
           },
         ])}
-        onClick={_ => RescriptReactRouter.push("#blog-post")}>
+        onClick={_ => RescriptReactRouter.push("#blog-post")}
+      >
         {"Blog Post"->React.string}
       </button>
     </div>

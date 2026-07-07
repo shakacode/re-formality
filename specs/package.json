@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "app:start": "parcel app/index.html --port 8085",
-    "res:build": "rescript build -with-deps",
-    "res:watch": "rescript build -with-deps -w",
+    "res:build": "rescript build",
+    "res:watch": "rescript watch",
     "res:clean": "rescript clean",
     "cypress:open": "cypress open",
     "cypress:run": "cypress run",
@@ -13,14 +13,14 @@
     "pretest": "pnpm run res:build"
   },
   "dependencies": {
-    "@rescript/react": "0.12.1",
+    "@rescript/react": "0.15.0",
     "cypress": "4.5.0",
-    "parcel": "2.8.3",
+    "parcel": "2.16.4",
     "process": "0.11.10",
-    "re-formality": "*",
-    "react": "18.2.0",
-    "react-dom": "18.2.0",
-    "rescript": "11.0.1",
+    "re-formality": "link:../lib",
+    "react": "19.2.7",
+    "react-dom": "19.2.7",
+    "rescript": "12.3.0",
     "start-server-and-test": "1.11.0"
   }
 }

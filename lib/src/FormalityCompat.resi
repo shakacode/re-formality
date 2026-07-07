@@ -46,7 +46,7 @@ module Async: {
       )
     | Validating
 
-  type validate<'state, 'message> = 'state => Js.Promise.t<
+  type validate<'state, 'message> = 'state => Promise.t<
     FormalityCompat__Validation.Result.result<'message>,
   >
 

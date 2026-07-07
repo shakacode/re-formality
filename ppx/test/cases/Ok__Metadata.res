@@ -43,7 +43,7 @@ module Form = %form(
         \"+++"(emailOnChange, metadata)
       }),
       validateAsync: (email, metadata) =>
-        Js.Promise.resolve(
+        Promise.resolve(
           Ok({
             open Email
             \"+++"(email, metadata)
@@ -57,7 +57,7 @@ module Form = %form(
         emailOptionOnChange->Belt.Option.map(x => \"+++"(x, metadata))
       }),
       validateAsync: (email, metadata) =>
-        Js.Promise.resolve(
+        Promise.resolve(
           Ok({
             open Email
             email->Belt.Option.map(x => \"+++"(x, metadata))
@@ -67,7 +67,7 @@ module Form = %form(
     emailStringOnChange: {
       strategy: OnSubmit,
       validate: ({emailStringOnChange, _}, metadata) => Ok(emailStringOnChange ++ metadata),
-      validateAsync: (email, metadata) => Js.Promise.resolve(Ok(email ++ metadata)),
+      validateAsync: (email, metadata) => Promise.resolve(Ok(email ++ metadata)),
     },
     emailOptionStringOnChange: {
       strategy: OnSubmit,
@@ -75,7 +75,7 @@ module Form = %form(
         emailOptionStringOnChange->Belt.Option.map(x => x ++ metadata),
       ),
       validateAsync: (email, metadata) =>
-        Js.Promise.resolve(Ok(email->Belt.Option.map(x => x ++ metadata))),
+        Promise.resolve(Ok(email->Belt.Option.map(x => x ++ metadata))),
     },
     emailOnBlur: {
       strategy: OnSubmit,
@@ -84,7 +84,7 @@ module Form = %form(
         \"+++"(emailOnBlur, metadata)
       }),
       validateAsync: (email, metadata) =>
-        Js.Promise.resolve(
+        Promise.resolve(
           Ok({
             open Email
             \"+++"(email, metadata)
@@ -98,7 +98,7 @@ module Form = %form(
         emailOptionOnBlur->Belt.Option.map(x => \"+++"(x, metadata))
       }),
       validateAsync: (email, metadata) =>
-        Js.Promise.resolve(
+        Promise.resolve(
           Ok({
             open Email
             email->Belt.Option.map(x => \"+++"(x, metadata))
@@ -108,7 +108,7 @@ module Form = %form(
     emailStringOnBlur: {
       strategy: OnSubmit,
       validate: ({emailStringOnBlur, _}, metadata) => Ok(emailStringOnBlur ++ metadata),
-      validateAsync: (email, metadata) => Js.Promise.resolve(Ok(email ++ metadata)),
+      validateAsync: (email, metadata) => Promise.resolve(Ok(email ++ metadata)),
     },
     emailOptionStringOnBlur: {
       strategy: OnSubmit,
@@ -116,7 +116,7 @@ module Form = %form(
         emailOptionStringOnBlur->Belt.Option.map(x => x ++ metadata),
       ),
       validateAsync: (email, metadata) =>
-        Js.Promise.resolve(Ok(email->Belt.Option.map(x => x ++ metadata))),
+        Promise.resolve(Ok(email->Belt.Option.map(x => x ++ metadata))),
     },
     users: {
       collection: (_input, _metadata) => Ok(),
@@ -134,7 +134,7 @@ module Form = %form(
             \"+++"((users->Belt.Array.getUnsafe(at)).userEmailOnChange, metadata)
           }),
           validateAsync: (email, metadata) =>
-            Js.Promise.resolve(
+            Promise.resolve(
               Ok({
                 open Email
                 \"+++"(email, metadata)
@@ -150,7 +150,7 @@ module Form = %form(
             )
           }),
           validateAsync: (email, metadata) =>
-            Js.Promise.resolve(
+            Promise.resolve(
               Ok({
                 open Email
                 email->Belt.Option.map(x => \"+++"(x, metadata))
@@ -162,7 +162,7 @@ module Form = %form(
           validate: ({users, _}, ~at, ~metadata) => Ok(
             (users->Belt.Array.getUnsafe(at)).userEmailStringOnChange ++ metadata,
           ),
-          validateAsync: (email, metadata) => Js.Promise.resolve(Ok(email ++ metadata)),
+          validateAsync: (email, metadata) => Promise.resolve(Ok(email ++ metadata)),
         },
         userEmailOptionStringOnChange: {
           strategy: OnSubmit,
@@ -172,7 +172,7 @@ module Form = %form(
             ),
           ),
           validateAsync: (email, metadata) =>
-            Js.Promise.resolve(Ok(email->Belt.Option.map(x => x ++ metadata))),
+            Promise.resolve(Ok(email->Belt.Option.map(x => x ++ metadata))),
         },
         userEmailOnBlur: {
           strategy: OnSubmit,
@@ -181,7 +181,7 @@ module Form = %form(
             \"+++"((users->Belt.Array.getUnsafe(at)).userEmailOnBlur, metadata)
           }),
           validateAsync: (email, metadata) =>
-            Js.Promise.resolve(
+            Promise.resolve(
               Ok({
                 open Email
                 \"+++"(email, metadata)
@@ -197,7 +197,7 @@ module Form = %form(
             )
           }),
           validateAsync: (email, metadata) =>
-            Js.Promise.resolve(
+            Promise.resolve(
               Ok({
                 open Email
                 email->Belt.Option.map(x => \"+++"(x, metadata))
@@ -209,7 +209,7 @@ module Form = %form(
           validate: ({users, _}, ~at, ~metadata) => Ok(
             (users->Belt.Array.getUnsafe(at)).userEmailStringOnBlur ++ metadata,
           ),
-          validateAsync: (email, metadata) => Js.Promise.resolve(Ok(email ++ metadata)),
+          validateAsync: (email, metadata) => Promise.resolve(Ok(email ++ metadata)),
         },
         userEmailOptionStringOnBlur: {
           strategy: OnSubmit,
@@ -219,7 +219,7 @@ module Form = %form(
             ),
           ),
           validateAsync: (email, metadata) =>
-            Js.Promise.resolve(Ok(email->Belt.Option.map(x => x ++ metadata))),
+            Promise.resolve(Ok(email->Belt.Option.map(x => x ++ metadata))),
         },
       },
     },

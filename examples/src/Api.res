@@ -1,16 +1,16 @@
 let takenEmail = "test@taken.email"
 
 let validateEmail = value =>
-  Js.Promise.make((~resolve, ~reject as _) => {
-    Js.log("Remote validation triggered")
-    Js.Global.setTimeout(() =>
+  Promise.make((resolve, _) => {
+    Console.log("Remote validation triggered")
+    setTimeout(() =>
       value !== takenEmail
         ? {
-            Js.log("Remote validation succeeded")
+            Console.log("Remote validation succeeded")
             resolve(true)
           }
         : {
-            Js.log("Remote validation failed")
+            Console.log("Remote validation failed")
             resolve(false)
           }
     , 1500)->ignore

@@ -446,22 +446,18 @@ let validate_fields_of_collection_in_sync_form
             (Some (Pat.tuple [ Pat.var ("output" |> str ~loc) ]))
           :: (fields |> List.rev |> List.rev_map (ok_pat_for_sync_field ~loc))))
       [%expr
-        ignore
-          (Js.Array2.push
-             output
-             [%e
-               Exp.record
-                 (fields |> List.rev |> List.rev_map (output_field_record_field ~loc))
-                 None] [@res.uapp]) [@res.uapp];
-        ignore
-          (Js.Array2.push
-             statuses
-             [%e
-               Exp.record
-                 (fields
-                  |> List.rev
-                  |> List.rev_map (field_dirty_status_record_field ~loc))
-                 None] [@res.uapp]) [@res.uapp];
+        Array.push
+          output
+          [%e
+            Exp.record
+              (fields |> List.rev |> List.rev_map (output_field_record_field ~loc))
+              None] [@res.uapp];
+        Array.push
+          statuses
+          [%e
+            Exp.record
+              (fields |> List.rev |> List.rev_map (field_dirty_status_record_field ~loc))
+              None] [@res.uapp];
         Ok output, statuses]
   in
   let error_case =
@@ -472,15 +468,12 @@ let validate_fields_of_collection_in_sync_form
               |> List.rev
               |> List.rev_map (result_and_visibility_pat_for_field ~loc))))
       [%expr
-        ignore
-          (Js.Array2.push
-             statuses
-             [%e
-               Exp.record
-                 (fields
-                  |> List.rev
-                  |> List.rev_map (field_dirty_status_record_field ~loc))
-                 None] [@res.uapp]) [@res.uapp];
+        Array.push
+          statuses
+          [%e
+            Exp.record
+              (fields |> List.rev |> List.rev_map (field_dirty_status_record_field ~loc))
+              None] [@res.uapp];
         Error (), statuses]
   in
   [%expr
@@ -574,19 +567,18 @@ let validate_fields_of_collection_in_async_form
             | SyncValidator _ -> false
             | AsyncValidator _ -> true)))
       [%expr
-        ignore
-          (Js.Array2.push
-             statuses
-             [%e
-               Exp.record
-                 (fields
-                  |> List.rev
-                  |> List.rev_map (fun (field : Scheme.field) ->
-                    match field.validator with
-                    | SyncValidator _ -> field |> field_dirty_status_record_field ~loc
-                    | AsyncValidator _ ->
-                      field |> async_field_dirty_or_validating_status_record_field ~loc))
-                 None] [@res.uapp]) [@res.uapp];
+        Array.push
+          statuses
+          [%e
+            Exp.record
+              (fields
+               |> List.rev
+               |> List.rev_map (fun (field : Scheme.field) ->
+                 match field.validator with
+                 | SyncValidator _ -> field |> field_dirty_status_record_field ~loc
+                 | AsyncValidator _ ->
+                   field |> async_field_dirty_or_validating_status_record_field ~loc))
+              None] [@res.uapp];
         `ValidatingFieldsOfCollection statuses]
   in
   let ok_case =
@@ -600,22 +592,18 @@ let validate_fields_of_collection_in_async_form
                 | SyncValidator _ -> field |> ok_pat_for_sync_field ~loc
                 | AsyncValidator _ -> field |> ok_pat_for_async_field ~loc))))
       [%expr
-        ignore
-          (Js.Array2.push
-             output
-             [%e
-               Exp.record
-                 (fields |> List.rev |> List.rev_map (output_field_record_field ~loc))
-                 None] [@res.uapp]) [@res.uapp];
-        ignore
-          (Js.Array2.push
-             statuses
-             [%e
-               Exp.record
-                 (fields
-                  |> List.rev
-                  |> List.rev_map (field_dirty_status_record_field ~loc))
-                 None] [@res.uapp]) [@res.uapp];
+        Array.push
+          output
+          [%e
+            Exp.record
+              (fields |> List.rev |> List.rev_map (output_field_record_field ~loc))
+              None] [@res.uapp];
+        Array.push
+          statuses
+          [%e
+            Exp.record
+              (fields |> List.rev |> List.rev_map (field_dirty_status_record_field ~loc))
+              None] [@res.uapp];
         `FieldsOfCollectionResult (Ok output, statuses)]
   in
   let error_case =
@@ -626,19 +614,18 @@ let validate_fields_of_collection_in_async_form
               |> List.rev
               |> List.rev_map (result_and_visibility_pat_for_field ~loc))))
       [%expr
-        ignore
-          (Js.Array2.push
-             statuses
-             [%e
-               Exp.record
-                 (fields
-                  |> List.rev
-                  |> List.rev_map (fun (field : Scheme.field) ->
-                    match field.validator with
-                    | SyncValidator _ -> field |> field_dirty_status_record_field ~loc
-                    | AsyncValidator _ ->
-                      field |> async_field_dirty_or_validating_status_record_field ~loc))
-                 None] [@res.uapp]) [@res.uapp];
+        Array.push
+          statuses
+          [%e
+            Exp.record
+              (fields
+               |> List.rev
+               |> List.rev_map (fun (field : Scheme.field) ->
+                 match field.validator with
+                 | SyncValidator _ -> field |> field_dirty_status_record_field ~loc
+                 | AsyncValidator _ ->
+                   field |> async_field_dirty_or_validating_status_record_field ~loc))
+              None] [@res.uapp];
         `FieldsOfCollectionResult (Error (), statuses)]
   in
   [%expr

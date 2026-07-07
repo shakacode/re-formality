@@ -8,7 +8,7 @@ module Form = %form(
         name: {
           strategy: OnSubmit,
           validate: ({authors, _}, ~at) => Ok((authors->Belt.Array.getUnsafe(at)).name),
-          validateAsync: name => Js.Promise.resolve(Ok(name)),
+          validateAsync: name => Promise.resolve(Ok(name)),
         },
       },
     },

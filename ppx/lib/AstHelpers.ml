@@ -51,9 +51,7 @@ module E = struct
   ;;
 
   let ref_ ~loc x =
-    Exp.apply
-      (Exp.ident (Lident "!" |> lid ~loc))
-      [ Nolabel, Exp.ident (Lident x |> lid ~loc) ]
+    Exp.field (Exp.ident (Lident x |> lid ~loc)) (Lident "contents" |> lid ~loc)
   ;;
 
   let record ~loc (xs : (string * expression) list) =

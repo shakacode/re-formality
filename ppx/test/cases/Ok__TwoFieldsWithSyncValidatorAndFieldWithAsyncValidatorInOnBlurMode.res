@@ -8,7 +8,7 @@ module Form = %form(
     name: {
       strategy: OnSubmit,
       validate: ({name, _}) => Ok(name),
-      validateAsync: name => Js.Promise.resolve(Ok(name)),
+      validateAsync: name => Promise.resolve(Ok(name)),
     },
     email: {
       strategy: OnSubmit,

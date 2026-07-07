@@ -22,9 +22,9 @@ module Make = (Form: Form) => {
   type state = {
     input: Form.state,
     status: FormStatus.t<Form.submissionError>,
-    fields: Map.t<Form.field, Validation.Async.status<Form.message>, FieldId.identity>,
+    fields: Belt.Map.t<Form.field, Validation.Async.status<Form.message>, FieldId.identity>,
     validators: ref<
-      Map.t<
+      Belt.Map.t<
         Form.field,
         Validation.Async.validator<Form.field, Form.state, Form.message>,
         FieldId.identity,
@@ -64,12 +64,12 @@ module Make = (Form: Form) => {
   let getInitialState = input => {
     input,
     status: FormStatus.Editing,
-    fields: Form.validators->List.reduce(Map.make(~id=module(FieldId)), (fields, validator) =>
-      fields->Map.set(validator.field, Validation.Async.Pristine)
+    fields: Form.validators->List.reduce(Belt.Map.make(~id=module(FieldId)), (fields, validator) =>
+      fields->Belt.Map.set(validator.field, Validation.Async.Pristine)
     ),
     validators: ref(
-      Form.validators->List.reduce(Map.make(~id=module(FieldId)), (fields, validator) =>
-        fields->Map.set(validator.field, validator)
+      Form.validators->List.reduce(Belt.Map.make(~id=module(FieldId)), (fields, validator) =>
+        fields->Belt.Map.set(validator.field, validator)
       ),
     ),
     submittedOnce: false,
@@ -84,30 +84,30 @@ module Make = (Form: Form) => {
     let (state, dispatch) = ReactUpdate.useReducer(memoizedInitialState, (state, action) =>
       switch action {
       | Change(field, input) =>
-        let validator = state.validators.contents->Map.get(field)
+        let validator = state.validators.contents->Belt.Map.get(field)
         switch validator {
         | None =>
           Update({
             ...state,
             input,
-            fields: state.fields->Map.set(field, Dirty(Ok(Valid), Hidden)),
+            fields: state.fields->Belt.Map.set(field, Dirty(Ok(Valid), Hidden)),
           })
         | Some(validator) =>
-          let status = state.fields->Map.get(field)
+          let status = state.fields->Belt.Map.get(field)
           let result = input->validator.validate
           let fields = switch validator.dependents {
           | None => state.fields
           | Some(dependents) =>
             dependents->List.reduce(state.fields, (fields, field) => {
-              let status = fields->Map.get(field)
+              let status = fields->Belt.Map.get(field)
               switch status {
               | None
               | Some(Pristine)
               | Some(Validating)
               | Some(Dirty(_, Hidden)) => fields
               | Some(Dirty(_, Shown)) =>
-                let validator = state.validators.contents->Map.getExn(field)
-                fields->Map.set(field, Dirty(input->validator.validate, Shown))
+                let validator = state.validators.contents->Belt.Map.getExn(field)
+                fields->Belt.Map.set(field, Dirty(input->validator.validate, Shown))
               }
             })
           }
@@ -120,19 +120,19 @@ module Make = (Form: Form) => {
               Update({
                 ...state,
                 input,
-                fields: fields->Map.set(field, Dirty(result, Shown)),
+                fields: fields->Belt.Map.set(field, Dirty(result, Shown)),
               })
             | (Ok(Valid), Some(_)) =>
               Update({
                 ...state,
                 input,
-                fields: fields->Map.set(field, Dirty(result, Hidden)),
+                fields: fields->Belt.Map.set(field, Dirty(result, Hidden)),
               })
             | (Ok(NoValue) | Error(_), Some(_)) =>
               Update({
                 ...state,
                 input,
-                fields: fields->Map.set(field, Dirty(result, Shown)),
+                fields: fields->Belt.Map.set(field, Dirty(result, Shown)),
               })
             }
 
@@ -142,32 +142,32 @@ module Make = (Form: Form) => {
               Update({
                 ...state,
                 input,
-                fields: fields->Map.set(field, Dirty(result, Shown)),
+                fields: fields->Belt.Map.set(field, Dirty(result, Shown)),
               })
             | (Error(_), None) =>
               Update({
                 ...state,
                 input,
-                fields: fields->Map.set(field, Dirty(result, Hidden)),
+                fields: fields->Belt.Map.set(field, Dirty(result, Hidden)),
               })
 
             | (Ok(Valid), Some(_)) =>
               Update({
                 ...state,
                 input,
-                fields: fields->Map.set(field, Dirty(result, Hidden)),
+                fields: fields->Belt.Map.set(field, Dirty(result, Hidden)),
               })
             | (Ok(NoValue), Some(_)) =>
               Update({
                 ...state,
                 input,
-                fields: fields->Map.set(field, Dirty(result, Shown)),
+                fields: fields->Belt.Map.set(field, Dirty(result, Shown)),
               })
             | (Error(_), Some(_)) =>
               Update({
                 ...state,
                 input,
-                fields: fields->Map.set(field, Dirty(result, Hidden)),
+                fields: fields->Belt.Map.set(field, Dirty(result, Hidden)),
               })
             }
 
@@ -175,14 +175,14 @@ module Make = (Form: Form) => {
             Update({
               ...state,
               input,
-              fields: fields->Map.set(field, Dirty(result, Hidden)),
+              fields: fields->Belt.Map.set(field, Dirty(result, Hidden)),
             })
           }
         }
 
       | Blur(field) =>
-        let status = state.fields->Map.get(field)
-        let validator = state.validators.contents->Map.get(field)
+        let status = state.fields->Belt.Map.get(field)
+        let validator = state.validators.contents->Belt.Map.get(field)
         switch (status, validator) {
         | (Some(Validating), _)
         | (Some(Dirty(_, Shown)), Some(_) | None)
@@ -191,7 +191,7 @@ module Make = (Form: Form) => {
         | (Some(Pristine) | None, None) =>
           Update({
             ...state,
-            fields: state.fields->Map.set(field, Dirty(Ok(Valid), Hidden)),
+            fields: state.fields->Belt.Map.set(field, Dirty(Ok(Valid), Hidden)),
           })
 
         | (Some(Pristine | Dirty(_, Hidden)) | None, Some(validator)) =>
@@ -202,7 +202,7 @@ module Make = (Form: Form) => {
           | OnSubmit =>
             Update({
               ...state,
-              fields: state.fields->Map.set(field, Dirty(result, Hidden)),
+              fields: state.fields->Belt.Map.set(field, Dirty(result, Hidden)),
             })
           | OnFirstBlur
           | OnFirstSuccessOrFirstBlur =>
@@ -210,41 +210,40 @@ module Make = (Form: Form) => {
             | (_, None) =>
               Update({
                 ...state,
-                fields: state.fields->Map.set(field, Dirty(result, Shown)),
+                fields: state.fields->Belt.Map.set(field, Dirty(result, Shown)),
               })
             | (Ok(Valid), Some((validateAsync, _))) =>
               UpdateWithSideEffects(
                 {
                   ...state,
-                  fields: state.fields->Map.set(field, Validating),
+                  fields: state.fields->Belt.Map.set(field, Validating),
                 },
                 ({dispatch}) => {
-                  open Js.Promise
                   state.input
                   ->validateAsync
-                  ->then_(result => {
+                  ->Promise.then(result => {
                     ApplyAsyncResult(field, state.input, result)->dispatch
-                    resolve()
-                  }, _)
+                    Promise.resolve()
+                  })
                   ->ignore
                 },
               )
             | (Ok(NoValue) | Error(_), Some((_, _))) =>
               Update({
                 ...state,
-                fields: state.fields->Map.set(field, Dirty(result, Shown)),
+                fields: state.fields->Belt.Map.set(field, Dirty(result, Shown)),
               })
             }
           }
         }
 
       | ApplyAsyncResult(field, input, result) =>
-        let validator = state.validators.contents->Map.getExn(field)
-        let eq = validator.validateAsync->Option.getExn->snd
+        let validator = state.validators.contents->Belt.Map.getExn(field)
+        let eq = validator.validateAsync->Option.getOrThrow->Pair.second
         if input->eq(state.input) {
           Update({
             ...state,
-            fields: state.fields->Map.set(field, Dirty(result, Shown)),
+            fields: state.fields->Belt.Map.set(field, Dirty(result, Shown)),
           })
         } else {
           NoUpdate
@@ -256,10 +255,10 @@ module Make = (Form: Form) => {
         | Editing
         | Submitted
         | SubmissionFailed(_) =>
-          let (valid, fields, validating) = state.validators.contents->Map.reduce(
+          let (valid, fields, validating) = state.validators.contents->Belt.Map.reduce(
             (true, state.fields, false),
             ((valid, fields, validating), field, validator) => {
-              let status = fields->Map.get(field)
+              let status = fields->Belt.Map.get(field)
               switch status {
               | _ if validating => (valid, fields, true)
               | Some(Validating) => (valid, fields, true)
@@ -273,9 +272,9 @@ module Make = (Form: Form) => {
                 let result = state.input->validator.validate
                 let fields = switch (currentResultIsInvalid, result, validator.validateAsync) {
                 | (true, Ok(Valid), Some(_)) => fields
-                | (_, _, _) => fields->Map.set(field, Dirty(result, Shown))
+                | (_, _, _) => fields->Belt.Map.set(field, Dirty(result, Shown))
                 }
-                switch (valid, fields->Map.get(field)) {
+                switch (valid, fields->Belt.Map.get(field)) {
                 | (false, _)
                 | (true, Some(Dirty(Error(_), _))) => (false, fields, false)
                 | (
@@ -334,13 +333,13 @@ module Make = (Form: Form) => {
             ...state,
             input: data,
             status: FormStatus.Submitted,
-            fields: state.fields->Map.map(_ => Validation.Async.Pristine),
+            fields: state.fields->Belt.Map.map(_ => Validation.Async.Pristine),
           })
         | None =>
           Update({
             ...state,
             status: FormStatus.Submitted,
-            fields: state.fields->Map.map(_ => Validation.Async.Pristine),
+            fields: state.fields->Belt.Map.map(_ => Validation.Async.Pristine),
           })
         }
 
@@ -384,7 +383,7 @@ module Make = (Form: Form) => {
       state: state.input,
       status: state.status,
       result: field =>
-        switch state.fields->Map.get(field) {
+        switch state.fields->Belt.Map.get(field) {
         | None
         | Some(Pristine)
         | Some(Validating)
@@ -393,7 +392,7 @@ module Make = (Form: Form) => {
         | Some(Dirty(result, Shown)) => Some(result)
         },
       dirty: () =>
-        state.fields->Map.some((_, status) =>
+        state.fields->Belt.Map.some((_, status) =>
           switch status {
           | Dirty(_)
           | Validating => true
@@ -401,7 +400,7 @@ module Make = (Form: Form) => {
           }
         ),
       validating: field =>
-        switch state.fields->Map.get(field) {
+        switch state.fields->Belt.Map.get(field) {
         | Some(Validating) => true
         | None
         | Some(Pristine)

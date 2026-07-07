@@ -387,26 +387,24 @@ module Async = {
     eq: ('outputValue, 'outputValue) => bool,
   }
 
-  type validateAsyncFn<'outputValue, 'message> = 'outputValue => Js.Promise.t<
+  type validateAsyncFn<'outputValue, 'message> = 'outputValue => Promise.t<
     result<'outputValue, 'message>,
   >
 
   type validateAsyncFnWithMetadata<'outputValue, 'message, 'metadata> = (
     'outputValue,
     'metadata,
-  ) => Js.Promise.t<result<'outputValue, 'message>>
+  ) => Promise.t<result<'outputValue, 'message>>
 
   let validateAsync = (
     ~value: 'outputValue,
     ~validate: validateAsyncFn<'outputValue, 'message>,
     ~andThen: result<'outputValue, 'message> => unit,
   ): unit =>
-    validate(value)
-    ->{
-      open Js.Promise
-      then_(res => res->andThen->resolve, _)
-    }
-    ->ignore
+    value
+    ->validate
+    ->Promise.then(res => res->andThen->Promise.resolve)
+    ->Promise.ignore
 
   let validateAsyncWithMetadata = (
     ~value: 'outputValue,
@@ -414,11 +412,9 @@ module Async = {
     ~validate: validateAsyncFnWithMetadata<'outputValue, 'message, 'metadata>,
     ~andThen: result<'outputValue, 'message> => unit,
   ): unit =>
-    validate(value, metadata)
-    ->{
-      open Js.Promise
-      then_(res => res->andThen->resolve, _)
-    }
+    value
+    ->validate(metadata)
+    ->Promise.then(res => res->andThen->Promise.resolve)
     ->ignore
 
   type formValidationResult<'output, 'fieldsStatuses, 'collectionsStatuses> =

@@ -4,8 +4,8 @@ module Form = %form(
     booleanField1: bool,
     booleanField2: bool,
     booleanField3: bool,
-    dateField1: Js.Date.t,
-    dateField2: Js.Date.t,
+    dateField1: Date.t,
+    dateField2: Date.t,
     intField1: string,
     intField2: string,
     intField3: string,
@@ -24,8 +24,8 @@ module Form = %form(
     booleanField1: bool,
     booleanField2: bool,
     booleanField3: bool,
-    dateField1: Js.Date.t,
-    dateField2: Js.Date.t,
+    dateField1: Date.t,
+    dateField2: Date.t,
     intField1: int,
     intField2: int,
     intField3: int,
@@ -58,7 +58,7 @@ module Form = %form(
     intField1: {
       strategy: OnFirstBlur,
       validate: form =>
-        switch form.intField1 |> int_of_string_opt {
+        switch form.intField1->Int.fromString {
         | Some(x) => Ok(x)
         | None => Error("Invalid number")
         },
@@ -66,15 +66,15 @@ module Form = %form(
     intField2: {
       strategy: OnFirstBlur,
       validate: form =>
-        switch form.intField2 |> float_of_string_opt {
-        | Some(x) => Ok(x |> int_of_float)
+        switch form.intField2->Float.fromString {
+        | Some(x) => Ok(x->Int.fromFloat)
         | None => Error("Invalid number")
         },
     },
     intField3: {
       strategy: OnFirstBlur,
       validate: form =>
-        switch form.intField3 |> int_of_string_opt {
+        switch form.intField3->Int.fromString {
         | Some(x) => Ok(x)
         | None => Error("Invalid number")
         },
@@ -82,16 +82,16 @@ module Form = %form(
     intField4: {
       strategy: OnFirstBlur,
       validate: form =>
-        switch form.intField4 |> float_of_string_opt {
-        | Some(x) => Ok(x |> int_of_float)
+        switch form.intField4->Float.fromString {
+        | Some(x) => Ok(x->Float.toInt)
         | None => Error("Invalid number")
         },
     },
     intField5: {
       strategy: OnFirstBlur,
       validate: foo =>
-        switch foo.intField5 |> float_of_string_opt {
-        | Some(x) => Ok(x |> int_of_float)
+        switch foo.intField5->Float.fromString {
+        | Some(x) => Ok(x->Float.toInt)
         | None => Error("Invalid number")
         },
     },

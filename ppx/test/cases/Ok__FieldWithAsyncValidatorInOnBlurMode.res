@@ -4,7 +4,7 @@ module Form = %form(
     name: {
       strategy: OnSubmit,
       validate: ({name}) => Ok(name),
-      validateAsync: name => Js.Promise.resolve(Ok(name)),
+      validateAsync: name => Promise.resolve(Ok(name)),
     },
   }
 )

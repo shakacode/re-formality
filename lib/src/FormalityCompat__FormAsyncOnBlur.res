@@ -10,7 +10,7 @@ module type Form = {
 
 module Make = (Form: Form) => FormalityCompat__FormAsyncOnBlurWithId.Make({
   include Form
-  module FieldId = Id.MakeComparable({
+  module FieldId = Belt.Id.MakeComparable({
     type t = Form.field
     let cmp = Pervasives.compare
   })

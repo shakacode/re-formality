@@ -3,7 +3,7 @@
     "sources": [
         "src"
     ],
-    "bs-dependencies": [
+    "dependencies": [
         "@rescript/react",
         "re-formality",
         "rescript-classnames"
@@ -11,15 +11,14 @@
     "jsx": {
         "version": 4
     },
-    "bsc-flags": [
-        "-open Belt",
+    "compiler-flags": [
         "-open Cx"
     ],
     "ppx-flags": [
-        "../_build/default/ppx/bin/bin.exe"
+        "re-formality-ppx"
     ],
     "package-specs": {
-        "module": "es6",
+        "module": "esmodule",
         "in-source": true
     },
     "suffix": ".res.js"

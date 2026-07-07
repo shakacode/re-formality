@@ -7,6 +7,7 @@ let make = (~className, ~onSubmit, ~children) =>
         event->ReactEvent.Form.preventDefault
       }
       onSubmit()
-    }}>
+    }}
+  >
     children
   </form>
