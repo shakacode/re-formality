@@ -14,7 +14,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-22.04]
         ocaml-version: [4.14.1]
         node-version: [24]
 
@@ -111,7 +111,7 @@ jobs:
       - validate
     strategy:
       matrix:
-        host-os: [ubuntu-latest]
+        host-os: [ubuntu-22.04]
         container-os: [linux-alpine-3]
         ocaml-version: [4.14.1]
     container:
