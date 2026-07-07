@@ -11,61 +11,60 @@ on:
 jobs:
   validate:
     name: Validate
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [ubuntu-latest]
         ocaml-version: [4.14.1]
-        node-version: [16.x]
+        node-version: [24]
 
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.10.0
+
       - name: Setup Node ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
+          cache: pnpm
 
-      - name: Print Yarn cache
-        id: print-yarn-cache
-        run: echo "yarn-cache=$(yarn cache dir)" >> $GITHUB_OUTPUT
-
-      - name: Restore Yarn cache
-        id: yarn-cache
-        uses: actions/cache@v4
-        with:
-          path: ${{ steps.print-yarn-cache.outputs.yarn-cache }}
-          key: ${{ matrix.os }}-yarn-${{ hashFiles('yarn.lock', '*/yarn.lock') }}
-
-      - name: Install Yarn deps
-        run: yarn install
+      - name: Install pnpm deps
+        run: pnpm install --frozen-lockfile
 
       - name: Setup OCaml ${{ matrix.ocaml-version }}
         uses: ocaml/setup-ocaml@v2
         with:
           ocaml-compiler: ${{ matrix.ocaml-version }}
 
+      - name: Set Opam repository
+        run: |
+          opam repo set-url default git+https://github.com/ocaml/opam-repository.git#a52dd1c5b0298d669078ed99d219623a6bf0f0c1 --yes
+          opam update
+
       - name: Install Opam deps
-        run: opam install . --deps-only --with-test
+        run: opam install . --deps-only --with-test --yes
 
       - name: Build PPX
         run: opam exec -- dune build
 
-      - name: Build ReScript lib
+      - name: Link PPX for ReScript apps
+        run: ln -sf ../_build/default/ppx/bin/bin.exe node_modules/re-formality-ppx
+
+      - name: Build ReScript packages
         run: |
-          cd lib
-          yarn run build
-          cd ../examples
-          yarn run build
+          pnpm --filter re-formality run build
+          pnpm --filter re-formality-examples run build
 
       - name: Run PPX tests
         run: opam exec -- dune exec test.exe
 
       - name: Run integration tests
-        run: |
-          cd specs
-          yarn run test
+        run: pnpm --filter re-formality-specs run test
 
   build_macos:
     name: Build on ${{ matrix.os }}
@@ -77,56 +76,26 @@ jobs:
       matrix:
         os: [macos-13, macos-14]
         ocaml-version: [4.14.1]
-        node-version: [16.x]
 
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
-
-      - name: Setup Node ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-
-      - name: Print Yarn cache
-        id: print-yarn-cache
-        run: echo "yarn-cache=$(yarn cache dir)" >> $GITHUB_OUTPUT
-
-      - name: Restore Yarn cache
-        id: yarn-cache
-        uses: actions/cache@v4
-        with:
-          path: ${{ steps.print-yarn-cache.outputs.yarn-cache }}
-          key: ${{ matrix.os }}-yarn-${{ hashFiles('yarn.lock', '*/yarn.lock') }}
-
-      - name: Install Yarn deps
-        run: yarn install
 
       - name: Setup OCaml ${{ matrix.ocaml-version }}
         uses: ocaml/setup-ocaml@v2
         with:
           ocaml-compiler: ${{ matrix.ocaml-version }}
 
+      - name: Set Opam repository
+        run: |
+          opam repo set-url default git+https://github.com/ocaml/opam-repository.git#a52dd1c5b0298d669078ed99d219623a6bf0f0c1 --yes
+          opam update
+
       - name: Install Opam deps
-        run: opam install . --deps-only --with-test
+        run: opam install . --deps-only --with-test --yes
 
       - name: Build PPX
         run: opam exec -- dune build
-
-      - name: Build ReScript lib
-        run: |
-          cd lib
-          yarn run build
-          cd ../examples
-          yarn run build
-
-      - name: Run PPX tests
-        run: opam exec -- dune exec test.exe
-
-      - name: Run integration tests
-        run: |
-          cd specs
-          yarn run test
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -145,43 +114,26 @@ jobs:
         host-os: [ubuntu-latest]
         container-os: [linux-alpine-3]
         ocaml-version: [4.14.1]
-        node-version: [16.x]
     container:
-      image: alex35mil/alpine-ocaml-opam-node-yarn:alpine-3.19-ocaml-4.14-node-16.20-yarn-1.22-o5gm
+      image: alex35mil/alpine-ocaml-opam-node-pnpm:alpine-3.19-ocaml-4.14-node-24.18-pnpm-11.10-7mhu
 
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Print Yarn cache
-        id: print-yarn-cache
-        run: echo "yarn-cache=$(yarn cache dir)" >> $GITHUB_OUTPUT
-
-      - name: Restore Yarn cache
-        id: yarn-cache
-        uses: actions/cache@v4
-        with:
-          path: ${{ steps.print-yarn-cache.outputs.yarn-cache }}
-          key: ${{ matrix.container-os }}-yarn-${{ hashFiles('yarn.lock', '*/yarn.lock') }}
-
-      - name: Install Yarn deps
-        run: yarn install
-
       - name: Setup OCaml ${{ matrix.ocaml-version }}
         run: opam init -a --disable-sandboxing --compiler=${{ matrix.ocaml-version }}
 
+      - name: Set Opam repository
+        run: |
+          opam repo set-url default git+https://github.com/ocaml/opam-repository.git#a52dd1c5b0298d669078ed99d219623a6bf0f0c1 --yes
+          opam update
+
       - name: Install Opam deps
-        run: opam install . --deps-only --with-test
+        run: opam install . --deps-only --with-test --yes
 
       - name: Build PPX
         run: opam exec -- dune build --profile static
-
-      - name: Build ReScript lib
-        run: |
-          cd lib
-          yarn run build
-          cd ../examples
-          yarn run build
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -199,30 +151,10 @@ jobs:
       matrix:
         os: [windows-latest]
         ocaml-version: [4.14.1]
-        node-version: [16.x]
 
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
-
-      - name: Setup Node ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-
-      - name: Print Yarn cache
-        id: print-yarn-cache
-        run: echo "::set-output name=yarn-cache::$(yarn cache dir)" # Using the old way as the new way doesn't work on windows
-
-      - name: Restore Yarn cache
-        id: yarn-cache
-        uses: actions/cache@v4
-        with:
-          path: ${{ steps.print-yarn-cache.outputs.yarn-cache }}
-          key: ${{ matrix.os }}-yarn-${{ hashFiles('yarn.lock', '*/yarn.lock') }}
-
-      - name: Install Yarn deps
-        run: yarn install
 
       - name: Apply Opam deps patch
         run: |
@@ -246,17 +178,10 @@ jobs:
           opam pin add alcotest https://github.com/mirage/alcotest.git#927088f # 1.7.0
 
       - name: Install Opam deps
-        run: opam install . --deps-only --with-test
+        run: opam install . --deps-only --with-test --yes
 
       - name: Build PPX
         run: opam exec -- dune build
-
-      - name: Build ReScript lib
-        run: |
-          cd lib
-          yarn run build
-          cd ../examples
-          yarn run build
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -277,10 +202,10 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Setup Node ${{ matrix.node-version }}
+      - name: Setup Node 24
         uses: actions/setup-node@v4
         with:
-          node-version: 16.x
+          node-version: 24
 
       - name: Download macOS x86 artifacts
         uses: actions/download-artifact@v4
